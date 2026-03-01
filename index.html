@@ -3,148 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio & Speed Insights</title>
+    <title>หยุดเผือก!</title>
     <style>
-        :root {
-            --bg: #ffffff;
-            --text: #1a1a1a;
-            --card-bg: #f9f9f9;
-            --border: #eaeaea;
-            --accent: #0070f3;
-            --code-bg: #f0f0f0;
+        :root { --bg: #fff; --text: #000; --border: #ccc; }
+        [data-theme='dark'] { --bg: #000; --text: #0ff; --border: #333; }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Courier New', monospace; 
+            margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; 
+            transition: 0.2s;
         }
-
-        [data-theme='dark'] {
-            --bg: #000000;
-            --text: #ffffff;
-            --card-bg: #111111;
-            --border: #333333;
-            --accent: #3291ff;
-            --code-bg: #222222;
+        /* Dropdown Style */
+        .nav { position: fixed; top: 20px; right: 20px; }
+        select { 
+            padding: 8px; border-radius: 5px; background: var(--text); color: var(--bg); 
+            border: 1px solid var(--border); cursor: pointer; font-family: inherit;
         }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 40px 20px;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* ปุ่มเปลี่ยนธีมมุมขวาบน */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            background: var(--text);
-            color: var(--bg);
-            font-weight: 600;
-            z-index: 1000;
-        }
-
-        .container {
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 20px;
-        }
-
-        .step {
-            margin-bottom: 24px;
-        }
-
-        .step-number {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background: var(--accent);
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            margin-right: 10px;
-            font-size: 14px;
-        }
-
-        code {
-            display: block;
-            background: var(--code-bg);
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-family: monospace;
-            font-size: 14px;
-            border: 1px solid var(--border);
-            overflow-x: auto;
-        }
-
-        h1 { font-size: 2rem; margin-bottom: 10px; }
-        h2 { font-size: 1.2rem; color: var(--accent); }
+        #app { text-align: center; max-width: 500px; padding: 20px; }
+        .glitch { font-size: 2rem; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-    <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
-
-    <div class="container">
-        <h1>Get Started</h1>
-        <p style="opacity: 0.7;">To start collecting performance metrics, follow these steps.</p>
-
-        <div class="card">
-            <div class="step">
-                <span class="step-number">1</span>
-                <strong>Install Speed Insights</strong>
-                <p>เนื่องจากเราใช้ HTML ธรรมดา ให้ใช้ Script นี้แทนการใช้ npm:</p>
-                <code>&lt;script defer src="/_vercel/insights/script.js"&gt;&lt;/script&gt;</code>
-            </div>
-
-            <div class="step">
-                <span class="step-number">2</span>
-                <strong>Check Web Vitals</strong>
-                <p>ระบบจะวัดค่า LCP, FID, และ CLS ของหน้าเว็บคุณโดยอัตโนมัติ</p>
-                <code>import { SpeedInsights } from "@vercel/speed-insights/next" // สำหรับ Next.js</code>
-            </div>
-
-            <div class="step">
-                <span class="step-number">3</span>
-                <strong>Deploy & Visit your Site</strong>
-                <p>Push งานขึ้น GitHub แล้วไปที่ URL ของคุณเพื่อเริ่มเก็บข้อมูลได้เลย!</p>
-            </div>
-        </div>
+    <div id="app">
+        <h1 style="color: red;">[ ERROR: 403 Forbidden ]</h1>
+        <p>พยายามจะ curl ดู source code หรอ? ไปนอนไป๊!</p>
     </div>
 
-    <script>
-        // 1. ตรวจสอบธีมเริ่มต้นจาก System
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-
-        // 2. ฟังก์ชันสลับธีม
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme');
-            if (current === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'light');
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
-        }
-    </script>
+    <div class="nav">
+        <select id="themeSelect" onchange="changeTheme(this.value)">
+            <option value="system">💻 System</option>
+            <option value="dark">🌑 Dark</option>
+            <option value="light">☀️ Light</option>
+        </select>
+    </div>
 
     <script defer src="/_vercel/insights/script.js"></script>
 
+    <script>
+        // --- ส่วน JavaScript หลัก ---
+        
+        const app = document.getElementById('app');
+        const themeSelect = document.getElementById('themeSelect');
+
+        // 1. ระบบจัดการภาษา (ตรวจสอบจากเบราว์เซอร์)
+        const userLang = navigator.language || navigator.userLanguage;
+        const isThai = userLang.includes('th');
+
+        // 2. เนื้อหาที่จะ Render (ด่าคน curl เป็นหลัก)
+        const content = {
+            th: {
+                title: "ยินดีด้วย คุณไม่ได้ curl",
+                desc: "นี่คือหน้า Portfolio ที่เขียนด้วย JS ล้วนๆ เพราะผมขี้เกียจเขียน HTML โง่ๆ ให้คนอื่นมาก๊อป",
+                joke: "สถานะ: กำลังพัฒนา (หรือกำลังอู้อยู่ก็ไม่รู้)"
+            },
+            en: {
+                title: "Nice try, Curler!",
+                desc: "This is a JS-rendered portfolio. Your curl command sees nothing but garbage.",
+                joke: "Status: Coding while sleeping."
+            }
+        };
+
+        const lang = isThai ? content.th : content.en;
+
+        // 3. ฟังก์ชัน Render หน้าเว็บ
+        function renderApp() {
+            app.innerHTML = `
+                <div class="glitch">${lang.title}</div>
+                <p>${lang.desc}</p>
+                <hr style="border: 0; border-top: 1px solid var(--border)">
+                <p style="font-style: italic; opacity: 0.6;">${lang.joke}</p>
+            `;
+        }
+
+        // 4. ระบบจัดการธีม (System / Dark / Light)
+        function applyTheme(mode) {
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (mode === 'dark' || (mode === 'system' && systemDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            localStorage.setItem('theme-pref', mode);
+        }
+
+        function changeTheme(val) {
+            applyTheme(val);
+        }
+
+        // 5. Initial Load
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('theme-pref') || 'system';
+            themeSelect.value = savedTheme;
+            applyTheme(savedTheme);
+            renderApp(); // พ่นเนื้อหาจริงทับคำด่าใน HTML
+        };
+
+        // ฟังการเปลี่ยนแปลงของ System Theme แบบ Real-time
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (themeSelect.value === 'system') applyTheme('system');
+        });
+    </script>
 </body>
 </html>
