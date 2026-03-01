@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex">
+  <title>403 Forbidden</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: #000; color: #1f1f1f; height: 100%; font-family: monospace; font-size: 13px; }
+    .decoy { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; opacity: .25; line-height: 2; }
+    #__root__ { position: fixed; inset: 0; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+  </style>
+</head>
+<body>
+  <div class="decoy">
+    <pre>nginx/1.24.0 (Ubuntu)
+403 Forbidden</pre>
+  </div>
+
+  <div id="__root__"></div>
+
+  <script>
+  (function() {
+    'use strict';
+    // Verify this is a real browser environment, not a bot/curl
+    var checks = [
+      typeof window !== 'undefined',
+      typeof document !== 'undefined',
+      !!window.history && !!window.history.pushState,
+      !!window.requestAnimationFrame,
+      typeof navigator !== 'undefined',
+      !navigator.webdriver,                        // block Selenium/Playwright
+      window.innerWidth > 0,
+      window.innerHeight > 0,
+      typeof CSS !== 'undefined',
+      typeof Promise !== 'undefined',
+    ];
+
+    if (!checks.every(Boolean)) return;
+
+    // Additional timing check (bots often execute synchronously)
+    var t0 = performance.now();
+    requestAnimationFrame(function() {
+      var delta = performance.now() - t0;
+      if (delta < 0) return; // impossible timing
+
+      var root = document.getElementById('__root__');
+      var decoy = document.querySelector('.decoy');
+
+      if (decoy) decoy.style.display = 'none';
+      root.style.opacity = '1';
+      root.style.pointerEvents = 'all';
+
+      var s = document.createElement('script');
+      s.type = 'module';
+      s.src = './src/app.js';
+      document.body.appendChild(s);
+    });
+  })();
+  </script>
+</body>
+</html>
