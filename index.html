@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>403 Forbidden</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{background:#090909;color:#111;height:100%;font-family:monospace;font-size:13px}
+    #__decoy__{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:.18;line-height:2;user-select:none;pointer-events:none}
+    #__root__{display:none;position:fixed;inset:0;background:#090909;overflow-y:auto}
+  </style>
+</head>
+<body>
+  <div id="__decoy__" aria-hidden="true">
+    <pre>nginx/1.24.0 (Ubuntu)
+
+Error 403: Forbidden
+
+The server denied access to this resource.
+</pre>
+  </div>
+  <div id="__root__"></div>
+  <script>
+  (function(){
+    try {
+      var ok =
+        typeof window === 'object' &&
+        typeof document === 'object' &&
+        typeof history === 'object' &&
+        typeof requestAnimationFrame === 'function' &&
+        typeof navigator === 'object' &&
+        !navigator.webdriver &&
+        !!window.CSS &&
+        !!window.IntersectionObserver;
+
+      if (!ok) return;
+
+      // Apply saved theme immediately to avoid flash
+      try {
+        var saved = JSON.parse(localStorage.getItem('pf_settings') || '{}');
+        var theme = saved.theme === 'light' ? 'light' : saved.theme === 'dark' ? 'dark'
+                  : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+        if (saved.accent) document.documentElement.style.setProperty('--accent', saved.accent);
+        var fsMap = {sm:'14px', md:'16px', lg:'18px'};
+        if (saved.fontSize) document.documentElement.style.fontSize = fsMap[saved.fontSize] || '16px';
+        if (saved.lang === 'th') document.documentElement.lang = 'th';
+      } catch(e){}
+
+      document.getElementById('__root__').style.display = 'block';
+      document.getElementById('__decoy__').style.display = 'none';
+
+      var m = document.createElement('script');
+      m.type = 'module';
+      m.src = './src/app.js';
+      document.body.appendChild(m);
+    } catch(e){}
+  })();
+  </script>
+</body>
+</html>
