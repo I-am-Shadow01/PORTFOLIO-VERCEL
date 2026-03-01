@@ -3,87 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
+    <title>My Portfolio & Speed Insights</title>
     <style>
-        /* CSS สำหรับความสวยงาม */
         :root {
             --bg: #ffffff;
             --text: #1a1a1a;
-            --primary: #0070f3;
+            --card-bg: #f9f9f9;
+            --border: #eaeaea;
+            --accent: #0070f3;
+            --code-bg: #f0f0f0;
         }
+
         [data-theme='dark'] {
-            --bg: #1a1a1a;
+            --bg: #000000;
             --text: #ffffff;
-            --primary: #3291ff;
+            --card-bg: #111111;
+            --border: #333333;
+            --accent: #3291ff;
+            --code-bg: #222222;
         }
+
         body {
             background-color: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
-            transition: 0.3s;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
         }
-        .card {
-            text-align: center;
-            padding: 2rem;
-            border: 1px solid #eaeaea;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
+
+        /* ปุ่มเปลี่ยนธีมมุมขวาบน */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
             cursor: pointer;
-            border-radius: 8px;
-            border: none;
-            background: var(--primary);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--text);
+            color: var(--bg);
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .step {
+            margin-bottom: 24px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
             color: white;
-            font-weight: bold;
-        }
-        .profile-img {
-            width: 100px;
-            height: 100px;
             border-radius: 50%;
-            background: #ddd;
-            margin-bottom: 1rem;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 10px;
+            font-size: 14px;
         }
+
+        code {
+            display: block;
+            background: var(--code-bg);
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        h1 { font-size: 2rem; margin-bottom: 10px; }
+        h2 { font-size: 1.2rem; color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div class="profile-img"></div>
-        <h1 id="greeting">ยินดีต้อนรับสู่โปรไฟล์ของฉัน</h1>
-        <p>กำลังเรียนรู้การทำเว็บด้วย Vercel + GitHub</p>
-        
-        <button onclick="toggleTheme()">เปลี่ยนโหมด มืด/สว่าง</button>
-        <button onclick="changeText()">ทักทายด้วย JS</button>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+
+    <div class="container">
+        <h1>Get Started</h1>
+        <p style="opacity: 0.7;">To start collecting performance metrics, follow these steps.</p>
+
+        <div class="card">
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Install Speed Insights</strong>
+                <p>เนื่องจากเราใช้ HTML ธรรมดา ให้ใช้ Script นี้แทนการใช้ npm:</p>
+                <code>&lt;script defer src="/_vercel/insights/script.js"&gt;&lt;/script&gt;</code>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Check Web Vitals</strong>
+                <p>ระบบจะวัดค่า LCP, FID, และ CLS ของหน้าเว็บคุณโดยอัตโนมัติ</p>
+                <code>import { SpeedInsights } from "@vercel/speed-insights/next" // สำหรับ Next.js</code>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Deploy & Visit your Site</strong>
+                <p>Push งานขึ้น GitHub แล้วไปที่ URL ของคุณเพื่อเริ่มเก็บข้อมูลได้เลย!</p>
+            </div>
+        </div>
     </div>
 
     <script>
-        // JavaScript เริ่มต้นตรงนี้
-        
-        // 1. ฟังก์ชันเปลี่ยนสี Theme
+        // 1. ตรวจสอบธีมเริ่มต้นจาก System
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        // 2. ฟังก์ชันสลับธีม
         function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
+            const current = document.documentElement.getAttribute('data-theme');
+            if (current === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'light');
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
         }
-
-        // 2. ฟังก์ชันเปลี่ยนข้อความ
-        function changeText() {
-            const h1 = document.getElementById('greeting');
-            h1.innerText = "ยินดีด้วย! คุณรัน JavaScript สำเร็จแล้ว 🚀";
-            h1.style.color = "#0070f3";
-        }
     </script>
+
+    <script defer src="/_vercel/insights/script.js"></script>
+
 </body>
 </html>
