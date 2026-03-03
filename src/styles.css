@@ -478,12 +478,11 @@ nav.scrolled{
 }
 [data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.18)}
 
-/* ── Glass panel — drops down from top-right ── */
+/* ── Glass panel — top-right corner, height fits content ── */
 .mob-glass{
   position:absolute;
-  top:0;right:0;
+  top:0; right:0;
   width:min(300px,90vw);
-  /* height is determined by children — no stretching */
   display:flex;
   flex-direction:column;
   background:rgba(8,8,20,.92);
@@ -491,49 +490,52 @@ nav.scrolled{
   border-left:1px solid var(--b1);
   border-bottom:1px solid var(--b1);
   border-bottom-left-radius:16px;
-  box-shadow:-12px 12px 48px rgba(0,0,0,.55),0 0 0 0.5px var(--b1);
+  box-shadow:-12px 12px 48px rgba(0,0,0,.55);
   transform:translateX(105%);
   transition:transform .38s var(--spring);
 }
 [data-theme=light] .mob-glass{
   background:rgba(248,248,255,.96);
-  border-left-color:rgba(0,0,0,.1);
-  border-bottom-color:rgba(0,0,0,.1);
+  border-left-color:rgba(0,0,0,.12);
+  border-bottom-color:rgba(0,0,0,.12);
   box-shadow:-8px 8px 32px rgba(0,0,0,.14);
 }
 .mob-overlay.open .mob-glass{ transform:translateX(0); }
 
-/* ── Section 1 : Name + X ── */
+/* ── ช่องที่ 1 : ชื่อ + ปุ่ม X ── */
 .mob-header{
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:16px 16px;
-  border-bottom:1px solid var(--b0);
+  border-bottom:1px solid var(--b1);
   flex:0 0 auto;
 }
+[data-theme=light] .mob-header{ border-bottom-color:rgba(0,0,0,.12); }
+
 .mob-header-logo{
   font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:var(--tx);
 }
 .mob-header-logo span{ color:var(--ac-text,var(--ac)); }
 .mob-close{
   width:32px;height:32px;border-radius:8px;
-  background:var(--g1);border:1px solid var(--b0);
+  background:var(--g1);border:1px solid var(--b1);
   display:flex;align-items:center;justify-content:center;
-  color:var(--tx3);flex-shrink:0;
+  color:var(--tx3);flex-shrink:0;cursor:pointer;
   transition:color var(--dur),background var(--dur),transform var(--dur) var(--spring);
-  cursor:pointer;
 }
 .mob-close:hover{ color:var(--tx);background:var(--g2);transform:rotate(90deg); }
 [data-theme=light] .mob-close{ background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.12); }
 [data-theme=light] .mob-close:hover{ background:#fff; }
 
-/* ── Section 2 : Nav links ── */
+/* ── ช่องที่ 2 : รายการเมนู ── */
 .mob-nav{
   flex:0 0 auto;
   padding:8px 8px;
   display:flex;flex-direction:column;gap:2px;
+  border-bottom:1px solid var(--b1);
 }
+[data-theme=light] .mob-nav{ border-bottom-color:rgba(0,0,0,.12); }
 
 @keyframes mobItemIn{
   from{ opacity:0;transform:translateX(14px); }
@@ -543,9 +545,8 @@ nav.scrolled{
   display:flex;align-items:center;gap:12px;width:100%;
   padding:12px 12px;border-radius:10px;
   color:var(--tx2);background:transparent;
-  opacity:0;
+  opacity:0;cursor:pointer;
   transition:background var(--dur),color var(--dur);
-  cursor:pointer;
 }
 .mob-overlay.open .mob-item{
   animation:mobItemIn .28s var(--spring) calc(var(--i)*.055s + .08s) both;
@@ -560,17 +561,15 @@ nav.scrolled{
   transition:opacity var(--dur);
 }
 .mob-item:hover .mob-num{ opacity:1; }
-
 .mob-label{
   font-size:.97rem;font-weight:500;letter-spacing:-.01em;
   color:inherit;flex:1;text-align:left;line-height:1;
   transition:transform var(--dur) var(--spring);
 }
 .mob-item:hover .mob-label{ transform:translateX(3px); }
-
 .mob-arrow{
   width:26px;height:26px;border-radius:50%;
-  border:1px solid var(--b0);
+  border:1px solid var(--b1);
   display:flex;align-items:center;justify-content:center;
   color:var(--tx3);flex-shrink:0;
   transition:border-color var(--dur),color var(--dur),background var(--dur),transform var(--dur) var(--spring);
@@ -579,17 +578,15 @@ nav.scrolled{
   border-color:var(--ac);color:var(--ac-on,#000);background:var(--ac);transform:rotate(-45deg);
 }
 
-/* ── Section 3 : Location / year ── */
+/* ── ช่องที่ 3 : location + ปี ── */
 .mob-footer{
   flex:0 0 auto;
-  padding:12px 16px 16px;
-  border-top:1px solid var(--b0);
+  padding:12px 16px 14px;
   display:flex;justify-content:space-between;align-items:center;
   font-size:.63rem;color:var(--tx3);letter-spacing:.06em;
   opacity:0;
   transition:opacity .24s var(--ease) .22s;
 }
-[data-theme=light] .mob-footer{ border-top-color:rgba(0,0,0,.08); }
 .mob-overlay.open .mob-footer{ opacity:1; }
 
 /* ══════════════════════════════════════════════════════════════

@@ -110,7 +110,6 @@ function buildOverlay(items, t, onClose) {
   ov.setAttribute('aria-label','Navigation menu');
   ov.innerHTML = `
     <div class="mob-glass">
-      <div class="mob-sheen"></div>
 
       <!-- Header -->
       <div class="mob-header">
