@@ -101,6 +101,17 @@ function createFooter(t) {
   return footer;
 }
 
+// ─── Scroll progress bar ───────────────────────────────────
+function initScrollProgress() {
+  const bar = document.createElement('div');
+  bar.className = 'scroll-progress';
+  document.body.appendChild(bar);
+  window.addEventListener('scroll', () => {
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+    bar.style.width = Math.min(pct, 100) + '%';
+  }, { passive: true });
+}
+
 // ─── Spotlight (project cards) ──────────────────────────────
 function initProjectSpotlight() {
   document.querySelectorAll('.project-card').forEach(card => {
@@ -198,8 +209,9 @@ async function render() {
 
     _initialized = true;
     initAnimations();
-    initProjectSpotlight();
     initSmoothScroll();
+    initScrollProgress();
+    initProjectSpotlight();
   } else {
     rerenderText(root, t);
   }

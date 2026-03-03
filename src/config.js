@@ -115,7 +115,7 @@ export const CONFIG = {
         copyable: true,
       },
       {
-        label: 'X',
+        label: 'Twitter / X',
         value: '@PPLEThai',
         icon: '𝕏',
         href: 'https://x.com/PPLEThai',

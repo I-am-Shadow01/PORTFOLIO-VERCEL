@@ -1,5 +1,5 @@
 /**
- * sections/projects.js
+ * sections/projects.js — enhanced cards
  */
 
 const GH_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -7,10 +7,10 @@ const GH_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentCo
   0-.237-.009-.866-.013-1.7-2.782.603-3.369-1.341-3.369-1.341-.454-1.156-1.11-1.463-1.11-1.463
   -.908-.62.069-.608.069-.608 1.003.07 1.532 1.03 1.532 1.03.892 1.529 2.341 1.087 2.91.831
   .09-.646.349-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.03-2.682
-  -.103-.254-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.026A9.578 9.578 0 0 1 12 6.836
-  c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.026 2.748-1.026.546 1.376.202 2.394.1 2.646
-  .64.698 1.026 1.591 1.026 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852
-  0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.166 22 16.418 22 12
+  -.103-.254-.447-1.27.098-2.646 0 0 .84-.269 2.75 1.026A9.578 9.578 0 0 1 12 6.836c.85.004
+  1.705.115 2.504.337 1.909-1.295 2.748-1.026 2.748-1.026.546 1.376.202 2.394.1 2.646.64.698
+  1.026 1.591 1.026 2.682 0 3.841-2.337 4.687-4.565 4.935.359.309.678.919.678 1.852 0
+  1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.166 22 16.418 22 12
   c0-5.523-4.477-10-10-10z"/>
 </svg>`;
 
@@ -24,11 +24,18 @@ export function renderProjects({ projects }, t) {
   section.id = 'projects';
 
   section.innerHTML = `
-    <p class="section-label reveal">${t('label_projects')}</p>
+    <div class="section-eyebrow reveal">
+      <span class="section-label">${t('label_projects')}</span>
+      <span class="section-line"></span>
+    </div>
     <h2 class="section-title reveal d1">${t('title_projects')}</h2>
+
     <div class="projects-grid">
       ${projects.map((p, i) => `
-        <article class="project-card reveal d${(i % 3) + 1}">
+        <article class="project-card reveal d${(i % 3) + 1}" tabindex="0">
+          <!-- Project number -->
+          <span class="project-num">0${i + 1}</span>
+
           <div class="project-header">
             <div class="project-icon" aria-hidden="true">${p.icon}</div>
             <div class="project-actions">
@@ -44,15 +51,36 @@ export function renderProjects({ projects }, t) {
                 </a>` : ''}
             </div>
           </div>
+
           <h3 class="project-name">${p.name}</h3>
           <p class="project-desc">${p.description}</p>
-          <div class="project-techs" aria-label="Technologies">
-            ${p.tech.map(tag => `<span class="project-tech">${tag}</span>`).join('')}
+
+          <div class="project-footer">
+            <div class="project-techs" aria-label="Technologies">
+              ${p.tech.map(tag => `<span class="project-tech">${tag}</span>`).join('')}
+            </div>
+            ${(p.github || p.demo) ? `
+              <a href="${p.demo || p.github}" target="_blank" rel="noopener noreferrer"
+                 class="project-arrow" aria-label="Open ${p.name}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </a>
+            ` : ''}
           </div>
         </article>
       `).join('')}
     </div>
   `;
+
+  // Mouse spotlight
+  section.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    });
+  });
 
   return section;
 }
