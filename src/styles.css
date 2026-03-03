@@ -483,26 +483,28 @@ nav.scrolled{
 [data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.14)}
 
 /* ╔═══════════════════════════════════════════════════════════╗
-   ║  Floating glass card  — liquid glass, 3 distinct zones   ║
+   ║  Floating glass card                                      ║
    ╚═══════════════════════════════════════════════════════════╝ */
 .mob-glass{
   position:absolute;top:14px;right:14px;
   width:min(300px,88vw);
-  /* ❶ flex column — every zone hugs its own content height   */
   display:flex;flex-direction:column;
-  /* ❷ solid-enough background so nothing leaks between zones */
   background:rgba(10,10,22,.86);
   backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
   border:1px solid rgba(255,255,255,.11);
   border-radius:20px;
-  /* ❸ overflow:hidden clips children cleanly at rounded corners */
-  overflow:hidden;
-  /* ❹ own stacking context — no zone can bleed into another   */
-  isolation:isolate;
+  /*
+   * KEY FIX: use clip-path instead of overflow:hidden
+   * overflow:hidden + transform on same element causes browsers
+   * to miscalculate the clipping height, truncating the card.
+   * clip-path clips visually without affecting layout/height.
+   */
+  clip-path:inset(0 round 20px);
   box-shadow:
     0 24px 64px rgba(0,0,0,.65),
     0 0 56px var(--acg),
     inset 0 1px 0 rgba(255,255,255,.10);
+  /* transform + opacity animate the entrance */
   transform:translateY(-10px) scale(.97);
   opacity:0;
   transition:transform .32s var(--spring),opacity .22s var(--ease);
@@ -523,18 +525,14 @@ nav.scrolled{
 .mob-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:13px 13px 12px;
-  /* slightly lighter glass layer */
   background:rgba(255,255,255,.035);
   border-bottom:1px solid rgba(255,255,255,.07);
-  /* own stacking context so it never overlaps siblings */
   position:relative;
-  z-index:3;
   flex-shrink:0;
 }
-/* sheen divider line */
 .mob-header::after{
   content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,.12),transparent);
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.14),transparent);
   pointer-events:none;
 }
 [data-theme=light] .mob-header{ background:rgba(255,255,255,.55); border-bottom-color:rgba(0,0,0,.08); }
@@ -566,21 +564,23 @@ nav.scrolled{
   padding:7px 7px;
   display:flex;flex-direction:column;gap:2px;
   flex-shrink:0;
-  /* KEY FIX: must NOT be transparent — blocks zone-3 bleed   */
-  background:rgba(10,10,22,.01);   /* effectively opaque (same as glass) */
+  /*
+   * Must be opaque (same as glass bg) — not transparent.
+   * Transparent nav lets the footer below paint visually on top
+   * before the opacity transition completes.
+   */
+  background:rgba(10,10,22,.86);
   border-bottom:1px solid rgba(255,255,255,.07);
   position:relative;
-  z-index:2;  /* stacks above zone 3 */
 }
 .mob-nav::after{
   content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,.12),transparent);
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.14),transparent);
   pointer-events:none;
 }
-[data-theme=light] .mob-nav{ background:rgba(255,255,255,.01); border-bottom-color:rgba(0,0,0,.08); }
+[data-theme=light] .mob-nav{ background:rgba(246,246,255,.94); border-bottom-color:rgba(0,0,0,.08); }
 [data-theme=light] .mob-nav::after{ background:linear-gradient(to right,transparent,rgba(0,0,0,.07),transparent); }
 
-/* stagger slide-up animation */
 @keyframes mobItemIn{
   from{ opacity:0; transform:translateY(6px); }
   to  { opacity:1; transform:translateY(0);   }
@@ -632,11 +632,7 @@ nav.scrolled{
   display:flex;justify-content:center;align-items:center;gap:6px;
   font-size:.67rem;color:var(--tx3);letter-spacing:.06em;
   flex-shrink:0;
-  /* slightly different glass tint */
   background:rgba(255,255,255,.018);
-  position:relative;
-  z-index:1;
-  /* fade in AFTER nav items finish animating */
   opacity:0;
   transition:opacity .22s var(--ease) .28s;
 }
