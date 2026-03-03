@@ -55,6 +55,16 @@ function createNav(t) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         overlay.classList.add('open');
+        // Force each mob-item visible via JS — CSS-only transitions on dynamic DOM ไม่น่าเชื่อถือ
+        overlay.querySelectorAll('.mob-item').forEach((item, i) => {
+          item.style.opacity = '0';
+          item.style.transform = 'translateX(16px)';
+          item.style.transition = 'opacity .28s ease, transform .32s cubic-bezier(.34,1.56,.64,1)';
+          setTimeout(() => {
+            item.style.opacity = '1';
+            item.style.transform = 'translateX(0)';
+          }, 100 + i * 60);
+        });
       });
     });
     const rootEl = document.getElementById('__root__');
