@@ -489,6 +489,9 @@ nav.scrolled{
   opacity:0;
   transition:transform .32s var(--spring),opacity .22s var(--ease);
   border-radius:20px;
+  /* backdrop-filter lives here — outer wrapper has transform but NO overflow:hidden
+     This avoids the Chromium bug: backdrop-filter+overflow:hidden=wrong height */
+  backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
   box-shadow:0 24px 64px rgba(0,0,0,.65),0 0 56px var(--acg);
 }
 [data-theme=light] .mob-glass{
@@ -500,7 +503,7 @@ nav.scrolled{
   display:flex;flex-direction:column;
   width:100%;
   background:rgba(10,10,22,.86);
-  backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
+  /* backdrop-filter moved to .mob-glass outer wrapper */
   border:1px solid rgba(255,255,255,.11);
   border-radius:20px;
   /* overflow:hidden removed: backdrop-filter+overflow:hidden=Chromium height bug */
