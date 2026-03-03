@@ -503,7 +503,7 @@ nav.scrolled{
   backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
   border:1px solid rgba(255,255,255,.11);
   border-radius:20px;
-  overflow:hidden;
+  /* overflow:hidden removed: backdrop-filter+overflow:hidden=Chromium height bug */
   box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
 }
 [data-theme=light] .mob-glass-inner{
@@ -519,6 +519,7 @@ nav.scrolled{
   border-bottom:1px solid rgba(255,255,255,.07);
   position:relative;
   flex-shrink:0;
+  border-radius:20px 20px 0 0;
 }
 .mob-header::after{
   content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:1px;
@@ -612,6 +613,7 @@ nav.scrolled{
   font-size:.67rem;color:var(--tx3);letter-spacing:.06em;
   flex-shrink:0;
   background:rgba(255,255,255,.018);
+  border-radius:0 0 20px 20px;
   opacity:0;
   transition:opacity .22s var(--ease) .28s;
 }
