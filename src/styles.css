@@ -230,7 +230,7 @@ nav.scrolled{
 
 /* ── Mobile overlay ──────────────────────────────────────────── */
 .mob-overlay{
-  position:fixed;inset:0;z-index:998;
+  position:fixed;inset:0;z-index:1020;
   background:transparent;
   backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
   pointer-events:none;

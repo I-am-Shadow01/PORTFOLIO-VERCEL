@@ -57,6 +57,8 @@ function createNav(t) {
         overlay.classList.add('open');
       });
     });
+    const rootEl = document.getElementById('__root__');
+    if (rootEl) rootEl.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
   }
 
@@ -64,6 +66,8 @@ function createNav(t) {
     burger.classList.remove('open');
     burger.setAttribute('aria-expanded','false');
     document.body.style.overflow = '';
+    const rootEl = document.getElementById('__root__');
+    if (rootEl) rootEl.style.overflow = '';
     if (!overlay) return;
     overlay.classList.remove('open');
     const el = overlay; overlay = null;
