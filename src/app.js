@@ -51,10 +51,10 @@ function createNav(t) {
     burger.setAttribute('aria-expanded','true');
     overlay = buildOverlay(items, t, closeMobile);
     document.body.appendChild(overlay);
+    // rAF ให้ browser paint initial state ก่อน แล้วค่อย add .open
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         overlay.classList.add('open');
-        overlay.__startSync();
       });
     });
     document.body.style.overflow = 'hidden';
@@ -65,7 +65,6 @@ function createNav(t) {
     burger.setAttribute('aria-expanded','false');
     document.body.style.overflow = '';
     if (!overlay) return;
-    overlay.__stopSync();
     overlay.classList.remove('open');
     const el = overlay; overlay = null;
     el.addEventListener('transitionend', ()=>el.remove(), { once:true });
@@ -112,17 +111,18 @@ function buildOverlay(items, t, onClose) {
   ov.innerHTML = `
     <div class="mob-glass">
 
-      <!-- Section 1: Name + Close -->
+      <!-- Header -->
       <div class="mob-header">
         <span class="mob-header-logo">${CONFIG.meta.firstName}<span>.</span></span>
         <button class="mob-close" aria-label="Close menu">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
+          <span>Close</span>
         </button>
       </div>
 
-      <!-- Section 2: Nav links -->
+      <!-- Nav links -->
       <nav class="mob-nav">
         ${items.map((item,i)=>`
           <button class="mob-item" style="--i:${i}"
@@ -137,43 +137,16 @@ function buildOverlay(items, t, onClose) {
           </button>`).join('')}
       </nav>
 
-      <!-- Section 3: Location + Year -->
+      <!-- Footer -->
       <div class="mob-footer">
-        <span>${CONFIG.meta.location}</span>
-        <span>${new Date().getFullYear()}</span>
+        <span>${CONFIG.meta.location}&nbsp;&nbsp;${new Date().getFullYear()}</span>
       </div>
     </div>
   `;
-
   ov.__close = onClose;
-
-  // Dynamic backdrop: clip overlay height to match panel height
-  const syncBackdropHeight = () => {
-    const glass = ov.querySelector('.mob-glass');
-    if (glass) {
-      const h = glass.getBoundingClientRect().height;
-      ov.style.height = h + 'px';
-    }
-  };
-
-  // Observe panel size changes
-  let ro = null;
-  ov.__startSync = () => {
-    const glass = ov.querySelector('.mob-glass');
-    if (!glass) return;
-    syncBackdropHeight();
-    if (window.ResizeObserver) {
-      ro = new ResizeObserver(syncBackdropHeight);
-      ro.observe(glass);
-    }
-  };
-  ov.__stopSync = () => {
-    if (ro) { ro.disconnect(); ro = null; }
-    ov.style.height = '';
-  };
-
-  // Close on backdrop click
+  // Close on backdrop click (outside the drawer panel)
   ov.addEventListener('click', e => { if (e.target === ov) onClose(); });
+  // Wire close button
   ov.querySelector('.mob-close').addEventListener('click', onClose);
   return ov;
 }

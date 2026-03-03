@@ -447,8 +447,8 @@ nav.scrolled{
   border-color: rgba(0,0,0,0.10);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.95),
-    0 32px 64px rgba(0,0,0,0.15),
-    0 0 80px var(--acg);         /* accent glow ใน light mode ด้วย */
+    0 20px 60px rgba(0,0,0,0.15),
+    0 0 80px var(--acg);
 }
 [data-theme=light] .mob-num   { color: var(--ac-text); opacity: .65; }
 [data-theme=light] .mob-label { color: #0C0C20; }
@@ -472,123 +472,141 @@ nav.scrolled{
 
 [data-theme=light] .mob-overlay{background:transparent}
 .mob-overlay.open{
-  background:rgba(0,0,0,.45);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.28);
   pointer-events:all;
 }
-[data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.18)}
+[data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.12)}
 
-/* ── Glass panel — top-right corner, height fits content ── */
+/* Glass drawer — floating card top-right, fits content */
 .mob-glass{
-  position:fixed;
-  top:0; right:0;
-  width:min(300px,90vw);
-  display:flex;
-  flex-direction:column;
-  z-index:999;
-  background:rgba(8,8,20,.92);
+  position:absolute;top:14px;right:14px;
+  width:min(300px,88vw);
+  height:auto;
+  display:flex;flex-direction:column;
+  background:rgba(8,8,20,.88);
   backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
-  border-left:1px solid var(--b1);
-  border-bottom:1px solid var(--b1);
-  border-bottom-left-radius:16px;
-  box-shadow:-12px 12px 48px rgba(0,0,0,.55);
-  transform:translateX(105%);
-  transition:transform .38s var(--spring);
+  border:1px solid var(--b1);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 60px var(--acg),inset 0 1px 0 rgba(255,255,255,.08);
+  transform:translateY(-10px) scale(.96);
+  opacity:0;
+  transition:transform .38s var(--spring),opacity .28s var(--ease);
 }
 [data-theme=light] .mob-glass{
-  background:rgba(248,248,255,.96);
-  border-left-color:rgba(0,0,0,.12);
-  border-bottom-color:rgba(0,0,0,.12);
-  box-shadow:-8px 8px 32px rgba(0,0,0,.14);
+  background:rgba(250,250,255,.94);
+  border-color:rgba(0,0,0,.10);
+  box-shadow:0 16px 48px rgba(0,0,0,.13),0 0 48px var(--acg),inset 0 1px 0 rgba(255,255,255,.95);
 }
-.mob-overlay.open .mob-glass{ transform:translateX(0); }
+.mob-overlay.open .mob-glass{transform:translateY(0) scale(1);opacity:1}
 
-/* ── ช่องที่ 1 : ชื่อ + ปุ่ม X ── */
+/* Sheen on left edge */
+.mob-sheen{
+  position:absolute;top:0;bottom:0;left:0;width:1px;
+  background:linear-gradient(to bottom,
+    transparent 0%,rgba(255,255,255,.28) 25%,
+    rgba(255,255,255,.14) 75%,transparent 100%);
+  pointer-events:none;
+}
+/* Accent glow blob */
+.mob-glass::after{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,var(--ac0),transparent 65%);
+  pointer-events:none;
+}
+
+/* Header row with name + close button */
 .mob-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:16px 16px;
-  border-bottom:1px solid var(--b1);
-  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 13px;
+  border-bottom:1px solid var(--b0);
+  flex-shrink:0;
 }
-[data-theme=light] .mob-header{ border-bottom-color:rgba(0,0,0,.12); }
-
 .mob-header-logo{
   font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:var(--tx);
 }
-.mob-header-logo span{ color:var(--ac-text,var(--ac)); }
+.mob-header-logo span{color:var(--ac-text,var(--ac))}
 .mob-close{
-  width:32px;height:32px;border-radius:8px;
-  background:var(--g1);border:1px solid var(--b1);
-  display:flex;align-items:center;justify-content:center;
-  color:var(--tx3);flex-shrink:0;cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px 6px 8px;border-radius:var(--r-s);
+  background:var(--g1);border:1px solid var(--b0);
+  color:var(--tx3);font-size:.72rem;font-weight:500;letter-spacing:.03em;
   transition:color var(--dur),background var(--dur),transform var(--dur) var(--spring);
+  flex-shrink:0;
 }
-.mob-close:hover{ color:var(--tx);background:var(--g2);transform:rotate(90deg); }
-[data-theme=light] .mob-close{ background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.12); }
-[data-theme=light] .mob-close:hover{ background:#fff; }
+.mob-close svg{flex-shrink:0;transition:transform var(--dur) var(--spring)}
+.mob-close:hover{color:var(--tx);background:var(--g2)}
+.mob-close:hover svg{transform:rotate(90deg)}
+[data-theme=light] .mob-close{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.1)}
+[data-theme=light] .mob-close:hover{background:rgba(255,255,255,.95)}
 
-/* ── ช่องที่ 2 : รายการเมนู ── */
+/* Nav items */
 .mob-nav{
-  flex:0 0 auto;
-  padding:8px 8px;
+  padding:8px 8px;overflow:hidden;
   display:flex;flex-direction:column;gap:2px;
-  border-bottom:1px solid var(--b1);
+  flex-shrink:0;
+  border-bottom:1px solid var(--b0);
 }
-[data-theme=light] .mob-nav{ border-bottom-color:rgba(0,0,0,.12); }
-
-@keyframes mobItemIn{
-  from{ opacity:0;transform:translateX(14px); }
-  to  { opacity:1;transform:translateX(0); }
+/* keyframe for stagger-in — avoids paint-timing issue with transition */
+@keyframes mobItemIn {
+  from { opacity:0; transform:translateX(16px); }
+  to   { opacity:1; transform:translateX(0); }
 }
 .mob-item{
   display:flex;align-items:center;gap:12px;width:100%;
-  padding:12px 12px;border-radius:10px;
+  padding:11px 12px;border-radius:var(--r);
   color:var(--tx2);background:transparent;
-  opacity:0;cursor:pointer;
-  transition:background var(--dur),color var(--dur);
+  /* invisible until drawer opens */
+  opacity:0;
+  transition: background var(--dur), color var(--dur);
 }
+/* play enter animation once drawer is open */
 .mob-overlay.open .mob-item{
-  animation:mobItemIn .28s var(--spring) calc(var(--i)*.055s + .08s) both;
+  animation: mobItemIn .32s var(--spring) calc(var(--i)*.06s + .12s) both;
 }
-.no-anim .mob-overlay.open .mob-item{ animation:none;opacity:1;transform:none; }
-.mob-item:hover{ background:var(--ac0);color:var(--tx); }
-
+/* no-anim: skip animation, show immediately */
+.no-anim .mob-overlay.open .mob-item{
+  animation: none;
+  opacity:1;transform:translateX(0);
+}
+.mob-item:hover{background:var(--ac0);color:var(--tx)}
 .mob-num{
-  font-size:.56rem;font-weight:500;
+  font-size:.58rem;font-weight:500;
   color:var(--ac-text,var(--ac));opacity:.55;
-  font-family:'Courier New',monospace;letter-spacing:.1em;flex-shrink:0;
+  font-family:'Courier New',monospace;letter-spacing:.12em;flex-shrink:0;
   transition:opacity var(--dur);
 }
-.mob-item:hover .mob-num{ opacity:1; }
+.mob-item:hover .mob-num{opacity:1}
 .mob-label{
-  font-size:.97rem;font-weight:500;letter-spacing:-.01em;
+  font-size:1rem;font-weight:500;letter-spacing:-.01em;
   color:inherit;flex:1;text-align:left;line-height:1;
   transition:transform var(--dur) var(--spring);
 }
-.mob-item:hover .mob-label{ transform:translateX(3px); }
+.mob-item:hover .mob-label{transform:translateX(3px)}
 .mob-arrow{
-  width:26px;height:26px;border-radius:50%;
-  border:1px solid var(--b1);
+  width:28px;height:28px;border-radius:50%;
+  border:1px solid var(--b0);
   display:flex;align-items:center;justify-content:center;
   color:var(--tx3);flex-shrink:0;
-  transition:border-color var(--dur),color var(--dur),background var(--dur),transform var(--dur) var(--spring);
+  transition:border-color var(--dur),color var(--dur),
+    background var(--dur),transform var(--dur) var(--spring);
 }
 .mob-item:hover .mob-arrow{
   border-color:var(--ac);color:var(--ac-on,#000);background:var(--ac);transform:rotate(-45deg);
 }
 
-/* ── ช่องที่ 3 : location + ปี ── */
+/* Footer */
 .mob-footer{
-  flex:0 0 auto;
   padding:12px 16px 14px;
-  display:flex;justify-content:space-between;align-items:center;
-  font-size:.63rem;color:var(--tx3);letter-spacing:.06em;
+  display:flex;justify-content:center;align-items:center;
+  font-size:.68rem;color:var(--tx3);letter-spacing:.05em;
+  flex-shrink:0;
   opacity:0;
-  transition:opacity .24s var(--ease) .22s;
+  transition:opacity .28s var(--ease) .28s;
 }
-.mob-overlay.open .mob-footer{ opacity:1; }
+[data-theme=light] .mob-footer{border-top-color:rgba(0,0,0,.07)}
+.mob-overlay.open .mob-footer{opacity:1}
 
 /* ══════════════════════════════════════════════════════════════
  * SECTION BASE
