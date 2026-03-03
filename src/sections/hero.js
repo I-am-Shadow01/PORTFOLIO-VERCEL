@@ -1,101 +1,77 @@
-/**
- * sections/hero.js
- */
-
 export function renderHero({ meta, about }, t) {
-  const section = document.createElement('section');
-  section.id = 'hero';
-
-  section.innerHTML = `
-    <div class="hero-glow"   aria-hidden="true"></div>
-    <div class="hero-glow-2" aria-hidden="true"></div>
-
-    <!-- Floating decorative code lines -->
+  const s = document.createElement('section');
+  s.id = 'hero';
+  s.innerHTML = `
     <div class="hero-deco" aria-hidden="true">
       <span class="deco-line deco-1">const dev = new Developer();</span>
-      <span class="deco-line deco-2">// building cool stuff</span>
-      <span class="deco-line deco-3">git commit -m "init 🚀"</span>
+      <span class="deco-line deco-2">// always shipping ✦</span>
+      <span class="deco-line deco-3">git push origin main</span>
       <span class="deco-line deco-4">npm run deploy</span>
     </div>
-
     <div class="hero-content">
-      <p class="hero-eyebrow reveal">
-        <span class="eyebrow-dot"></span>${meta.greeting}
-      </p>
-
+      <p class="hero-eyebrow reveal"><span class="eyebrow-dot"></span>${meta.greeting}</p>
       <h1 class="hero-name reveal d1">
-        <span class="name-first">${meta.firstName}</span><span class="name-last">${meta.lastName}</span><span class="name-accent">.</span>
+        <span class="name-first">${meta.firstName}</span><span class="name-last">${meta.lastName}</span><span class="name-dot">.</span>
       </h1>
-
-      <div class="hero-role-wrap reveal d2">
-        <span class="role-bracket">&lt;</span>
+      <div class="hero-role reveal d2">
+        <span class="role-br">&lt;</span>
         <span class="typed-text" aria-live="polite"></span>
-        <span class="typed-cursor" aria-hidden="true">_</span>
-        <span class="role-bracket">/&gt;</span>
+        <span class="typed-cur" aria-hidden="true">_</span>
+        <span class="role-br">/&gt;</span>
       </div>
-
       ${meta.available ? `
-        <div class="available-badge reveal d3" role="status">
-          <span class="available-dot" aria-hidden="true"></span>
-          ${t('available')}
-        </div>
-      ` : ''}
-
+        <div class="avail-badge reveal d3">
+          <span class="avail-dot"></span>${t('available')}
+        </div>` : ''}
       <div class="hero-cta reveal d4">
-        <button data-section="projects" class="btn btn-primary">
+        <button class="btn btn-primary" onclick="window.__go('projects')">
           ${t('cta_projects')}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
           </svg>
         </button>
-        <button data-section="contact" class="btn btn-secondary">${t('cta_contact')}</button>
+        <button class="btn btn-ghost" onclick="window.__go('contact')">${t('cta_contact')}</button>
       </div>
-
-      <!-- Quick stats row -->
-      <div class="hero-stats reveal d5" aria-label="Quick stats">
-        ${about.stats.map(s => `
-          <div class="hero-stat">
-            <span class="hero-stat-num">${s.number}</span>
-            <span class="hero-stat-label">${s.label}</span>
+      <div class="hero-stats glass reveal d5">
+        ${about.stats.map(s=>`
+          <div class="hstat">
+            <span class="hstat-n">${s.number}</span>
+            <span class="hstat-l">${s.label}</span>
           </div>
-        `).join('<div class="hero-stat-divider" aria-hidden="true"></div>')}
+        `).join('<div class="hstat-sep"></div>')}
       </div>
     </div>
-
-    <!-- Side metadata strip -->
     <div class="hero-side" aria-hidden="true">
-      <span class="hero-side-item">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+      <span class="hero-loc">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
         </svg>
         ${meta.location}
       </span>
       <div class="hero-side-line"></div>
-      <span class="hero-side-year">${new Date().getFullYear()}</span>
+      <span class="hero-yr">${new Date().getFullYear()}</span>
     </div>
   `;
 
   // Typing animation
-  const typedEl = section.querySelector('.typed-text');
-  const roles   = meta.roles;
-  let roleIdx = 0, charIdx = 0, deleting = false, timer;
-
+  const el = s.querySelector('.typed-text');
+  let ri=0, ci=0, del=false;
   function tick() {
-    const cur = roles[roleIdx];
-    typedEl.textContent = deleting ? cur.slice(0, --charIdx) : cur.slice(0, ++charIdx);
-    let delay = deleting ? 40 : 85;
-    if (!deleting && charIdx === cur.length) { delay = 2400; deleting = true; }
-    else if (deleting && charIdx === 0)      { deleting = false; roleIdx = (roleIdx + 1) % roles.length; delay = 400; }
-    timer = setTimeout(tick, delay);
+    const cur = meta.roles[ri];
+    el.textContent = del ? cur.slice(0,--ci) : cur.slice(0,++ci);
+    let d = del ? 38 : 82;
+    if (!del && ci===cur.length) { d=2400; del=true; }
+    else if (del && ci===0) { del=false; ri=(ri+1)%meta.roles.length; d=380; }
+    setTimeout(tick, d);
   }
-  setTimeout(tick, 1000);
+  setTimeout(tick, 900);
 
-  // Name glitch hover
-  const nameEl = section.querySelector('.hero-name');
-  if (nameEl) {
-    nameEl.addEventListener('mouseenter', () => nameEl.classList.add('glitch'));
-    nameEl.addEventListener('animationend', () => nameEl.classList.remove('glitch'));
-  }
+  // Glitch on name hover
+  const name = s.querySelector('.hero-name');
+  name?.addEventListener('mouseenter', ()=>name.classList.add('glitch'));
+  name?.addEventListener('animationend',  ()=>name.classList.remove('glitch'));
 
-  return section;
+  return s;
 }

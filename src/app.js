@@ -1,178 +1,126 @@
-/**
- * app.js — Entry point
- */
+import { CONFIG }               from './config.js';
+import { renderHero }           from './sections/hero.js';
+import { renderAbout }          from './sections/about.js';
+import { renderSkills }         from './sections/skills.js';
+import { renderProjects }       from './sections/projects.js';
+import { renderContact }        from './sections/contact.js';
+import { initCursor }           from './utils/cursor.js';
+import { initAnimations }       from './utils/animations.js';
+import { initBackground }       from './utils/background.js';
+import { initSmoothScroll }     from './utils/smoothscroll.js';
+import { loadSettings, applySettings, watchSystemTheme, getSettings } from './utils/settings.js';
+import { createSettingsPanel }  from './components/settings-panel.js';
+import { createT }              from './i18n.js';
 
-import { CONFIG }                        from './config.js';
-import { renderHero }                    from './sections/hero.js';
-import { renderAbout }                   from './sections/about.js';
-import { renderSkills }                  from './sections/skills.js';
-import { renderProjects }                from './sections/projects.js';
-import { renderContact }                 from './sections/contact.js';
-import { initCursor }                    from './utils/cursor.js';
-import { initAnimations }                from './utils/animations.js';
-import { initBackground }                from './utils/background.js';
-import { initSmoothScroll }              from './utils/smoothscroll.js';
-import { loadSettings, applySettings,
-         watchSystemTheme, getSettings } from './utils/settings.js';
-import { createSettingsPanel }           from './components/settings-panel.js';
-import { createT }                       from './i18n.js';
-
-// ─── Nav ────────────────────────────────────────────────────
+// ── Nav ──────────────────────────────────────────────────────
 function createNav(t) {
   const nav = document.createElement('nav');
-  nav.setAttribute('role', 'navigation');
-  nav.setAttribute('aria-label', 'Main navigation');
-
-  // NO href="#..." — all navigation via data-section
   const items = [
-    { id: 'about',    key: 'nav_about'    },
-    { id: 'skills',   key: 'nav_skills'   },
-    { id: 'projects', key: 'nav_projects' },
-    { id: 'contact',  key: 'nav_contact'  },
+    { id:'about',    key:'nav_about'    },
+    { id:'skills',   key:'nav_skills'   },
+    { id:'projects', key:'nav_projects' },
+    { id:'contact',  key:'nav_contact'  },
   ];
 
   nav.innerHTML = `
-    <button class="nav-logo" data-section="hero" aria-label="Back to top">
+    <button class="nav-logo" onclick="window.__go('hero')">
       ${CONFIG.meta.firstName}<span>.</span>
     </button>
-
     <ul class="nav-links" role="list">
-      ${items.map(i => `
+      ${items.map(i=>`
         <li>
-          <button class="nav-link" data-section="${i.id}" data-id="${i.id}">
+          <button class="nav-link" data-navid="${i.id}" onclick="window.__go('${i.id}')">
             ${t(i.key)}
           </button>
-        </li>
-      `).join('')}
+        </li>`).join('')}
     </ul>
-
     <button class="nav-hamburger" aria-label="Toggle menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   `;
 
-  // ── Hamburger → open/close liquid glass overlay ──────────
-  const hamburger = nav.querySelector('.nav-hamburger');
+  const burger = nav.querySelector('.nav-hamburger');
   let overlay = null;
 
-  hamburger.addEventListener('click', () => {
-    const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
-    if (isOpen) closeMobileMenu();
-    else openMobileMenu();
-  });
+  burger.addEventListener('click', () => overlay ? closeMobile() : openMobile());
+  document.addEventListener('keydown', e => { if (e.key==='Escape' && overlay) closeMobile(); });
 
-  function openMobileMenu() {
-    hamburger.classList.add('open');
-    hamburger.setAttribute('aria-expanded', 'true');
-
-    overlay = createMobileOverlay(items, t, closeMobileMenu);
+  function openMobile() {
+    burger.classList.add('open');
+    burger.setAttribute('aria-expanded','true');
+    overlay = buildOverlay(items, t, closeMobile);
     document.body.appendChild(overlay);
-    // Force reflow before animating
     overlay.offsetHeight;
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
 
-  function closeMobileMenu() {
-    if (!overlay) return;
-    hamburger.classList.remove('open');
-    hamburger.setAttribute('aria-expanded', 'false');
-    overlay.classList.remove('open');
+  function closeMobile() {
+    burger.classList.remove('open');
+    burger.setAttribute('aria-expanded','false');
     document.body.style.overflow = '';
-    overlay.addEventListener('transitionend', () => overlay?.remove(), { once: true });
-    overlay = null;
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    const el = overlay; overlay = null;
+    el.addEventListener('transitionend', ()=>el.remove(), { once:true });
   }
 
-  // Keyboard: ESC closes
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay) closeMobileMenu();
-  });
-
-  // ── Scroll behavior ──────────────────────────────────────
-  window.addEventListener('scroll', () => {
+  window.addEventListener('scroll', ()=>{
     nav.classList.toggle('scrolled', window.scrollY > 50);
-    updateActiveLink(nav);
-  }, { passive: true });
+    const sy = window.scrollY + 140;
+    let active = 'hero';
+    document.querySelectorAll('section[id]').forEach(s=>{
+      if (s.getBoundingClientRect().top + window.scrollY <= sy) active = s.id;
+    });
+    nav.querySelectorAll('.nav-link').forEach(b=>{
+      b.classList.toggle('active', b.dataset.navid === active);
+    });
+  }, { passive:true });
 
   return nav;
 }
 
-// ─── Liquid glass mobile overlay ────────────────────────────
-function createMobileOverlay(items, t, onClose) {
-  const overlay = document.createElement('div');
-  overlay.className = 'mobile-overlay';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Navigation');
-
-  overlay.innerHTML = `
-    <div class="mobile-overlay-glass">
-      <nav class="mobile-nav-inner">
-        ${items.map((item, i) => `
-          <button
-            class="mobile-nav-item"
-            data-section="${item.id}"
-            style="--i: ${i}"
-            tabindex="0"
-          >
-            <span class="mni-num">0${i + 1}</span>
-            <span class="mni-label">${t('nav_' + item.id)}</span>
-            <span class="mni-arrow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+// ── Liquid glass mobile overlay ──────────────────────────────
+function buildOverlay(items, t, onClose) {
+  const ov = document.createElement('div');
+  ov.className = 'mob-overlay';
+  ov.setAttribute('role','dialog');
+  ov.setAttribute('aria-modal','true');
+  ov.innerHTML = `
+    <div class="mob-glass">
+      <div class="mob-sheen"></div>
+      <nav class="mob-nav">
+        ${items.map((item,i)=>`
+          <button class="mob-item" style="--i:${i}"
+            onclick="this.closest('.mob-overlay').__close(); setTimeout(()=>window.__go('${item.id}'),120)">
+            <span class="mob-num">0${i+1}</span>
+            <span class="mob-label">${t('nav_'+item.id)}</span>
+            <span class="mob-arrow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
               </svg>
             </span>
-          </button>
-        `).join('')}
+          </button>`).join('')}
       </nav>
-
-      <div class="mobile-overlay-footer">
-        <span class="mof-location">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-          </svg>
-          Bangkok, TH
-        </span>
-        <span class="mof-year">${new Date().getFullYear()}</span>
+      <div class="mob-footer">
+        <span>${CONFIG.meta.location}</span>
+        <span>${new Date().getFullYear()}</span>
       </div>
     </div>
   `;
-
-  // Close on backdrop click (outside glass card)
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) onClose();
-  });
-
-  // Close after nav item clicked
-  overlay.querySelectorAll('[data-section]').forEach(btn => {
-    btn.addEventListener('click', onClose);
-  });
-
-  return overlay;
+  ov.__close = onClose;
+  ov.addEventListener('click', e=>{ if(e.target===ov) onClose(); });
+  return ov;
 }
 
-// ─── Active link ─────────────────────────────────────────────
-function updateActiveLink(nav) {
-  const scrollY = window.scrollY + 140;
-  let activeId  = 'hero';
-  document.querySelectorAll('section[id]').forEach(s => {
-    if (s.offsetTop <= scrollY) activeId = s.id;
-  });
-  nav.querySelectorAll('[data-id]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.id === activeId);
-  });
-}
-
-// ─── Footer ─────────────────────────────────────────────────
+// ── Footer ───────────────────────────────────────────────────
 function createFooter(t) {
   const footer = document.createElement('footer');
   footer.innerHTML = `
-    <p class="footer-copy">
-      © ${new Date().getFullYear()} <span>${CONFIG.meta.fullName}</span>
-    </p>
-    <button class="footer-top" data-section="hero" aria-label="${t('back_top')}">
+    <p class="footer-copy">© ${new Date().getFullYear()} <span>${CONFIG.meta.fullName}</span></p>
+    <button class="footer-top" onclick="window.__go('hero')">
       ${t('back_top')}
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="18 15 12 9 6 15"/>
       </svg>
     </button>
@@ -180,79 +128,76 @@ function createFooter(t) {
   return footer;
 }
 
-// ─── Scroll progress bar ─────────────────────────────────────
+// ── Scroll progress bar ───────────────────────────────────────
 function initScrollProgress() {
-  const bar = document.createElement('div');
-  bar.className = 'scroll-progress';
+  const bar = Object.assign(document.createElement('div'), { className:'scroll-progress' });
   document.body.appendChild(bar);
-  window.addEventListener('scroll', () => {
-    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
-    bar.style.width = Math.min(pct, 100) + '%';
-  }, { passive: true });
+  window.addEventListener('scroll', ()=>{
+    bar.style.width = Math.min(
+      window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100, 100
+    ) + '%';
+  }, { passive:true });
 }
 
-// ─── Spotlight (project cards) ───────────────────────────────
-function initProjectSpotlight() {
-  document.querySelectorAll('.project-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
+// ── Spotlight on project cards ────────────────────────────────
+function initSpotlight() {
+  document.querySelectorAll('.project-card').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
       const r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
-      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+      card.style.setProperty('--mx', `${e.clientX-r.left}px`);
+      card.style.setProperty('--my', `${e.clientY-r.top}px`);
     });
   });
 }
 
-// ─── Cursor ──────────────────────────────────────────────────
-let _cursorCleanup = null;
+// ── Cursor ────────────────────────────────────────────────────
+let _cur = null;
 function syncCursor() {
-  const { cursor } = getSettings();
-  if (cursor && !_cursorCleanup)       { _cursorCleanup = initCursor(); }
-  else if (!cursor && _cursorCleanup)  { _cursorCleanup(); _cursorCleanup = null; }
+  const on = getSettings().cursor;
+  if (on && !_cur)  _cur = initCursor();
+  if (!on && _cur) { _cur(); _cur = null; }
 }
 
-// ─── Background ──────────────────────────────────────────────
-let _bgCleanup = null;
-function syncBackground() {
-  const { bgfx } = getSettings();
-  if (bgfx && !_bgCleanup)       { _bgCleanup = initBackground(); }
-  else if (!bgfx && _bgCleanup)  { _bgCleanup(); _bgCleanup = null; }
+// ── Background canvas ─────────────────────────────────────────
+let _bg = null;
+function syncBg() {
+  const on = getSettings().bgfx;
+  if (on && !_bg)  _bg = initBackground();
+  if (!on && _bg) { _bg(); _bg = null; }
 }
 
-// ─── Stylesheet ──────────────────────────────────────────────
+// ── Load CSS ──────────────────────────────────────────────────
 function loadStyles() {
-  return new Promise(resolve => {
-    if (document.querySelector('link[href*="styles.css"]')) return resolve();
-    const link = document.createElement('link');
-    link.rel = 'stylesheet'; link.href = './src/styles.css';
-    link.onload = resolve; link.onerror = resolve;
-    document.head.appendChild(link);
+  return new Promise(res=>{
+    if (document.querySelector('link[href*="styles.css"]')) return res();
+    const l = document.createElement('link');
+    l.rel='stylesheet'; l.href='./src/styles.css';
+    l.onload=res; l.onerror=res;
+    document.head.appendChild(l);
   });
 }
 
 function injectMeta() {
   document.title = `${CONFIG.meta.fullName} — Portfolio`;
-  const metas = [
-    { name: 'description', content: `${CONFIG.meta.fullName} — ${CONFIG.meta.roles[0]}` },
-    { name: 'theme-color', content: '#090909' },
-  ];
-  metas.forEach(m => {
+  [{ name:'description', content:`${CONFIG.meta.fullName} — ${CONFIG.meta.roles[0]}` },
+   { name:'theme-color', content:'#080810' }]
+  .forEach(m=>{
     let el = document.head.querySelector(`meta[name="${m.name}"]`);
-    if (!el) { el = document.createElement('meta'); Object.entries(m).forEach(([k,v]) => el.setAttribute(k,v)); document.head.appendChild(el); }
-    else el.content = m.content;
+    if (!el) { el=document.createElement('meta'); document.head.appendChild(el); }
+    Object.entries(m).forEach(([k,v])=>el.setAttribute(k,v));
   });
 }
 
-// ─── Render ──────────────────────────────────────────────────
-let _initialized = false;
+// ── Main render ───────────────────────────────────────────────
+let _ready = false;
 
 async function render() {
   const root = document.getElementById('__root__');
-  const t    = createT(getSettings());
+  const t = createT(getSettings());
 
-  if (!_initialized) {
+  if (!_ready) {
     await loadStyles();
     injectMeta();
-
     const { panel, trigger, backdrop } = createSettingsPanel();
 
     root.innerHTML = '';
@@ -263,43 +208,30 @@ async function render() {
     root.appendChild(renderProjects(CONFIG, t));
     root.appendChild(renderContact(CONFIG, t));
     root.appendChild(createFooter(t));
-
     document.body.appendChild(backdrop);
     document.body.appendChild(trigger);
     document.body.appendChild(panel);
 
-    _initialized = true;
-    initAnimations();
+    _ready = true;
+
+    // initSmoothScroll must run first — registers window.__go
     initSmoothScroll();
+    initAnimations();
     initScrollProgress();
-    initProjectSpotlight();
-  } else {
-    rerenderText(root, t);
+    initSpotlight();
   }
 
   syncCursor();
-  syncBackground();
+  syncBg();
 }
 
-function rerenderText(root, t) {
-  root.querySelectorAll('[data-id]').forEach(btn => {
-    const map = { about:'nav_about', skills:'nav_skills', projects:'nav_projects', contact:'nav_contact' };
-    const key = map[btn.dataset.id];
-    if (key) btn.textContent = t(key);
-  });
-}
-
-// ─── Bootstrap ───────────────────────────────────────────────
-async function initApp() {
-  const settings = loadSettings();
-  applySettings(settings);
+async function boot() {
+  applySettings(loadSettings());
   watchSystemTheme();
   await render();
   window.addEventListener('pf:settings-changed', render);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
+if (document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', boot);
+else boot();

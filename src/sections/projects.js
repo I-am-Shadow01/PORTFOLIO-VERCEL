@@ -32,7 +32,7 @@ export function renderProjects({ projects }, t) {
 
     <div class="projects-grid">
       ${projects.map((p, i) => `
-        <article class="project-card reveal d${(i % 3) + 1}" tabindex="0">
+        <article class="project-card reveal d${(i % 3) + 1}" tabindex="0"><span class="project-sweep" aria-hidden="true"></span>
           <!-- Project number -->
           <span class="project-num">0${i + 1}</span>
 
