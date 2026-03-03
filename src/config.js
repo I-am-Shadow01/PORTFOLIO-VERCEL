@@ -102,9 +102,9 @@ export const CONFIG = {
       },
       {
         label: 'GitHub',
-        value: '@I-am-Shadow01',
+        value: '@yourusername',
         icon: 'GH',
-        href: 'https://github.com/I-am-Shadow01',
+        href: 'https://github.com/yourusername',
         copyable: false,
       },
       {

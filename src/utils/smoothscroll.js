@@ -16,8 +16,10 @@ export function initSmoothScroll() {
     }
     const target = document.getElementById(id);
     if (!target) return;
-    // getBoundingClientRect is reliable for any element depth
-    const top = target.getBoundingClientRect().top + window.scrollY - 64;
-    window.scrollTo({ top, behavior: 'smooth' });
+    const root = document.getElementById('__root__');
+    const scroller = root || window;
+    const scrollTop = root ? root.scrollTop : window.scrollY;
+    const top = target.getBoundingClientRect().top + scrollTop - 64;
+    scroller.scrollTo({ top, behavior: 'smooth' });
   };
 }

@@ -65,12 +65,16 @@ function createNav(t) {
     el.addEventListener('transitionend', ()=>el.remove(), { once:true });
   }
 
-  window.addEventListener('scroll', ()=>{
-    nav.classList.toggle('scrolled', window.scrollY > 50);
-    const sy = window.scrollY + 140;
+  const root = document.getElementById('__root__');
+  const scroller = root || window;
+
+  scroller.addEventListener('scroll', ()=>{
+    const scrollTop = root ? root.scrollTop : window.scrollY;
+    nav.classList.toggle('scrolled', scrollTop > 50);
+    const sy = scrollTop + 140;
     let active = 'hero';
     document.querySelectorAll('section[id]').forEach(s=>{
-      if (s.getBoundingClientRect().top + window.scrollY <= sy) active = s.id;
+      if (s.getBoundingClientRect().top + scrollTop <= sy) active = s.id;
     });
     nav.querySelectorAll('.nav-link').forEach(b=>{
       b.classList.toggle('active', b.dataset.navid === active);
@@ -132,10 +136,12 @@ function createFooter(t) {
 function initScrollProgress() {
   const bar = Object.assign(document.createElement('div'), { className:'scroll-progress' });
   document.body.appendChild(bar);
-  window.addEventListener('scroll', ()=>{
-    bar.style.width = Math.min(
-      window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100, 100
-    ) + '%';
+  const root = document.getElementById('__root__');
+  const scroller = root || window;
+  scroller.addEventListener('scroll', ()=>{
+    const scrollTop = root ? root.scrollTop : window.scrollY;
+    const scrollHeight = root ? root.scrollHeight - root.clientHeight : document.body.scrollHeight - window.innerHeight;
+    bar.style.width = Math.min(scrollTop / scrollHeight * 100, 100) + '%';
   }, { passive:true });
 }
 
