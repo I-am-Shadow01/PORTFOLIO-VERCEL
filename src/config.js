@@ -10,7 +10,7 @@ export const CONFIG = {
   // ─── General ──────────────────────────────────
   meta: {
     firstName: 'CID',       // ชื่อ (ใช้ใน hero)
-    lastName: ' KAGENOU',        // นามสกุล
+    lastName: 'KAGENOU',        // นามสกุล
     fullName: 'CID KAGENOU',   // ชื่อเต็ม (ใช้ใน nav, footer)
     roles: [                 // หน้าที่ / ตำแหน่ง (typing animation)
       'Full-Stack Developer',

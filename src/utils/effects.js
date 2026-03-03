@@ -161,7 +161,8 @@ function burst(x, y) {
     const angle  = (i / COUNT) * Math.PI * 2;
     const dist   = 40 + Math.random() * 55;
     const size   = 3 + Math.random() * 4;
-    const colors = ['#c6f135','#a8d120','#e8ff60','#fff'];
+    const ac = getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135';
+    const colors = [ac, ac, '#fff'];
     const color  = colors[Math.floor(Math.random() * colors.length)];
 
     Object.assign(p.style, {
@@ -243,7 +244,7 @@ export function initSparkleTrail() {
       pointerEvents: 'none',
       zIndex: 88888,
       width: '5px', height: '5px',
-      background: '#c6f135',
+      background: getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135',
       transform: 'translate(-50%,-50%)',
       transition: 'opacity 0.3s ease',
     });
