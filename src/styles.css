@@ -486,10 +486,10 @@ nav.scrolled{
   backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
   border:1px solid var(--b1);
   border-radius:18px;
-  overflow:hidden; /* safe: animation uses translateY not translateX */
+  overflow:hidden;
   box-shadow:
     0 20px 60px rgba(0,0,0,.55),
-    0 0 60px var(--acg),
+    0 0 50px var(--acg),
     inset 0 1px 0 rgba(255,255,255,.08);
   transform:translateY(-12px) scale(.95);
   opacity:0;
@@ -505,20 +505,12 @@ nav.scrolled{
 }
 .mob-overlay.open .mob-glass{ transform:translateY(0) scale(1); opacity:1; }
 
-/* Accent glow blob */
-.mob-glass::after{
-  content:'';position:absolute;top:-60px;right:-40px;
-  width:180px;height:180px;border-radius:50%;
-  background:radial-gradient(circle,var(--ac0),transparent 65%);
-  pointer-events:none;z-index:0;
-}
-
 /* ── SECTION 1 : Name + Close menu ──────────────────────────── */
 .mob-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 14px 13px;
   border-bottom:1px solid var(--b1);
-  flex-shrink:0;position:relative;z-index:1;
+  flex-shrink:0;
 }
 .mob-header-logo{
   font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:var(--tx);
@@ -543,13 +535,13 @@ nav.scrolled{
 .mob-nav{
   padding:6px 6px;
   display:flex;flex-direction:column;gap:2px;
-  flex-shrink:0;position:relative;z-index:1;
+  flex-shrink:0;
   border-bottom:1px solid var(--b1);
 }
 
-/* translateY only — safe inside overflow:hidden */
+/* fade+slide up — safe inside overflow:hidden */
 @keyframes mobItemIn{
-  from{ opacity:0; transform:translateY(6px); }
+  from{ opacity:0; transform:translateY(8px); }
   to  { opacity:1; transform:translateY(0);   }
 }
 .mob-item{
@@ -563,7 +555,7 @@ nav.scrolled{
   animation:mobItemIn .28s var(--spring) calc(var(--i)*.055s + .08s) both;
 }
 .no-anim .mob-overlay.open .mob-item{
-  animation:none; opacity:1; transform:none;
+  animation:none;opacity:1;transform:none;
 }
 .mob-item:hover{ background:var(--ac0);color:var(--tx); }
 
@@ -597,9 +589,9 @@ nav.scrolled{
   padding:11px 16px 13px;
   display:flex;justify-content:center;align-items:center;
   font-size:.67rem;color:var(--tx3);letter-spacing:.05em;
-  flex-shrink:0;position:relative;z-index:1;
+  flex-shrink:0;
   opacity:0;
-  transition:opacity .24s var(--ease) .32s;
+  transition:opacity .24s var(--ease) .35s;
 }
 [data-theme=light] .mob-footer{ color:rgba(12,12,32,.45); }
 .mob-overlay.open .mob-footer{ opacity:1; }

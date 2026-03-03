@@ -139,7 +139,7 @@ function buildOverlay(items, t, onClose) {
 
       <!-- Footer -->
       <div class="mob-footer">
-        <span>${CONFIG.meta.location}&nbsp;&nbsp;${new Date().getFullYear()}</span>
+        <span>${CONFIG.meta.location} · ${new Date().getFullYear()}</span>
       </div>
     </div>
   `;
