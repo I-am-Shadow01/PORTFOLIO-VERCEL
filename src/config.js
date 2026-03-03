@@ -9,16 +9,16 @@ export const CONFIG = {
 
   // ─── General ──────────────────────────────────
   meta: {
-    firstName: 'CID',       // ชื่อ (ใช้ใน hero)
-    lastName: 'KAGENOU',        // นามสกุล
-    fullName: 'CID KAGENOU',   // ชื่อเต็ม (ใช้ใน nav, footer)
+    firstName: 'YOUR',       // ชื่อ (ใช้ใน hero)
+    lastName: 'NAME',        // นามสกุล
+    fullName: 'Your Name',   // ชื่อเต็ม (ใช้ใน nav, footer)
     roles: [                 // หน้าที่ / ตำแหน่ง (typing animation)
       'Full-Stack Developer',
       'DevOps Engineer',
       'Open Source Contributor',
     ],
     greeting: 'Hello, World.',
-    location: 'trat, Thailand 🇹🇭',
+    location: 'Bangkok, Thailand 🇹🇭',
     available: true,         // true = แสดง "Available for work"
   },
 
@@ -63,7 +63,7 @@ export const CONFIG = {
   // demo: URL หรือ null
   projects: [
     {
-      name: 'Discord Media Bot(ยังไม่ลงgit)',
+      name: 'Discord Media Bot',
       description: 'บอท Discord สำหรับดาวน์โหลด media จาก YouTube และ platform อื่นๆ พร้อม persistent embed interface, quality selection, และ file management',
       tech: ['Python', 'Discord.py', 'yt-dlp', 'FFmpeg'],
       icon: '🤖',
@@ -71,7 +71,7 @@ export const CONFIG = {
       demo: null,
     },
     {
-      name: 'System Monitor Overlay(ยังไม่ลงgit)',
+      name: 'System Monitor Overlay',
       description: 'Real-time overlay สำหรับ Android/Termux แสดงข้อมูล CPU, GPU, RAM และ temperature แบบ live บนหน้าจอ',
       tech: ['Python', 'Termux', 'Bash', 'WebSocket'],
       icon: '📊',
@@ -95,9 +95,9 @@ export const CONFIG = {
     links: [
       {
         label: 'Email',
-        value: 'naphatsaranmek@gmail.com',
+        value: 'you@example.com',
         icon: '✉',
-        href: 'mailto:naphatsaranmek@gmail.com',
+        href: 'mailto:you@example.com',
         copyable: true,        // true = คลิกเพื่อ copy email
       },
       {
@@ -108,17 +108,17 @@ export const CONFIG = {
         copyable: false,
       },
       {
-        label: 'discord',
-        value: 'cid_kagenou_02',
-        icon: 'DC',
-        href: 'cid_kagenou_02',
-        copyable: true,
+        label: 'LinkedIn',
+        value: 'Your Name',
+        icon: 'LI',
+        href: 'https://linkedin.com/in/yourusername',
+        copyable: false,
       },
       {
         label: 'Twitter / X',
-        value: '@PPLEThai',
+        value: '@yourusername',
         icon: '𝕏',
-        href: 'https://x.com/PPLEThai',
+        href: 'https://x.com/yourusername',
         copyable: false,
       },
     ],
