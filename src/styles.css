@@ -477,24 +477,30 @@ nav.scrolled{
 
 [data-theme=light] .mob-overlay{background:transparent}
 .mob-overlay.open{
-  background:rgba(0,0,0,.28);
+  background:rgba(0,0,0,.30);
   pointer-events:all;
 }
-[data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.12)}
+[data-theme=light] .mob-overlay.open{background:rgba(0,0,0,.14)}
 
-/* ── Floating glass card ─────────────────────────────────────── */
+/* ╔═══════════════════════════════════════════════════════════╗
+   ║  Floating glass card  — liquid glass, 3 distinct zones   ║
+   ╚═══════════════════════════════════════════════════════════╝ */
 .mob-glass{
   position:absolute;top:14px;right:14px;
   width:min(300px,88vw);
+  /* ❶ flex column — every zone hugs its own content height   */
   display:flex;flex-direction:column;
-  background:rgba(8,8,20,.80);
+  /* ❷ solid-enough background so nothing leaks between zones */
+  background:rgba(10,10,22,.86);
   backdrop-filter:var(--blurXL);-webkit-backdrop-filter:var(--blurXL);
   border:1px solid rgba(255,255,255,.11);
   border-radius:20px;
+  /* ❸ overflow:hidden clips children cleanly at rounded corners */
   overflow:hidden;
+  /* ❹ own stacking context — no zone can bleed into another   */
+  isolation:isolate;
   box-shadow:
-    0 24px 64px rgba(0,0,0,.60),
-    0 0 0 1px rgba(255,255,255,.03),
+    0 24px 64px rgba(0,0,0,.65),
     0 0 56px var(--acg),
     inset 0 1px 0 rgba(255,255,255,.10);
   transform:translateY(-10px) scale(.97);
@@ -502,38 +508,38 @@ nav.scrolled{
   transition:transform .32s var(--spring),opacity .22s var(--ease);
 }
 [data-theme=light] .mob-glass{
-  background:rgba(248,248,255,.93);
+  background:rgba(246,246,255,.94);
   border-color:rgba(0,0,0,.10);
   box-shadow:
-    0 16px 48px rgba(0,0,0,.13),
+    0 16px 48px rgba(0,0,0,.14),
     0 0 48px var(--acg),
     inset 0 1px 0 rgba(255,255,255,.95);
 }
 .mob-overlay.open .mob-glass{ transform:translateY(0) scale(1); opacity:1; }
 
-/* ═══════════════════════════════════════════════════════════
-   SECTION 1 : Name + Close menu   (fits content dynamically)
-   ─────────────────────────────────────────────────────────── */
+/* ╔═══════════════════════════════════════════════════════════╗
+   ║  ZONE 1 — Name + Close menu                              ║
+   ╚═══════════════════════════════════════════════════════════╝ */
 .mob-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:13px 13px 12px;
-  background:rgba(255,255,255,.028);
+  /* slightly lighter glass layer */
+  background:rgba(255,255,255,.035);
   border-bottom:1px solid rgba(255,255,255,.07);
+  /* own stacking context so it never overlaps siblings */
   position:relative;
+  z-index:3;
   flex-shrink:0;
 }
+/* sheen divider line */
 .mob-header::after{
   content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,.10),transparent);
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.12),transparent);
   pointer-events:none;
 }
-[data-theme=light] .mob-header{
-  background:rgba(255,255,255,.55);
-  border-bottom-color:rgba(0,0,0,.08);
-}
-[data-theme=light] .mob-header::after{
-  background:linear-gradient(to right,transparent,rgba(0,0,0,.06),transparent);
-}
+[data-theme=light] .mob-header{ background:rgba(255,255,255,.55); border-bottom-color:rgba(0,0,0,.08); }
+[data-theme=light] .mob-header::after{ background:linear-gradient(to right,transparent,rgba(0,0,0,.07),transparent); }
+
 .mob-header-logo{
   font-size:.92rem;font-weight:700;letter-spacing:-.02em;color:var(--tx);
 }
@@ -548,33 +554,33 @@ nav.scrolled{
   transition:color var(--dur),background var(--dur),border-color var(--dur);
 }
 .mob-close svg{ flex-shrink:0;transition:transform var(--dur) var(--spring); }
-.mob-close:hover{ color:var(--tx);background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.18); }
+.mob-close:hover{ color:var(--tx);background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.20); }
 .mob-close:hover svg{ transform:rotate(90deg); }
 [data-theme=light] .mob-close{ background:rgba(255,255,255,.75);border-color:rgba(0,0,0,.10); }
 [data-theme=light] .mob-close:hover{ background:rgba(255,255,255,.95); }
 
-/* ═══════════════════════════════════════════════════════════
-   SECTION 2 : Nav links   (fits content dynamically)
-   ─────────────────────────────────────────────────────────── */
+/* ╔═══════════════════════════════════════════════════════════╗
+   ║  ZONE 2 — Nav links                                      ║
+   ╚═══════════════════════════════════════════════════════════╝ */
 .mob-nav{
   padding:7px 7px;
   display:flex;flex-direction:column;gap:2px;
   flex-shrink:0;
-  background:transparent;
+  /* KEY FIX: must NOT be transparent — blocks zone-3 bleed   */
+  background:rgba(10,10,22,.01);   /* effectively opaque (same as glass) */
   border-bottom:1px solid rgba(255,255,255,.07);
   position:relative;
+  z-index:2;  /* stacks above zone 3 */
 }
 .mob-nav::after{
   content:'';position:absolute;bottom:-1px;left:8%;right:8%;height:1px;
-  background:linear-gradient(to right,transparent,rgba(255,255,255,.10),transparent);
+  background:linear-gradient(to right,transparent,rgba(255,255,255,.12),transparent);
   pointer-events:none;
 }
-[data-theme=light] .mob-nav{ border-bottom-color:rgba(0,0,0,.08); }
-[data-theme=light] .mob-nav::after{
-  background:linear-gradient(to right,transparent,rgba(0,0,0,.06),transparent);
-}
+[data-theme=light] .mob-nav{ background:rgba(255,255,255,.01); border-bottom-color:rgba(0,0,0,.08); }
+[data-theme=light] .mob-nav::after{ background:linear-gradient(to right,transparent,rgba(0,0,0,.07),transparent); }
 
-/* fade+slide up — safe inside overflow:hidden */
+/* stagger slide-up animation */
 @keyframes mobItemIn{
   from{ opacity:0; transform:translateY(6px); }
   to  { opacity:1; transform:translateY(0);   }
@@ -589,9 +595,7 @@ nav.scrolled{
 .mob-overlay.open .mob-item{
   animation:mobItemIn .26s var(--spring) calc(var(--i)*.05s + .06s) both;
 }
-.no-anim .mob-overlay.open .mob-item{
-  animation:none;opacity:1;transform:none;
-}
+.no-anim .mob-overlay.open .mob-item{ animation:none;opacity:1;transform:none; }
 .mob-item:hover{ background:var(--ac0);color:var(--tx); }
 
 .mob-num{
@@ -616,22 +620,27 @@ nav.scrolled{
     background var(--dur),transform var(--dur) var(--spring);
 }
 .mob-item:hover .mob-arrow{
-  border-color:var(--ac);color:var(--ac-on,#000);background:var(--ac);transform:rotate(-45deg);
+  border-color:var(--ac);color:var(--ac-on,#000);background:var(--ac);
+  transform:rotate(-45deg);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SECTION 3 : Location + year   (fits content dynamically)
-   ─────────────────────────────────────────────────────────── */
+/* ╔═══════════════════════════════════════════════════════════╗
+   ║  ZONE 3 — Location + year                               ║
+   ╚═══════════════════════════════════════════════════════════╝ */
 .mob-footer{
   padding:10px 16px 12px;
   display:flex;justify-content:center;align-items:center;gap:6px;
   font-size:.67rem;color:var(--tx3);letter-spacing:.06em;
   flex-shrink:0;
+  /* slightly different glass tint */
   background:rgba(255,255,255,.018);
+  position:relative;
+  z-index:1;
+  /* fade in AFTER nav items finish animating */
   opacity:0;
-  transition:opacity .24s var(--ease) .30s;
+  transition:opacity .22s var(--ease) .28s;
 }
-[data-theme=light] .mob-footer{ background:rgba(255,255,255,.35);color:rgba(12,12,32,.45); }
+[data-theme=light] .mob-footer{ background:rgba(255,255,255,.40); color:rgba(12,12,32,.50); }
 .mob-overlay.open .mob-footer{ opacity:1; }
 
 /* ══════════════════════════════════════════════════════════════
