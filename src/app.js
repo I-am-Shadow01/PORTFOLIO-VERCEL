@@ -8,6 +8,7 @@ import { initCursor }           from './utils/cursor.js';
 import { initAnimations }       from './utils/animations.js';
 import { initBackground }       from './utils/background.js';
 import { initSmoothScroll }     from './utils/smoothscroll.js';
+import { initMagneticButtons, initTiltCards, initTextScramble, initCounters, initRipple, initParticleBurst, initParallax, initSkillGlow, initSparkleTrail } from './utils/effects.js';
 import { loadSettings, applySettings, watchSystemTheme, getSettings } from './utils/settings.js';
 import { createSettingsPanel }  from './components/settings-panel.js';
 import { createT }              from './i18n.js';
@@ -68,18 +69,30 @@ function createNav(t) {
   const root = document.getElementById('__root__');
   const scroller = root || window;
 
+  // ── Scrolled class for nav background ──
   scroller.addEventListener('scroll', ()=>{
     const scrollTop = root ? root.scrollTop : window.scrollY;
     nav.classList.toggle('scrolled', scrollTop > 50);
-    const sy = scrollTop + 140;
-    let active = 'hero';
-    document.querySelectorAll('section[id]').forEach(s=>{
-      if (s.getBoundingClientRect().top + scrollTop <= sy) active = s.id;
-    });
-    nav.querySelectorAll('.nav-link').forEach(b=>{
-      b.classList.toggle('active', b.dataset.navid === active);
-    });
   }, { passive:true });
+
+  // ── Active section via IntersectionObserver ──
+  const visibleMap = new Map();
+  const navObs = new IntersectionObserver(entries => {
+    entries.forEach(e => visibleMap.set(e.target.id, e.intersectionRatio));
+    let bestId = 'hero', bestRatio = -1;
+    const order = ['hero','about','skills','projects','contact'];
+    order.forEach(id => {
+      const r = visibleMap.get(id) ?? 0;
+      if (r > bestRatio) { bestRatio = r; bestId = id; }
+    });
+    nav.querySelectorAll('.nav-link').forEach(b => {
+      b.classList.toggle('active', b.dataset.navid === bestId);
+    });
+  }, {
+    root: root || null,
+    threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+  });
+  document.querySelectorAll('section[id]').forEach(s => navObs.observe(s));
 
   return nav;
 }
@@ -225,6 +238,17 @@ async function render() {
     initAnimations();
     initScrollProgress();
     initSpotlight();
+
+    // 25002500 Extra effects 2500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
+    initMagneticButtons();
+    initTiltCards();
+    initTextScramble();
+    initCounters();
+    initRipple();
+    initParticleBurst();
+    initParallax();
+    initSkillGlow();
+    initSparkleTrail();
   }
 
   syncCursor();
