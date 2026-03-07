@@ -71,12 +71,12 @@ export const CONFIG = {
       demo: null,
     },
     {
-      name: 'System Monitor Overlay(ยังไม่ลงgit)',
-      description: 'Real-time overlay สำหรับ Android/Termux แสดงข้อมูล CPU, GPU, RAM และ temperature แบบ live บนหน้าจอ',
-      tech: ['Python', 'Termux', 'Bash', 'WebSocket'],
-      icon: '📊',
-      github: 'https://github.com/yourusername/project',
-      demo: null,
+  name: 'Force Translate Unlocker',
+  description: 'Chrome extension ที่ลบบล็อกการแปลออกจากทุกเว็บโดยอัตโนมัติ รองรับเว็บ SPA/React/Next.js และมีปุ่มเปิด/ปิดใน popup',
+  tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
+  icon: '🌐',
+  github: 'https://github.com/I-am-Shadow01/force-translate-unlocker',
+  demo: null,
     },
     {
       name: 'Project Three',
