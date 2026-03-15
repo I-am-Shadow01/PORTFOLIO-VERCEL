@@ -24,7 +24,8 @@ export const DEFAULTS = {
   anim:     true,
   cursor:   true,
   bgfx:     true,           // interactive canvas background
-  perfMode: 'dynamic',      // 'dynamic' | 'eco'  (performance mode)
+  perfMode: 'dynamic',      // 'eco' | 'dynamic' | 'performance'
+  showFps:  false,          // FPS overlay
 };
 
 const FS_MAP = { sm: '14px', md: '16px', lg: '18px' };
@@ -72,12 +73,27 @@ export function onSettingsChange(fn) {
 }
 
 // ─── Apply to DOM ─────────────────────────────────────────
+/** Brief full-page fade mask so dark↔light switch isn't jarring */
+function flashThemeTransition() {
+  const mask = document.createElement('div');
+  mask.style.cssText =
+    'position:fixed;inset:0;z-index:99997;pointer-events:none;' +
+    'background:var(--bg);opacity:.55;transition:opacity .48s ease;';
+  document.body.appendChild(mask);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    mask.style.opacity = '0';
+    mask.addEventListener('transitionend', () => mask.remove(), {once:true});
+  }));
+}
+
 export function applySettings(s) {
   const html = document.documentElement;
 
-  // Theme
+  // Theme (with smooth transition)
   const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   const theme = s.theme === 'system' ? systemTheme : s.theme;
+  const prevTheme = html.getAttribute('data-theme');
+  if (prevTheme && prevTheme !== theme) flashThemeTransition();
   html.setAttribute('data-theme', theme);
 
   // Lang

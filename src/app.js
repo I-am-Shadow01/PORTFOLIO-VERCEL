@@ -190,6 +190,49 @@ function initSpotlight() {
   });
 }
 
+
+// ── FPS Overlay ───────────────────────────────────────────────
+function createFpsOverlay() {
+  const el = document.createElement('div');
+  el.id = 'fps-overlay';
+  el.className = 'fps-overlay';
+  document.body.appendChild(el);
+
+  let history = new Array(24).fill(60);
+  let visible = false;
+
+  function update(fps) {
+    history.push(fps); history.shift();
+    const color = fps >= 50 ? '#4ade80' : fps >= 30 ? '#fbbf24' : '#f87171';
+    const bars = history.map(f => {
+      const h = Math.max(2, Math.round((f / 60) * 22));
+      const c = f >= 50 ? '#4ade80' : f >= 30 ? '#fbbf24' : '#f87171';
+      return `<i style="height:${h}px;background:${c}"></i>`;
+    }).join('');
+    el.innerHTML = `<span class="fps-num" style="color:${color}">${fps}</span><span class="fps-unit">fps</span><div class="fps-bars">${bars}</div>`;
+  }
+
+  function setVisible(v) {
+    visible = v;
+    el.style.opacity = v ? '1' : '0';
+    el.style.pointerEvents = v ? 'auto' : 'none';
+  }
+
+  // Tick every rAF for real rendered FPS
+  let last = performance.now(), count = 0;
+  function tick(t) {
+    count++;
+    if (t - last >= 1000) {
+      update(count);
+      count = 0; last = t;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  return { el, setVisible };
+}
+
 // ── Cursor ────────────────────────────────────────────────────
 let _cur = null;
 function syncCursor() {
@@ -201,16 +244,15 @@ function syncCursor() {
 // ── Background canvas ─────────────────────────────────────────
 let _bg = null;
 let _lastPerfMode = null;
+let _fpsOverlay = null;
 function syncBg() {
   const s = getSettings();
   const on = s.bgfx;
-  // Restart canvas when perf mode changes (particle count differs)
-  if (_bg && on && s.perfMode !== _lastPerfMode) {
-    _bg(); _bg = null;
-  }
+  if (_bg && on && s.perfMode !== _lastPerfMode) { _bg(); _bg = null; }
   _lastPerfMode = s.perfMode;
-  if (on && !_bg)  _bg = initBackground();
+  if (on && !_bg) _bg = initBackground();
   if (!on && _bg) { _bg(); _bg = null; }
+  if (_fpsOverlay) _fpsOverlay.setVisible(s.showFps !== false && s.showFps);
 }
 
 // ── Load CSS ──────────────────────────────────────────────────
@@ -245,6 +287,7 @@ async function render() {
   if (!_ready) {
     await loadStyles();
     injectMeta();
+    _fpsOverlay = createFpsOverlay();
     const { panel, trigger, backdrop } = createSettingsPanel();
 
     root.innerHTML = '';

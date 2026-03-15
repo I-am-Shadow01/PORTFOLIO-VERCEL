@@ -6,6 +6,28 @@
 @font-face{font-family:'Anakotmai';src:url('../fonts/anakotmai-medium.woff2') format('woff2');font-weight:500;font-display:swap}
 @font-face{font-family:'Anakotmai';src:url('../fonts/anakotmai-bold.woff2') format('woff2');font-weight:700;font-display:swap}
 
+/* ── CSS Custom Property registration (enables CSS transitions on --ac) ── */
+@property --ac {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #C6F135;
+}
+@property --ac-on {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a0a0a;
+}
+@property --ac-text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #C6F135;
+}
+
+/* Smooth accent color transition on all elements */
+:root {
+  transition: --ac 0.42s ease, --ac-on 0.42s ease, --ac-text 0.42s ease;
+}
+
 /* ── Tokens ─────────────────────────────────────────────────── */
 :root{
   /* background */
@@ -1208,14 +1230,39 @@ footer{
 
 /* Performance mode segment */
 .sp-seg--perf{margin-top:2px}
-.sp-perf-btn{display:flex;align-items:center;gap:6px;justify-content:center}
-.sp-perf-btn svg{flex-shrink:0;opacity:.75}
+.sp-perf-btn{display:flex;align-items:center;gap:5px;justify-content:center;padding:9px 8px}
+.sp-perf-btn svg{flex-shrink:0;opacity:.7}
 .sp-perf-btn.active svg{opacity:1}
 .sp-perf-hint{
   margin-top:10px;font-size:.72rem;color:var(--tx3);
   line-height:1.5;padding:8px 12px;
   background:var(--g0);border-radius:var(--r-s);
   border:1px solid var(--b0);
+  transition:color .3s,background .3s;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+ * FPS OVERLAY
+ * ══════════════════════════════════════════════════════════════ */
+.fps-overlay{
+  position:fixed;bottom:16px;left:16px;z-index:9998;
+  background:var(--gd1);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--b0);border-radius:var(--r-s);
+  padding:8px 12px 6px;min-width:72px;
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;
+  font-family:'Anakotmai',monospace;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s var(--ease);
+}
+.fps-num{font-size:1.15rem;font-weight:700;line-height:1;letter-spacing:-.03em}
+.fps-unit{font-size:.65rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em}
+.fps-bars{
+  display:flex;align-items:flex-end;gap:2px;height:24px;width:100%;margin-top:4px;
+}
+.fps-bars i{
+  display:inline-block;width:3px;border-radius:2px;
+  transition:height .3s ease, background .3s ease;flex-shrink:0;
 }
 
 /* ══════════════════════════════════════════════════════════════

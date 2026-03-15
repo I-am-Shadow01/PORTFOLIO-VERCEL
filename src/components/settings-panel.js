@@ -15,6 +15,14 @@ import { createT } from '../i18n.js';
 export function createSettingsPanel() {
   let t = createT(getSettings());
 
+  // Adaptive quality hint updater (attached/detached with each build)
+  function _onAdaptiveQuality(e) {
+    const hint = panel.querySelector('.sp-perf-hint');
+    if (!hint || getSettings().perfMode !== 'performance') return;
+    const labels = ['Ultra quality ⚡', 'High quality', 'Reduced quality 🔋'];
+    hint.textContent = `${e.detail.fps} FPS — ${labels[e.detail.step] || ''}`;
+  }
+
   // ── Panel element ───────────────────────────────────────
   const panel = document.createElement('div');
   panel.id    = 'settings-panel';
@@ -37,6 +45,8 @@ export function createSettingsPanel() {
 
   // ── Build panel ─────────────────────────────────────────
   function build() {
+    // ── Save scroll position before rebuild ──────────────────
+    const savedScroll = panel.querySelector('.sp-body')?.scrollTop ?? 0;
     const s = getSettings();
     t = createT(s);
 
@@ -156,21 +166,43 @@ export function createSettingsPanel() {
         <div class="sp-section">
           <p class="sp-label">${t('settings_perfmode')}</p>
           <div class="sp-seg sp-seg--perf" role="group" aria-label="${t('settings_perfmode')}">
-            <button class="sp-seg-btn sp-perf-btn ${s.perfMode !== 'eco' ? 'active' : ''}"
-                    data-setting="perfMode" data-value="dynamic">
-              ${PERF_DYNAMIC_ICON}
-              <span>${t('settings_perf_dynamic')}</span>
-            </button>
             <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'eco' ? 'active' : ''}"
                     data-setting="perfMode" data-value="eco">
               ${PERF_ECO_ICON}
               <span>${t('settings_perf_eco')}</span>
             </button>
+            <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'dynamic' || !s.perfMode ? 'active' : ''}"
+                    data-setting="perfMode" data-value="dynamic">
+              ${PERF_DYNAMIC_ICON}
+              <span>${t('settings_perf_dynamic')}</span>
+            </button>
+            <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'performance' ? 'active' : ''}"
+                    data-setting="perfMode" data-value="performance">
+              ${PERF_PERFORMANCE_ICON}
+              <span>${t('settings_perf_performance') || 'Performance'}</span>
+            </button>
           </div>
-          <p class="sp-perf-hint">${s.perfMode === 'eco'
-            ? (t('settings_perf_eco_hint') || 'ลดการคำนวณ — ประหยัด CPU')
-            : (t('settings_perf_dynamic_hint') || 'ทุก Layer ทำงานแบบ Real-time')
+          <p class="sp-perf-hint">${
+            s.perfMode === 'eco'         ? t('settings_perf_eco_hint') :
+            s.perfMode === 'performance' ? t('settings_perf_performance_hint') :
+                                           t('settings_perf_dynamic_hint')
           }</p>
+        </div>
+
+        <!-- FPS Counter toggle -->
+        <div class="sp-section">
+          <div class="sp-toggle-row">
+            <div class="sp-toggle-info">
+              ${FPS_ICON}
+              <span>${t('settings_showfps')}</span>
+            </div>
+            <button class="sp-toggle ${s.showFps ? 'on' : ''}"
+                    data-setting="showFps" data-value="${!s.showFps}"
+                    role="switch" aria-checked="${s.showFps}"
+                    aria-label="${t('settings_showfps')}">
+              <span class="sp-toggle-knob"></span>
+            </button>
+          </div>
         </div>
 
         <!-- Reset -->
@@ -180,6 +212,18 @@ export function createSettingsPanel() {
 
       </div>
     `;
+
+    // ── Restore scroll position after DOM rebuild ────────────
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const body = panel.querySelector('.sp-body');
+        if (body && savedScroll > 0) body.scrollTop = savedScroll;
+      });
+    });
+
+    // ── Subscribe to adaptive quality updates ────────────────
+    window.removeEventListener('pf:adaptive-quality', _onAdaptiveQuality);
+    window.addEventListener('pf:adaptive-quality', _onAdaptiveQuality);
 
     // ── Event listeners (re-bind each rebuild) ──────────────
     // Segmented buttons
@@ -244,6 +288,7 @@ export function createSettingsPanel() {
   }
 
   function close() {
+    window.removeEventListener('pf:adaptive-quality', _onAdaptiveQuality);
     panel.classList.remove('open');
     backdrop.classList.remove('open');
     trigger.setAttribute('aria-expanded', 'false');
@@ -328,6 +373,17 @@ const BG_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
   <circle cx="12" cy="12" r="1" fill="currentColor"/>
 </svg>`;
 
+
+const PERF_PERFORMANCE_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/>
+</svg>`;
+
+const FPS_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+  <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+  <path d="M7 8v5M10 10v3M13 7v6M16 9v4" stroke-linecap="round"/>
+</svg>`;
 
 const PERF_DYNAMIC_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2" aria-hidden="true">
