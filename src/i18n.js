@@ -60,6 +60,11 @@ export const TRANSLATIONS = {
     settings_off:         'Off',
     settings_reset:       'Reset to Default',
     settings_close:       'Close settings',
+    settings_perfmode:    'Performance Mode',
+    settings_perf_dynamic:'Dynamic (Full)',
+    settings_perf_eco:    'Eco (Low CPU)',
+    settings_perf_dynamic_hint: 'All layers — full real-time animation',
+    settings_perf_eco_hint:     'Reduced layers — saves CPU',
   },
   th: {
     // Nav
@@ -117,6 +122,11 @@ export const TRANSLATIONS = {
     settings_off:         'ปิด',
     settings_reset:       'รีเซ็ตค่าเริ่มต้น',
     settings_close:       'ปิดการตั้งค่า',
+    settings_perfmode:    'โหมดประสิทธิภาพ',
+    settings_perf_dynamic:'ไดนามิก (เต็ม)',
+    settings_perf_eco:    'ประหยัด CPU',
+    settings_perf_dynamic_hint: 'ทุก Layer — แอนิเมชันแบบ Real-time เต็มรูปแบบ',
+    settings_perf_eco_hint:     'ลด Layer — ประหยัด CPU สำหรับเครื่องช้า',
   },
 };
 

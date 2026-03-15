@@ -24,6 +24,7 @@ export const DEFAULTS = {
   anim:     true,
   cursor:   true,
   bgfx:     true,           // interactive canvas background
+  perfMode: 'dynamic',      // 'dynamic' | 'eco'  (performance mode)
 };
 
 const FS_MAP = { sm: '14px', md: '16px', lg: '18px' };
@@ -85,25 +86,25 @@ export function applySettings(s) {
   html.lang = lang;
 
   // ── Accent color ──────────────────────────────────────────
-  // Set --ac and all derived variants so dynamic accent works everywhere
-  html.style.setProperty('--ac',  s.accent);
+  // Set --ac AND --accent (legacy alias) + all derived variants
+  html.style.setProperty('--ac',     s.accent);
+  html.style.setProperty('--accent', s.accent);   // legacy alias
   html.style.setProperty('--ac0', hexToRgba(s.accent, 0.09));
   html.style.setProperty('--ac1', hexToRgba(s.accent, 0.18));
   html.style.setProperty('--acg', hexToRgba(s.accent, 0.32));
 
-  // --ac-on: contrasting text color when accent is the background
-  // (used on btn-primary, toggle knob, copy-toast, arrow hover, etc.)
+  // --ac-on: readable text when accent IS the background (WCAG AA)
   const lum = relativeLuminance(s.accent);
-  const acOn = lum > 0.30 ? '#0a0a0a' : '#f5f5f5';
+  const acOn = lum > 0.179 ? '#0a0a0a' : '#f5f5f5';
   html.style.setProperty('--ac-on', acOn);
 
-  // --ac-text: accent color safe to use AS text on the current theme
-  // On light themes, bright accents need to be darkened so they're readable
-  if (theme === 'light' && lum > 0.25) {
-    html.style.setProperty('--ac-text', darkenHex(s.accent, 0.52));
-  } else if (theme === 'dark' && lum < 0.04) {
-    // Very dark accent on dark bg → lighten
-    html.style.setProperty('--ac-text', lightenHex(s.accent, 0.55));
+  // --ac-text: accent used AS text color — auto-adjusted for WCAG contrast
+  const bgLum    = theme === 'light' ? 0.93 : 0.03;
+  const contrast = (Math.max(lum, bgLum) + 0.05) / (Math.min(lum, bgLum) + 0.05);
+  if (theme === 'light' && contrast < 4.5) {
+    html.style.setProperty('--ac-text', darkenHex(s.accent, Math.min(0.72, 0.50 + (4.5 - contrast) * 0.08)));
+  } else if (theme === 'dark' && contrast < 3.0) {
+    html.style.setProperty('--ac-text', lightenHex(s.accent, Math.min(0.80, 0.45 + (3.0 - contrast) * 0.12)));
   } else {
     html.style.setProperty('--ac-text', s.accent);
   }

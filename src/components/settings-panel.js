@@ -152,6 +152,27 @@ export function createSettingsPanel() {
           </div>
         </div>
 
+        <!-- Performance Mode -->
+        <div class="sp-section">
+          <p class="sp-label">${t('settings_perfmode')}</p>
+          <div class="sp-seg sp-seg--perf" role="group" aria-label="${t('settings_perfmode')}">
+            <button class="sp-seg-btn sp-perf-btn ${s.perfMode !== 'eco' ? 'active' : ''}"
+                    data-setting="perfMode" data-value="dynamic">
+              ${PERF_DYNAMIC_ICON}
+              <span>${t('settings_perf_dynamic')}</span>
+            </button>
+            <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'eco' ? 'active' : ''}"
+                    data-setting="perfMode" data-value="eco">
+              ${PERF_ECO_ICON}
+              <span>${t('settings_perf_eco')}</span>
+            </button>
+          </div>
+          <p class="sp-perf-hint">${s.perfMode === 'eco'
+            ? (t('settings_perf_eco_hint') || 'ลดการคำนวณ — ประหยัด CPU')
+            : (t('settings_perf_dynamic_hint') || 'ทุก Layer ทำงานแบบ Real-time')
+          }</p>
+        </div>
+
         <!-- Reset -->
         <div class="sp-section">
           <button class="sp-reset" id="sp-reset-btn">${t('settings_reset')}</button>
@@ -307,6 +328,16 @@ const BG_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
   <circle cx="12" cy="12" r="1" fill="currentColor"/>
 </svg>`;
 
+
+const PERF_DYNAMIC_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+</svg>`;
+
+const PERF_ECO_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" stroke-width="2" aria-hidden="true">
+  <path d="M12 22V12m0 0C12 6 7 3 2 3c0 7 3 12 10 13zm0 0c0-6 5-9 10-9-1 7-5 12-10 13"/>
+</svg>`;
 const PICKER_ICON = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2" aria-hidden="true">
   <path d="M12 2l-1 9h2L12 2z" fill="currentColor" stroke="none"/>

@@ -200,8 +200,15 @@ function syncCursor() {
 
 // ── Background canvas ─────────────────────────────────────────
 let _bg = null;
+let _lastPerfMode = null;
 function syncBg() {
-  const on = getSettings().bgfx;
+  const s = getSettings();
+  const on = s.bgfx;
+  // Restart canvas when perf mode changes (particle count differs)
+  if (_bg && on && s.perfMode !== _lastPerfMode) {
+    _bg(); _bg = null;
+  }
+  _lastPerfMode = s.perfMode;
   if (on && !_bg)  _bg = initBackground();
   if (!on && _bg) { _bg(); _bg = null; }
 }

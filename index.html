@@ -43,7 +43,11 @@ The server denied access to this resource.
         var theme = saved.theme === 'light' ? 'light' : saved.theme === 'dark' ? 'dark'
                   : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', theme);
-        if (saved.accent) document.documentElement.style.setProperty('--accent', saved.accent);
+        if (saved.accent) {
+          document.documentElement.style.setProperty('--accent', saved.accent);
+          document.documentElement.style.setProperty('--ac', saved.accent);
+        }
+        if (saved.perfMode) document.documentElement.dataset.perfMode = saved.perfMode;
         var fsMap = {sm:'14px', md:'16px', lg:'18px'};
         if (saved.fontSize) document.documentElement.style.fontSize = fsMap[saved.fontSize] || '16px';
         if (saved.lang === 'th') document.documentElement.lang = 'th';

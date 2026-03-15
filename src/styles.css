@@ -1151,10 +1151,12 @@ footer{
 }
 .sp-seg-btn:hover{color:var(--tx)}
 .sp-seg-btn.active{
-  background:var(--g2);color:var(--tx);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 4px rgba(0,0,0,.2);
+  background:var(--ac);color:var(--ac-on,#000);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 8px var(--acg);
 }
-[data-theme=light] .sp-seg-btn.active{box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+[data-theme=light] .sp-seg-btn.active{
+  box-shadow:0 1px 6px var(--acg),inset 0 1px 0 rgba(255,255,255,.9);
+}
 
 .sp-swatches{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .sp-swatch{
@@ -1202,6 +1204,19 @@ footer{
 }
 [data-theme=light] .sp-reset{box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
 .sp-reset:hover{border-color:var(--b1);color:var(--tx);background:var(--g2)}
+
+
+/* Performance mode segment */
+.sp-seg--perf{margin-top:2px}
+.sp-perf-btn{display:flex;align-items:center;gap:6px;justify-content:center}
+.sp-perf-btn svg{flex-shrink:0;opacity:.75}
+.sp-perf-btn.active svg{opacity:1}
+.sp-perf-hint{
+  margin-top:10px;font-size:.72rem;color:var(--tx3);
+  line-height:1.5;padding:8px 12px;
+  background:var(--g0);border-radius:var(--r-s);
+  border:1px solid var(--b0);
+}
 
 /* ══════════════════════════════════════════════════════════════
  * NO-ANIM
