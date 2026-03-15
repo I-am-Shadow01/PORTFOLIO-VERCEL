@@ -24,7 +24,7 @@ export const DEFAULTS = {
   anim:     true,
   cursor:   true,
   bgfx:     true,           // interactive canvas background
-  perfMode: 'dynamic',      // 'eco' | 'dynamic' | 'performance'
+  perfMode: 'medium',       // 'eco' | 'medium' | 'performance'
   showFps:  false,          // FPS overlay
 };
 
@@ -73,28 +73,43 @@ export function onSettingsChange(fn) {
 }
 
 // ─── Apply to DOM ─────────────────────────────────────────
-/** Brief full-page fade mask so dark↔light switch isn't jarring */
-function flashThemeTransition() {
-  const mask = document.createElement('div');
-  mask.style.cssText =
-    'position:fixed;inset:0;z-index:99997;pointer-events:none;' +
-    'background:var(--bg);opacity:.55;transition:opacity .48s ease;';
-  document.body.appendChild(mask);
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    mask.style.opacity = '0';
-    mask.addEventListener('transitionend', () => mask.remove(), {once:true});
-  }));
-}
+// Track last committed theme to prevent repeated ripples during animation
+let _lastCommittedTheme = null;
+let _rippleInProgress = false;
 
 export function applySettings(s) {
   const html = document.documentElement;
 
-  // Theme (with smooth transition)
+  // Theme — only ripple when theme actually changes AND no ripple already running
   const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   const theme = s.theme === 'system' ? systemTheme : s.theme;
-  const prevTheme = html.getAttribute('data-theme');
-  if (prevTheme && prevTheme !== theme) flashThemeTransition();
-  html.setAttribute('data-theme', theme);
+  const currentTheme = _lastCommittedTheme || html.getAttribute('data-theme') || 'dark';
+
+  if (currentTheme !== theme && !_rippleInProgress) {
+    _rippleInProgress = true;
+    _lastCommittedTheme = theme; // lock immediately — no double-fire
+
+    const ripple = document.createElement('div');
+    ripple.className = 'theme-ripple';
+    document.body.appendChild(ripple);
+    ripple.getBoundingClientRect(); // force reflow
+    ripple.classList.add('expand');
+
+    setTimeout(() => {
+      html.setAttribute('data-theme', theme);
+    }, 220);
+
+    ripple.addEventListener('transitionend', () => {
+      ripple.remove();
+      _rippleInProgress = false;
+    }, {once: true});
+
+    // Safety: clear flag if transitionend never fires
+    setTimeout(() => { _rippleInProgress = false; }, 700);
+  } else if (!_rippleInProgress) {
+    html.setAttribute('data-theme', theme);
+    _lastCommittedTheme = theme;
+  }
 
   // Lang
   const systemLang = (navigator.language || 'en').startsWith('th') ? 'th' : 'en';

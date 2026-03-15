@@ -200,16 +200,18 @@ function createFpsOverlay() {
 
   let history = new Array(24).fill(60);
   let visible = false;
+  // Show "--" immediately so user knows it loaded
+  el.innerHTML = `<div class="fps-top"><span class="fps-num">--</span><span class="fps-unit">fps</span></div><div class="fps-bars">${new Array(24).fill('<i style="height:9px;background:#444"></i>').join('')}</div>`;
 
   function update(fps) {
     history.push(fps); history.shift();
     const color = fps >= 50 ? '#4ade80' : fps >= 30 ? '#fbbf24' : '#f87171';
     const bars = history.map(f => {
-      const h = Math.max(2, Math.round((f / 60) * 22));
+      const h = Math.max(1, Math.round((f / 60) * 16));
       const c = f >= 50 ? '#4ade80' : f >= 30 ? '#fbbf24' : '#f87171';
       return `<i style="height:${h}px;background:${c}"></i>`;
     }).join('');
-    el.innerHTML = `<span class="fps-num" style="color:${color}">${fps}</span><span class="fps-unit">fps</span><div class="fps-bars">${bars}</div>`;
+    el.innerHTML = `<div class="fps-top"><span class="fps-num" style="color:${color}">${fps}</span><span class="fps-unit">fps</span></div><div class="fps-bars">${bars}</div>`;
   }
 
   function setVisible(v) {
@@ -218,7 +220,7 @@ function createFpsOverlay() {
     el.style.pointerEvents = v ? 'auto' : 'none';
   }
 
-  // Tick every rAF for real rendered FPS
+  // Count rAF ticks for real rendered FPS (not background canvas fps)
   let last = performance.now(), count = 0;
   function tick(t) {
     count++;
@@ -248,11 +250,11 @@ let _fpsOverlay = null;
 function syncBg() {
   const s = getSettings();
   const on = s.bgfx;
-  if (_bg && on && s.perfMode !== _lastPerfMode) { _bg(); _bg = null; }
+  if (_bg && on && (s.perfMode||'medium') !== (_lastPerfMode||'medium')) { _bg(); _bg = null; }
   _lastPerfMode = s.perfMode;
   if (on && !_bg) _bg = initBackground();
   if (!on && _bg) { _bg(); _bg = null; }
-  if (_fpsOverlay) _fpsOverlay.setVisible(s.showFps !== false && s.showFps);
+  if (_fpsOverlay) _fpsOverlay.setVisible(!!s.showFps);
 }
 
 // ── Load CSS ──────────────────────────────────────────────────
@@ -288,6 +290,8 @@ async function render() {
     await loadStyles();
     injectMeta();
     _fpsOverlay = createFpsOverlay();
+    // Show/hide based on saved setting immediately
+    _fpsOverlay.setVisible(!!getSettings().showFps);
     const { panel, trigger, backdrop } = createSettingsPanel();
 
     root.innerHTML = '';

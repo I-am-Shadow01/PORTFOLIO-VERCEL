@@ -30,6 +30,22 @@ export function createSettingsPanel() {
   panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-label', 'Settings');
 
+  // Static shell — created once, never replaced in build()
+  const _spHeader = document.createElement('div');
+  _spHeader.className = 'sp-header';
+  const _spTitleEl = document.createElement('h2');
+  _spTitleEl.className = 'sp-title';
+  const _spCloseBtn = document.createElement('button');
+  _spCloseBtn.className = 'sp-close';
+  _spCloseBtn.innerHTML = CLOSE_ICON;
+  _spHeader.appendChild(_spTitleEl);
+  _spHeader.appendChild(_spCloseBtn);
+  panel.appendChild(_spHeader);
+
+  const _spBody = document.createElement('div');
+  _spBody.className = 'sp-body';
+  panel.appendChild(_spBody);
+
   // ── Trigger button ──────────────────────────────────────
   const trigger = document.createElement('button');
   trigger.id            = 'settings-trigger';
@@ -45,18 +61,17 @@ export function createSettingsPanel() {
 
   // ── Build panel ─────────────────────────────────────────
   function build() {
-    // ── Save scroll position before rebuild ──────────────────
-    const savedScroll = panel.querySelector('.sp-body')?.scrollTop ?? 0;
+    // Header is static — only update text, no scroll reset
+    const savedScroll = _spBody.scrollTop;
+    _spTitleEl.textContent = t('settings_title');
+    _spCloseBtn.setAttribute('aria-label', t('settings_close'));
+    _spCloseBtn.onclick = close;
+
     const s = getSettings();
     t = createT(s);
+    _spTitleEl.textContent = t('settings_title');
 
-    panel.innerHTML = `
-      <div class="sp-header">
-        <h2 class="sp-title">${t('settings_title')}</h2>
-        <button class="sp-close" aria-label="${t('settings_close')}">${CLOSE_ICON}</button>
-      </div>
-
-      <div class="sp-body">
+    _spBody.innerHTML = `
 
         <!-- Theme -->
         <div class="sp-section">
@@ -98,11 +113,17 @@ export function createSettingsPanel() {
                 title="${p.name}">
               </button>
             `).join('')}
-            <label class="sp-swatch sp-swatch-custom" title="Custom color" aria-label="Custom color">
-              <input type="color" value="${ACCENT_PRESETS.find(p=>p.value===s.accent)?.value ?? s.accent}"
-                     class="sp-color-input" aria-label="Custom accent color">
-              ${PICKER_ICON}
-            </label>
+            <button class="sp-hue-open" title="Custom color" aria-label="Custom color">
+              <span class="sp-hue-dot" style="background:${s.accent}"></span>
+            </button>
+            <div class="sp-hue-popover" id="sp-hue-popover" hidden style="cursor:default">
+              <canvas class="sp-sv-square" width="192" height="140" id="sp-sv-canvas"></canvas>
+              <canvas class="sp-hue-bar" width="192" height="16" id="sp-hue-canvas"></canvas>
+              <div class="sp-picker-bottom">
+                <div class="sp-hue-preview" id="sp-preview"></div>
+                <input type="text" class="sp-hex-input" id="sp-hex-input" maxlength="7" spellcheck="false">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -171,10 +192,10 @@ export function createSettingsPanel() {
               ${PERF_ECO_ICON}
               <span>${t('settings_perf_eco')}</span>
             </button>
-            <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'dynamic' || !s.perfMode ? 'active' : ''}"
-                    data-setting="perfMode" data-value="dynamic">
-              ${PERF_DYNAMIC_ICON}
-              <span>${t('settings_perf_dynamic')}</span>
+            <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'medium' || !s.perfMode ? 'active' : ''}"
+                    data-setting="perfMode" data-value="medium">
+              ${PERF_MEDIUM_ICON}
+              <span>${t('settings_perf_medium')}</span>
             </button>
             <button class="sp-seg-btn sp-perf-btn ${s.perfMode === 'performance' ? 'active' : ''}"
                     data-setting="perfMode" data-value="performance">
@@ -182,10 +203,10 @@ export function createSettingsPanel() {
               <span>${t('settings_perf_performance') || 'Performance'}</span>
             </button>
           </div>
-          <p class="sp-perf-hint">${
+          <p class="sp-perf-hint" id="perf-hint">${
             s.perfMode === 'eco'         ? t('settings_perf_eco_hint') :
             s.perfMode === 'performance' ? t('settings_perf_performance_hint') :
-                                           t('settings_perf_dynamic_hint')
+                                           t('settings_perf_medium_hint')
           }</p>
         </div>
 
@@ -213,13 +234,8 @@ export function createSettingsPanel() {
       </div>
     `;
 
-    // ── Restore scroll position after DOM rebuild ────────────
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const body = panel.querySelector('.sp-body');
-        if (body && savedScroll > 0) body.scrollTop = savedScroll;
-      });
-    });
+    // Restore scroll position (header is static, no flash)
+    if (savedScroll > 0) _spBody.scrollTop = savedScroll;
 
     // ── Subscribe to adaptive quality updates ────────────────
     window.removeEventListener('pf:adaptive-quality', _onAdaptiveQuality);
@@ -246,14 +262,11 @@ export function createSettingsPanel() {
       });
     });
 
-    // Color picker
-    const colorInput = panel.querySelector('.sp-color-input');
-    if (colorInput) {
-      colorInput.addEventListener('input', (e) => {
-        saveSettings({ accent: e.target.value });
-        dispatchPageRerender();
-      });
-    }
+    // Hue wheel picker
+    initHueWheel(panel, (hex) => {
+      saveSettings({ accent: hex });
+      dispatchPageRerender();
+    }, getSettings().accent);
 
     // Toggle switches
     panel.querySelectorAll('.sp-toggle').forEach(btn => {
@@ -273,8 +286,7 @@ export function createSettingsPanel() {
       dispatchPageRerender();
     });
 
-    // Close button
-    panel.querySelector('.sp-close')?.addEventListener('click', close);
+
   }
 
   // ── Open / Close ────────────────────────────────────────
@@ -284,7 +296,7 @@ export function createSettingsPanel() {
     backdrop.classList.add('open');
     trigger.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
-    panel.querySelector('.sp-close')?.focus();
+    _spCloseBtn.focus();
   }
 
   function close() {
@@ -308,6 +320,168 @@ export function createSettingsPanel() {
   });
 
   return { panel, trigger, backdrop };
+}
+
+// ─── Hue Wheel Color Picker ───────────────────────────────────
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return '#' + f(0) + f(8) + f(4);
+}
+
+function hexToHsl(hex) {
+  let h = hex.replace('#','');
+  if (h.length===3) h = h.split('').map(c=>c+c).join('');
+  const r=parseInt(h.slice(0,2),16)/255, g=parseInt(h.slice(2,4),16)/255, b=parseInt(h.slice(4,6),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+  let hh=0, ss=0, ll=(max+min)/2;
+  if (d) {
+    ss = d / (1 - Math.abs(2*ll-1));
+    if (max===r) hh=((g-b)/d+6)%6;
+    else if (max===g) hh=(b-r)/d+2;
+    else hh=(r-g)/d+4;
+    hh *= 60;
+  }
+  return {h:Math.round(hh), s:Math.round(ss*100), l:Math.round(ll*100)};
+}
+
+function initHueWheel(panel, onChange, currentHex) {
+  const btn      = panel.querySelector('.sp-hue-open');
+  const pop      = panel.querySelector('#sp-hue-popover');
+  const svCanvas = panel.querySelector('#sp-sv-canvas');
+  const hCanvas  = panel.querySelector('#sp-hue-canvas');
+  const preview  = panel.querySelector('#sp-preview');
+  const hexInput = panel.querySelector('#sp-hex-input');
+  if (!btn || !pop || !svCanvas || !hCanvas) return;
+
+  const sc = svCanvas.getContext('2d');
+  const hc = hCanvas.getContext('2d');
+
+  let hsl = hexToHsl(currentHex || '#C6F135');
+  if (hsl.l < 8)  hsl.l = 55;
+  if (hsl.s < 15) hsl.s = 85;
+
+  // Cursor positions (0-1)
+  let svX = hsl.s / 100;
+  let svY = 1 - hsl.l / 100;
+  let hueX = hsl.h / 360;
+
+  function commit() {
+    const hex = hslToHex(Math.round(hueX*360), Math.round(svX*100), Math.round((1-svY)*100));
+    if (preview)  { preview.style.background = hex; }
+    if (hexInput) { hexInput.value = hex; }
+    if (btn)      { btn.querySelector('.sp-hue-dot').style.background = hex; }
+    onChange(hex);
+  }
+
+  function drawSV() {
+    const W = svCanvas.width, H = svCanvas.height;
+    const hDeg = Math.round(hueX * 360);
+    // White → pure hue (horizontal)
+    const gradW = sc.createLinearGradient(0,0,W,0);
+    gradW.addColorStop(0, '#fff');
+    gradW.addColorStop(1, `hsl(${hDeg},100%,50%)`);
+    sc.fillStyle = gradW; sc.fillRect(0,0,W,H);
+    // Transparent → black (vertical)
+    const gradB = sc.createLinearGradient(0,0,0,H);
+    gradB.addColorStop(0, 'rgba(0,0,0,0)');
+    gradB.addColorStop(1, '#000');
+    sc.fillStyle = gradB; sc.fillRect(0,0,W,H);
+    // Cursor
+    const cx = svX*W, cy = svY*H;
+    sc.beginPath(); sc.arc(cx,cy,7,0,Math.PI*2);
+    sc.strokeStyle='#fff'; sc.lineWidth=2; sc.stroke();
+    sc.beginPath(); sc.arc(cx,cy,5,0,Math.PI*2);
+    sc.strokeStyle='rgba(0,0,0,0.4)'; sc.lineWidth=1; sc.stroke();
+  }
+
+  function drawHue() {
+    const W = hCanvas.width, H = hCanvas.height;
+    const grad = hc.createLinearGradient(0,0,W,0);
+    for (let i=0;i<=12;i++) grad.addColorStop(i/12, `hsl(${i*30},100%,50%)`);
+    hc.fillStyle = grad; hc.fillRect(0,0,W,H);
+    // Cursor line
+    const cx = hueX * W;
+    hc.fillStyle='#fff'; hc.fillRect(cx-2,0,4,H);
+    hc.fillStyle='rgba(0,0,0,0.4)'; hc.fillRect(cx-1,0,2,H);
+  }
+
+  function render() { drawSV(); drawHue(); commit(); }
+
+  // SV square — drag
+  function onSVEvent(e) {
+    e.preventDefault();
+    const rect = svCanvas.getBoundingClientRect();
+    const cx = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+    const cy = (e.clientY ?? e.touches?.[0]?.clientY) - rect.top;
+    svX = Math.max(0, Math.min(1, cx / rect.width));
+    svY = Math.max(0, Math.min(1, cy / rect.height));
+    render();
+  }
+  let svDrag = false;
+  svCanvas.addEventListener('mousedown',  e => { svDrag=true; onSVEvent(e); });
+  svCanvas.addEventListener('touchstart', e => { svDrag=true; onSVEvent(e); }, {passive:false});
+  window.addEventListener('mousemove',  e => { if(svDrag) onSVEvent(e); });
+  window.addEventListener('touchmove',  e => { if(svDrag) onSVEvent(e); }, {passive:false});
+  window.addEventListener('mouseup',   () => svDrag=false);
+  window.addEventListener('touchend',  () => svDrag=false);
+
+  // Hue bar — drag
+  function onHueEvent(e) {
+    e.preventDefault();
+    const rect = hCanvas.getBoundingClientRect();
+    const cx = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+    hueX = Math.max(0, Math.min(1, cx / rect.width));
+    render();
+  }
+  let hueDrag = false;
+  hCanvas.addEventListener('mousedown',  e => { hueDrag=true; onHueEvent(e); });
+  hCanvas.addEventListener('touchstart', e => { hueDrag=true; onHueEvent(e); }, {passive:false});
+  window.addEventListener('mousemove',  e => { if(hueDrag) onHueEvent(e); });
+  window.addEventListener('touchmove',  e => { if(hueDrag) onHueEvent(e); }, {passive:false});
+  window.addEventListener('mouseup',   () => hueDrag=false);
+  window.addEventListener('touchend',  () => hueDrag=false);
+
+  // Hex input
+  if (hexInput) {
+    hexInput.addEventListener('input', e => {
+      const v = e.target.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        const h2 = hexToHsl(v);
+        hsl = h2;
+        hueX = h2.h/360;
+        svX  = h2.s/100;
+        svY  = 1 - h2.l/100;
+        render();
+      }
+    });
+    hexInput.addEventListener('keydown', e => { if(e.key==='Enter') { hexInput.blur(); } });
+  }
+
+  // Toggle popover
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isHidden = pop.hidden;
+    pop.hidden = !isHidden;
+    if (isHidden) {
+      // Re-sync from current accent when opening
+      const cur = hexToHsl(getSettings ? getSettings().accent : '#C6F135');
+      hsl = cur; hueX=cur.h/360; svX=cur.s/100; svY=1-cur.l/100;
+      render();
+    }
+  });
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!btn.contains(e.target) && !pop.contains(e.target)) pop.hidden = true;
+  });
+
+  render();
 }
 
 // Signal app to re-render dynamic parts (lang-sensitive text)
@@ -385,7 +559,7 @@ const FPS_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
   <path d="M7 8v5M10 10v3M13 7v6M16 9v4" stroke-linecap="round"/>
 </svg>`;
 
-const PERF_DYNAMIC_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+const PERF_MEDIUM_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
   stroke="currentColor" stroke-width="2" aria-hidden="true">
   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
 </svg>`;
