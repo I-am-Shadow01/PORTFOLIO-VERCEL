@@ -68,6 +68,7 @@ export function initBackground() {
     initParticles();
     buildFlowParticles();
     buildLorenz();
+    resizeWaveCanvas();
   }
   window.addEventListener('resize', resize, {passive:true});
 
@@ -126,11 +127,32 @@ export function initBackground() {
   // PARTICLES — Lennard-Jones + blob gravity + flow + mouse
   // ════════════════════════════════════════════════════════════
   let particles = [];
-  const CONNECT = 155, REPEL = 105;
+  const CONNECT = 155, REPEL = 105, LJ_RADIUS = 70;
 
   function makeParticle() {
     const vx=(Math.random()-0.5)*0.28, vy=(Math.random()-0.5)*0.28;
     return {x:Math.random()*W, y:Math.random()*H, vx, vy, bvx:vx, bvy:vy, r:Math.random()*1.4+0.5};
+  }
+
+  // เดิมโค้ดเลือก "15 อนุภาคแรกในอาเรย์" มาคิด Lennard-Jones ไม่ใช่ 15 ตัวที่ใกล้ที่สุดจริง
+  // ตรงนี้สร้าง spatial hash grid (cell = LJ_RADIUS) เพื่อหาเพื่อนบ้านที่อยู่ใกล้จริงๆ ในต้นทุน ~O(1) ต่ออนุภาค
+  function buildSpatialGrid(cellSize) {
+    const grid = new Map();
+    for (const p of particles) {
+      const key = `${Math.floor(p.x/cellSize)},${Math.floor(p.y/cellSize)}`;
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(p);
+    }
+    return grid;
+  }
+  function nearbyParticles(grid, cellSize, p) {
+    const gx = Math.floor(p.x/cellSize), gy = Math.floor(p.y/cellSize);
+    const out = [];
+    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) {
+      const cell = grid.get(`${gx+dx},${gy+dy}`);
+      if (cell) out.push(...cell);
+    }
+    return out;
   }
 
   function targetCount() {
@@ -161,6 +183,7 @@ export function initBackground() {
     const perf = getSettings().perfMode === 'performance';
     const dotB  = (isDark()?0.60:0.55)*cM;
     const lineB = (isDark()?0.20:0.18)*cM;
+    const grid  = perf ? buildSpatialGrid(LJ_RADIUS) : null; // สร้างใหม่ทุกเฟรม เพราะอนุภาคขยับตลอด
 
     particles.forEach(p => {
       const flow = Math.sin(p.x*0.004+t*0.00025)*Math.PI + Math.cos(p.y*0.004+t*0.00018)*Math.PI*0.6;
@@ -176,11 +199,11 @@ export function initBackground() {
           const bdx=cx-p.x, bdy=cy-p.y, bd=Math.hypot(bdx,bdy);
           if (bd>10 && bd<300) { const f=0.0009*(300-bd)/300; p.vx+=(bdx/bd)*f; p.vy+=(bdy/bd)*f; }
         });
-        // Lennard-Jones with 15 nearest (skip self by index)
-        for (let i=0; i<Math.min(particles.length,15); i++) {
-          const q=particles[i]; if (q===p) continue;
+        // Lennard-Jones กับอนุภาคที่ "ใกล้จริง" ตาม grid (ก่อนหน้านี้บั๊ก เช็คแค่ particles[0..14])
+        for (const q of nearbyParticles(grid, LJ_RADIUS, p)) {
+          if (q===p) continue;
           const dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy);
-          if (d<70 && d>1) { const s6=Math.pow(20/d,6),f=0.005*(2*s6*s6-s6)/d; p.vx-=(dx/d)*f; p.vy-=(dy/d)*f; }
+          if (d<LJ_RADIUS && d>1) { const s6=Math.pow(20/d,6),f=0.005*(2*s6*s6-s6)/d; p.vx-=(dx/d)*f; p.vy-=(dy/d)*f; }
         }
       }
 
@@ -298,19 +321,22 @@ export function initBackground() {
       ctx.beginPath();ctx.arc(x,y,2.5+inf*3,0,Math.PI*2);
       ctx.fillStyle=`rgba(${cR},${cG},${cB},${base*(1.2+inf*1.5)})`;ctx.fill();
 
-      // Trail
+      // Trail — รวมเป็น bucket ละ ~15 จุดต่อ path เดียว แทนที่จะ stroke() ทีละเส้น (ลดจาก ~300 เหลือ ~20 draw call ต่อระบบ)
       epicycleTrails[si].push({x,y});
       if(epicycleTrails[si].length>TRAIL_LEN)epicycleTrails[si].shift();
       const trail=epicycleTrails[si];
       if(trail.length<2)return;
-      ctx.save();
-      for(let i=1;i<trail.length;i++){
-        const frac=i/trail.length;
-        ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);
-        ctx.strokeStyle=`rgba(${cR},${cG},${cB},${frac*base*(0.85+inf*0.5)})`;
-        ctx.lineWidth=0.4+frac*1.4;ctx.stroke();
+      const EBUCKET=15;
+      for (let start=1; start<trail.length; start+=EBUCKET) {
+        const end = Math.min(start+EBUCKET, trail.length);
+        const midFrac = ((start+end)/2)/trail.length;
+        ctx.beginPath();
+        ctx.moveTo(trail[start-1].x, trail[start-1].y);
+        for (let i=start; i<end; i++) ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.strokeStyle=`rgba(${cR},${cG},${cB},${midFrac*base*(0.85+inf*0.5)})`;
+        ctx.lineWidth=0.4+midFrac*1.4;
+        ctx.stroke();
       }
-      ctx.restore();
     });
   }
 
@@ -348,10 +374,22 @@ export function initBackground() {
     if(lorenzPts.length<2)return;
     const base=(isDark()?0.28:0.22)*cM;
     ctx.save();
-    for(let i=1;i<lorenzPts.length;i++){
-      const p=lorenzPts[i-1],q=lorenzPts[i],frac=i/lorenzPts.length;
-      ctx.beginPath();ctx.moveTo(lcx+p.x*sc,lcy+(p.z-25)*sc);ctx.lineTo(lcx+q.x*sc,lcy+(q.z-25)*sc);
-      ctx.strokeStyle=`rgba(${cR},${cG},${cB},${frac*base})`;ctx.lineWidth=0.5+frac*0.6;ctx.stroke();
+    // เดิม stroke() แยกทีละ segment (สูงสุด 2000 ครั้ง/เฟรม) — รวมเป็น "กลุ่ม" ละ ~40 จุด
+    // ต่อ path เดียว ลด draw call เหลือ ~50 ครั้ง ยังคงเกรเดียนต์จางลงตามอายุของเส้นได้เหมือนเดิม
+    const BUCKET = 40;
+    for (let start=1; start<lorenzPts.length; start+=BUCKET) {
+      const end = Math.min(start+BUCKET, lorenzPts.length);
+      const midFrac = ((start+end)/2)/lorenzPts.length;
+      ctx.beginPath();
+      const p0 = lorenzPts[start-1];
+      ctx.moveTo(lcx+p0.x*sc, lcy+(p0.z-25)*sc);
+      for (let i=start; i<end; i++) {
+        const q = lorenzPts[i];
+        ctx.lineTo(lcx+q.x*sc, lcy+(q.z-25)*sc);
+      }
+      ctx.strokeStyle=`rgba(${cR},${cG},${cB},${midFrac*base})`;
+      ctx.lineWidth=0.5+midFrac*0.6;
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -359,31 +397,68 @@ export function initBackground() {
   // ════════════════════════════════════════════════════════════
   // 3B1B C — WAVE INTERFERENCE
   // Mouse adds a 4th coherent source at cursor position
+  //
+  // เดิมวนลูป fillRect() ~12,000+ ครั้ง/เฟรม (แต่ละครั้งสร้าง rgba string ใหม่)
+  // ซึ่งเป็นภาระ main-thread หนักมาก — เปลี่ยนมาเขียนพิกเซลตรงลง ImageData
+  // บน offscreen canvas แทน (แค่ 1 putImageData + 1 drawImage ต่อเฟรม)
   // ════════════════════════════════════════════════════════════
+  const waveCanvas = document.createElement('canvas');
+  const waveCtx = waveCanvas.getContext('2d');
+  let waveImgData = null;
+
+  function resizeWaveCanvas() {
+    waveCanvas.width = Math.max(1, W);
+    waveCanvas.height = Math.max(1, H);
+    waveImgData = waveCtx.createImageData(waveCanvas.width, waveCanvas.height);
+  }
+
   function drawWaveInterference(t) {
+    if (!waveImgData) return;
     const base=(isDark()?0.040:0.060)*cM;
-    const sources=[{x:W*0.28,y:H*0.32},{x:W*0.72,y:H*0.32},{x:W*0.50,y:H*0.75}];
-    if(mouse.x>0&&mouse.x<W) sources.push({x:mouse.x,y:mouse.y}); // 4th source at mouse!
+    const s0x=W*0.28,s0y=H*0.32, s1x=W*0.72,s1y=H*0.32, s2x=W*0.50,s2y=H*0.75;
+    const hasMouse = mouse.x>0 && mouse.x<W;
+    const smx=mouse.x, smy=mouse.y;
+    const numSources = hasMouse ? 4 : 3;
     const k=0.018, omega=t*0.0015, STEP=13;
-    ctx.save();
-    for(let px=0;px<W;px+=STEP){
-      for(let py=0;py<H;py+=STEP){
-        let amp=0;
-        sources.forEach(s=>{ amp+=Math.cos(k*Math.hypot(px-s.x,py-s.y)-omega); });
-        amp/=sources.length;
-        const intensity=Math.abs(amp);
-        if(intensity>0.52){
-          ctx.fillStyle=`rgba(${cR},${cG},${cB},${(intensity-0.52)*base*2.8})`;
-          ctx.fillRect(px-1,py-1,STEP-1,STEP-1);
+
+    const data = waveImgData.data;
+    data.fill(0); // เคลียร์เป็น transparent ทั้งหมดก่อนเขียนรอบใหม่
+
+    for (let px=0; px<W; px+=STEP) {
+      for (let py=0; py<H; py+=STEP) {
+        let amp = Math.cos(k*Math.hypot(px-s0x,py-s0y)-omega)
+                + Math.cos(k*Math.hypot(px-s1x,py-s1y)-omega)
+                + Math.cos(k*Math.hypot(px-s2x,py-s2y)-omega);
+        if (hasMouse) amp += Math.cos(k*Math.hypot(px-smx,py-smy)-omega);
+        amp /= numSources;
+        const intensity = Math.abs(amp);
+        if (intensity <= 0.52) continue;
+
+        const alpha = Math.min(255, (intensity-0.52)*base*2.8*255);
+        const bw = Math.min(STEP-1, W-px), bh = Math.min(STEP-1, H-py);
+        for (let by=0; by<bh; by++) {
+          let idx = ((py+by)*W + px) * 4;
+          for (let bx=0; bx<bw; bx++) {
+            data[idx]   = cR;
+            data[idx+1] = cG;
+            data[idx+2] = cB;
+            data[idx+3] = alpha;
+            idx += 4;
+          }
         }
       }
     }
-    // Draw source dots
-    sources.forEach((s,i)=>{
+    waveCtx.putImageData(waveImgData, 0, 0);
+    ctx.drawImage(waveCanvas, 0, 0);
+
+    // Draw source dots (แค่ 3-4 วง เบาอยู่แล้ว วาดตรงบน main ctx ตามเดิม)
+    const dots = hasMouse
+      ? [{x:s0x,y:s0y},{x:s1x,y:s1y},{x:s2x,y:s2y},{x:smx,y:smy}]
+      : [{x:s0x,y:s0y},{x:s1x,y:s1y},{x:s2x,y:s2y}];
+    dots.forEach((s,i)=>{
       ctx.beginPath();ctx.arc(s.x,s.y,i===3?5:3.5,0,Math.PI*2);
       ctx.fillStyle=`rgba(${cR},${cG},${cB},${(i===3?0.9:0.6)*cM})`;ctx.fill();
     });
-    ctx.restore();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -418,13 +493,11 @@ export function initBackground() {
 
       p.x+=Math.cos(angle)*1.6; p.y+=Math.sin(angle)*1.6;
       if(p.trail.length<2)return;
-      ctx.save();
       for(let i=1;i<p.trail.length;i++){
         const frac=i/p.trail.length;
         ctx.beginPath();ctx.moveTo(p.trail[i-1].x,p.trail[i-1].y);ctx.lineTo(p.trail[i].x,p.trail[i].y);
         ctx.strokeStyle=`rgba(${cR},${cG},${cB},${frac*base*0.65})`;ctx.lineWidth=0.7+frac*0.6;ctx.stroke();
       }
-      ctx.restore();
     });
   }
 

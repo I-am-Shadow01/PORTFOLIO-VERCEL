@@ -236,6 +236,19 @@ export function initSparkleTrail() {
   const trail = [];
   const MAX = 18;
 
+  // อ่าน accent color จริงจาก CSS var (ตามธีมที่ผู้ใช้ตั้งใน settings) แทนสีตายตัว
+  function currentAccent() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135';
+  }
+  // เฉด "อ่อนกว่า" accent เล็กน้อยสำหรับหางท้าย trail — ผสมกับดำแทน hardcode เลขฮาร์ดโค้ด
+  function dimmed(hex) {
+    const h = hex.replace('#', '');
+    if (h.length !== 6) return hex;
+    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+    const mix = c => Math.round(c * 0.78).toString(16).padStart(2,'0');
+    return `#${mix(r)}${mix(g)}${mix(b)}`;
+  }
+
   function Dot() {
     const el = document.createElement('div');
     Object.assign(el.style, {
@@ -244,7 +257,7 @@ export function initSparkleTrail() {
       pointerEvents: 'none',
       zIndex: 88888,
       width: '5px', height: '5px',
-      background: getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135',
+      background: currentAccent(),
       transform: 'translate(-50%,-50%)',
       transition: 'opacity 0.3s ease',
     });
@@ -263,6 +276,7 @@ export function initSparkleTrail() {
   let raf;
   function frame() {
     const dot = trail[idx % MAX];
+    const accent = currentAccent();
     dot.x = mx; dot.y = my;
     const age = (idx % MAX) / MAX;
     dot.el.style.left = mx + 'px';
@@ -270,7 +284,7 @@ export function initSparkleTrail() {
     dot.el.style.opacity = '0.7';
     dot.el.style.width  = (2 + age * 4) + 'px';
     dot.el.style.height = (2 + age * 4) + 'px';
-    dot.el.style.background = age < 0.5 ? '#c6f135' : '#a8d120';
+    dot.el.style.background = age < 0.5 ? accent : dimmed(accent);
 
     // fade old dots
     trail.forEach((d, i) => {
