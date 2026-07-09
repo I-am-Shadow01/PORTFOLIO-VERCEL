@@ -1104,6 +1104,47 @@ section+section{
 .contact-item.copied .copy-toast{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ══════════════════════════════════════════════════════════════
+ * DONATE
+ * ══════════════════════════════════════════════════════════════ */
+.donate-grid{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;max-width:720px}
+.donate-qr-card{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:28px 24px;border-radius:var(--r);
+  background:var(--g1);border:1px solid var(--b0);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+  min-width:260px;flex:1;
+}
+[data-theme=light] .donate-qr-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.donate-qr-canvas-wrap{position:relative;width:220px;height:220px;border-radius:var(--r-s);overflow:hidden;background:#fff}
+.donate-qr-canvas{display:block;width:220px;height:220px}
+.donate-qr-status{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;color:#666;background:rgba(255,255,255,.92);text-align:center;padding:0 10px;
+}
+.donate-qr-status:empty{display:none}
+.donate-qr-status.is-error{color:#c0392b}
+.donate-amounts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.donate-amount-btn{
+  padding:8px 16px;border-radius:100px;font-size:.83rem;font-weight:500;
+  background:var(--g1);border:1px solid var(--b0);color:var(--tx2);cursor:pointer;
+  transition:border-color var(--dur),color var(--dur),background var(--dur),transform var(--dur) var(--spring);
+}
+.donate-amount-btn:hover{border-color:var(--b1);color:var(--tx)}
+.donate-amount-btn.active{background:var(--ac);border-color:var(--ac);color:var(--ac-on,#000)}
+.donate-custom-row{width:100%}
+.donate-custom-input{
+  width:100%;padding:10px 14px;border-radius:var(--r-s);font-size:.85rem;
+  background:var(--g0);border:1px solid var(--b0);color:var(--tx);text-align:center;
+}
+.donate-custom-input:focus{outline:none;border-color:var(--ac1)}
+.donate-id-copy{width:100%;cursor:pointer;font:inherit;text-align:left}
+.donate-links-card{flex:1;min-width:260px}
+.donate-links-heading{font-size:.75rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.donate-ext-icon{margin-left:auto;color:var(--tx3);flex-shrink:0}
+.donate-empty-hint{color:var(--tx3);font-size:.9rem}
+
+/* ══════════════════════════════════════════════════════════════
  * FOOTER
  * ══════════════════════════════════════════════════════════════ */
 footer{

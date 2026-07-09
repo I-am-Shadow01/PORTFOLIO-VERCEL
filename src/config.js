@@ -88,6 +88,49 @@ export const CONFIG = {
     },
   ],
 
+  // ─── Donate / Support ──────────────────────────
+  // แก้ค่าทั้งหมดในนี้ที่เดียว — ห้ามแก้ใน sections/donate.js
+  donate: {
+    heading: 'Buy Me a Coffee',
+    subheading: 'ถ้าโปรเจกต์หรือ tool ที่ผมทำมีประโยชน์ เลี้ยงกาแฟกันได้ครับ ☕',
+
+    // PromptPay QR — สร้าง QR ฝั่ง client ทั้งหมด (ไม่ส่งข้อมูลออกไปที่ server ไหน)
+    promptpay: {
+      enabled: false, // ⚠️ ยังไม่มีข้อมูลจริง — ใส่เลขจริงแล้วเปลี่ยนเป็น true
+      id: '0000000000',        // TODO: เบอร์โทร / เลขบัตร ปชช. / e-Wallet ID พร้อมเพย์ (ตัวเลขล้วน)
+      accountName: 'CID KAGENOU', // TODO: ชื่อบัญชีที่จะโชว์ใต้ QR
+      currency: 'THB',
+      presetAmounts: [20, 50, 100, 200], // ปุ่มจำนวนเงินลัด แก้/เพิ่ม/ลดได้ที่นี่
+      defaultAmount: 50,
+      allowCustomAmount: true,
+    },
+
+    // ช่องทางอื่นๆ (การ์ดจะไม่ถูกแสดงถ้า href เป็นค่า placeholder ด้านล่าง)
+    links: [
+      {
+        label: 'Ko-fi',
+        value: 'Support on Ko-fi',
+        icon: '☕',
+        href: 'https://ko-fi.com/yourusername', // TODO: ใส่ลิงก์ Ko-fi จริง
+        copyable: false,
+      },
+      {
+        label: 'GitHub Sponsors',
+        value: '@I-am-Shadow01',
+        icon: 'GH',
+        href: 'https://github.com/sponsors/yourusername', // TODO: ใส่ลิงก์จริง (ต้องสมัคร GitHub Sponsors ก่อน)
+        copyable: false,
+      },
+      {
+        label: 'PayPal',
+        value: 'PayPal.me',
+        icon: '$',
+        href: 'https://paypal.me/yourusername', // TODO: ใส่ลิงก์จริง
+        copyable: false,
+      },
+    ],
+  },
+
   // ─── Contact & Social ─────────────────────────
   contact: {
     heading: "Let's Work Together",

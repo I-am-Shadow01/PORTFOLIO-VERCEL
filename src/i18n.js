@@ -9,6 +9,7 @@ export const TRANSLATIONS = {
     nav_about:    'About',
     nav_skills:   'Skills',
     nav_projects: 'Projects',
+    nav_donate:   'Donate',
     nav_contact:  'Contact',
 
     // Hero
@@ -22,11 +23,21 @@ export const TRANSLATIONS = {
     label_skills:   'Skills',
     label_projects: 'Projects',
     label_contact:  'Contact',
+    label_donate:   'Donate',
 
     // Section titles
     title_about:    'Who I Am',
     title_skills:   'Tech Stack',
     title_projects: "Things I've Built",
+
+    // Donate
+    donate_amount_label:      'Amount',
+    donate_custom_placeholder:'Custom amount (THB)',
+    donate_id_label:          'PromptPay ID (tap to copy)',
+    donate_other_ways:        'Other ways to support',
+    donate_generating:        'Generating QR…',
+    donate_generate_error:    'Could not generate QR code',
+    donate_not_configured:    'Donate options are not configured yet.',
 
     // Projects
     github: 'GitHub',
@@ -79,6 +90,7 @@ export const TRANSLATIONS = {
     nav_about:    'เกี่ยวกับ',
     nav_skills:   'ทักษะ',
     nav_projects: 'โปรเจกต์',
+    nav_donate:   'สนับสนุน',
     nav_contact:  'ติดต่อ',
 
     // Hero
@@ -92,11 +104,21 @@ export const TRANSLATIONS = {
     label_skills:   'ทักษะ',
     label_projects: 'โปรเจกต์',
     label_contact:  'ติดต่อ',
+    label_donate:   'สนับสนุน',
 
     // Section titles
     title_about:    'ฉันคือใคร',
     title_skills:   'เทคโนโลยีที่ใช้',
     title_projects: 'สิ่งที่ฉันสร้าง',
+
+    // Donate
+    donate_amount_label:      'จำนวนเงิน',
+    donate_custom_placeholder:'ระบุจำนวนเอง (บาท)',
+    donate_id_label:          'เลขพร้อมเพย์ (แตะเพื่อคัดลอก)',
+    donate_other_ways:        'ช่องทางสนับสนุนอื่นๆ',
+    donate_generating:        'กำลังสร้าง QR…',
+    donate_generate_error:    'สร้าง QR ไม่สำเร็จ',
+    donate_not_configured:    'ยังไม่ได้ตั้งค่าช่องทางบริจาค',
 
     // Projects
     github: 'GitHub',

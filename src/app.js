@@ -3,6 +3,7 @@ import { renderHero }           from './sections/hero.js';
 import { renderAbout }          from './sections/about.js';
 import { renderSkills }         from './sections/skills.js';
 import { renderProjects }       from './sections/projects.js';
+import { renderDonate }         from './sections/donate.js';
 import { renderContact }        from './sections/contact.js';
 import { initCursor }           from './utils/cursor.js';
 import { initAnimations }       from './utils/animations.js';
@@ -20,6 +21,7 @@ function createNav(t) {
     { id:'about',    key:'nav_about'    },
     { id:'skills',   key:'nav_skills'   },
     { id:'projects', key:'nav_projects' },
+    { id:'donate',   key:'nav_donate'   },
     { id:'contact',  key:'nav_contact'  },
   ];
 
@@ -84,7 +86,7 @@ function createNav(t) {
   const navObs = new IntersectionObserver(entries => {
     entries.forEach(e => visibleMap.set(e.target.id, e.intersectionRatio));
     let bestId = 'hero', bestRatio = -1;
-    const order = ['hero','about','skills','projects','contact'];
+    const order = ['hero','about','skills','projects','donate','contact'];
     order.forEach(id => {
       const r = visibleMap.get(id) ?? 0;
       if (r > bestRatio) { bestRatio = r; bestId = id; }
@@ -300,6 +302,7 @@ async function render() {
     root.appendChild(renderAbout(CONFIG, t));
     root.appendChild(renderSkills(CONFIG, t));
     root.appendChild(renderProjects(CONFIG, t));
+    root.appendChild(renderDonate(CONFIG, t));
     root.appendChild(renderContact(CONFIG, t));
     root.appendChild(createFooter(t));
     document.body.appendChild(backdrop);
