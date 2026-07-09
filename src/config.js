@@ -96,9 +96,9 @@ export const CONFIG = {
 
     // PromptPay QR — สร้าง QR ฝั่ง client ทั้งหมด (ไม่ส่งข้อมูลออกไปที่ server ไหน)
     promptpay: {
-      enabled: false, // ⚠️ ยังไม่มีข้อมูลจริง — ใส่เลขจริงแล้วเปลี่ยนเป็น true
-      id: '0000000000',        // TODO: เบอร์โทร / เลขบัตร ปชช. / e-Wallet ID พร้อมเพย์ (ตัวเลขล้วน)
-      accountName: 'CID KAGENOU', // TODO: ชื่อบัญชีที่จะโชว์ใต้ QR
+      enabled: true,
+      id: '0889304036',            // เบอร์พร้อมเพย์จริงที่ยืนยันแล้วจาก K+
+      accountName: 'CID KAGENOU', // TODO: เปลี่ยนเป็นชื่อที่ขึ้นตอนสแกนจริง (ถ้าไม่ตรง)
       currency: 'THB',
       presetAmounts: [20, 50, 100, 200], // ปุ่มจำนวนเงินลัด แก้/เพิ่ม/ลดได้ที่นี่
       defaultAmount: 50,
@@ -114,10 +114,10 @@ export const CONFIG = {
 
     // โอนเข้าบัญชีธนาคารตรงๆ (ใช้แทน/คู่กับ PromptPay ก็ได้ — เช่นยังไม่มีพร้อมเพย์)
     bankTransfer: {
-      enabled: false, // ⚠️ ใส่ข้อมูลจริงแล้วเปลี่ยนเป็น true
-      bankName: 'KASIKORNBANK (K+)', // TODO: ชื่อธนาคาร
-      accountNumber: '000-0-00000-0', // TODO: เลขบัญชีจริง
-      accountName: 'CID KAGENOU',     // TODO: ชื่อบัญชีจริง
+      enabled: false, // สำรองไว้เฉยๆ เพราะมีพร้อมเพย์ใช้งานได้แล้ว — เปลี่ยนเป็น true ได้ถ้าอยากมีสำรอง
+      bankName: 'KASIKORNBANK (K+)',
+      accountNumber: '221-8-12719-6',
+      accountName: 'CID KAGENOU', // TODO: เปลี่ยนเป็นชื่อจริงถ้าไม่ตรง
     },
 
     // ช่องทางอื่นๆ (การ์ดจะไม่ถูกแสดงถ้า href เป็นค่า placeholder ด้านล่าง)
