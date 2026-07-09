@@ -13,6 +13,24 @@ const EXT_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" st
   <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
 </svg>`;
 
+// การ์ด "คัดลอกแล้วโอนเอง" — ใช้ซ้ำได้กับทุกช่องทาง (ธนาคาร, TrueMoney, ฯลฯ)
+function copyCardHtml({ className, icon, copyValue, label, value, heading, hint }) {
+  return `
+    <div class="donate-copy-card ${className} reveal d2">
+      ${heading ? `<p class="donate-links-heading">${heading}</p>` : ''}
+      <button type="button" class="contact-item donate-copy-btn" data-copy="${copyValue}">
+        <span class="copy-toast" aria-live="polite" data-copied-label></span>
+        <div class="contact-icon" aria-hidden="true">${icon}</div>
+        <div class="contact-info">
+          <span class="contact-label">${label}</span>
+          <span class="contact-value">${value}</span>
+        </div>
+      </button>
+      ${hint ? `<p class="donate-copy-hint">${hint}</p>` : ''}
+    </div>
+  `;
+}
+
 let qrLibsPromise = null;
 function loadQrLibs() {
   if (!qrLibsPromise) {
@@ -33,9 +51,12 @@ export function renderDonate({ donate }, t) {
   if (!donate) return section;
 
   const pp = donate.promptpay || {};
+  const bank = donate.bankTransfer || {};
+  const tmn = donate.trueMoneyWallet || {};
   const validLinks = (donate.links || []).filter(
     (l) => l.href && !/yourusername/i.test(l.href)
   );
+  const nothingConfigured = !pp.enabled && !bank.enabled && !tmn.enabled && !validLinks.length;
 
   section.innerHTML = `
     <div class="section-eyebrow reveal">
@@ -67,16 +88,35 @@ export function renderDonate({ donate }, t) {
             </div>
           ` : ''}
 
-          <button type="button" class="contact-item donate-id-copy" data-copy="${pp.id}">
-            <span class="copy-toast" aria-live="polite">${t('copied')}</span>
-            <div class="contact-icon" aria-hidden="true">PP</div>
-            <div class="contact-info">
-              <span class="contact-label">${t('donate_id_label')}</span>
-              <span class="contact-value">${pp.accountName || ''}</span>
-            </div>
-          </button>
+          ${copyCardHtml({
+            className: 'donate-pp-copy',
+            icon: 'PP',
+            copyValue: pp.id,
+            label: t('donate_id_label'),
+            value: pp.accountName || '',
+          })}
         </div>
       ` : ''}
+
+      ${bank.enabled ? copyCardHtml({
+        className: 'donate-bank-copy',
+        icon: '฿',
+        copyValue: bank.accountNumber,
+        label: bank.bankName || '',
+        value: bank.accountNumber || '',
+        heading: t('donate_bank_heading'),
+        hint: `${bank.accountName || ''} · ${t('donate_bank_copy_hint')}`,
+      }) : ''}
+
+      ${tmn.enabled ? copyCardHtml({
+        className: 'donate-tmn-copy',
+        icon: 'TW',
+        copyValue: tmn.phoneNumber,
+        label: t('donate_tmn_heading'),
+        value: tmn.phoneNumber || '',
+        heading: t('donate_tmn_heading'),
+        hint: t('donate_tmn_hint'),
+      }) : ''}
 
       ${validLinks.length ? `
         <div class="donate-links-card reveal d3">
@@ -98,9 +138,7 @@ export function renderDonate({ donate }, t) {
         </div>
       ` : ''}
 
-      ${!pp.enabled && !validLinks.length ? `
-        <p class="donate-empty-hint">${t('donate_not_configured')}</p>
-      ` : ''}
+      ${nothingConfigured ? `<p class="donate-empty-hint">${t('donate_not_configured')}</p>` : ''}
     </div>
   `;
 
@@ -108,14 +146,16 @@ export function renderDonate({ donate }, t) {
     wireQr(section, pp, t);
   }
 
-  wireCopyButton(section, t);
+  // ทุกการ์ด copy (PromptPay ID, ธนาคาร, TrueMoney) ใช้ปุ่ม class เดียวกัน — wire ทีเดียวทั้งหมด
+  section.querySelectorAll('.donate-copy-btn').forEach((btn) => wireCopyButton(btn, t));
 
   return section;
 }
 
-function wireCopyButton(section, t) {
-  const btn = section.querySelector('.donate-id-copy');
-  if (!btn) return;
+function wireCopyButton(btn, t) {
+  const toast = btn.querySelector('[data-copied-label]');
+  if (toast) toast.textContent = t('copied');
+
   btn.addEventListener('click', async () => {
     const text = btn.dataset.copy;
     if (!text) return;

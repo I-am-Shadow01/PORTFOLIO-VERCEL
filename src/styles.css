@@ -1138,7 +1138,15 @@ section+section{
   background:var(--g0);border:1px solid var(--b0);color:var(--tx);text-align:center;
 }
 .donate-custom-input:focus{outline:none;border-color:var(--ac1)}
-.donate-id-copy{width:100%;cursor:pointer;font:inherit;text-align:left}
+.donate-copy-card{display:flex;flex-direction:column;gap:10px;width:100%}
+.donate-copy-btn{width:100%;cursor:pointer;font:inherit;text-align:left}
+.donate-copy-hint{font-size:.7rem;color:var(--tx3)}
+.donate-bank-copy,.donate-tmn-copy{
+  padding:24px;border-radius:var(--r);background:var(--g1);border:1px solid var(--b0);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07);min-width:260px;flex:1;
+}
+[data-theme=light] .donate-bank-copy,[data-theme=light] .donate-tmn-copy{box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
 .donate-links-card{flex:1;min-width:260px}
 .donate-links-heading{font-size:.75rem;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
 .donate-ext-icon{margin-left:auto;color:var(--tx3);flex-shrink:0}

@@ -105,6 +105,21 @@ export const CONFIG = {
       allowCustomAmount: true,
     },
 
+    // TrueMoney Wallet — โอนตรงเข้าเบอร์ หรือคนโอนจะส่ง "ซองของขวัญ" มาหาเบอร์นี้เองก็ได้
+    // (การสร้างซองเป็นสิ่งที่ผู้ให้ทำจากแอปของเขาเอง เว็บนี้แค่โชว์เบอร์ให้พิมพ์ตอนโอน/ตอนสร้างซอง)
+    trueMoneyWallet: {
+      enabled: false, // ⚠️ ใส่เบอร์จริงแล้วเปลี่ยนเป็น true
+      phoneNumber: '081-234-5678', // TODO: เบอร์ที่ผูก TrueMoney Wallet จริง
+    },
+
+    // โอนเข้าบัญชีธนาคารตรงๆ (ใช้แทน/คู่กับ PromptPay ก็ได้ — เช่นยังไม่มีพร้อมเพย์)
+    bankTransfer: {
+      enabled: false, // ⚠️ ใส่ข้อมูลจริงแล้วเปลี่ยนเป็น true
+      bankName: 'KASIKORNBANK (K+)', // TODO: ชื่อธนาคาร
+      accountNumber: '000-0-00000-0', // TODO: เลขบัญชีจริง
+      accountName: 'CID KAGENOU',     // TODO: ชื่อบัญชีจริง
+    },
+
     // ช่องทางอื่นๆ (การ์ดจะไม่ถูกแสดงถ้า href เป็นค่า placeholder ด้านล่าง)
     links: [
       {
