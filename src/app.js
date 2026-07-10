@@ -72,16 +72,24 @@ function createNav(t) {
     el.addEventListener('transitionend', ()=>el.remove(), { once:true });
   }
 
+  return nav;
+}
+
+// เดิมโค้ด scroll-listener + IntersectionObserver ของ nav ถูกสร้างใหม่ทุกครั้งที่ createNav() ทำงาน
+// แต่ผูกกับ scroller (root/window) ที่เป็น node ถาวร — ถ้าเรียก createNav() ซ้ำ (เช่นตอนสลับภาษา
+// แล้ว rebuild เนื้อหา) จะเพิ่ม listener ซ้อนไปเรื่อยๆ ไม่มีวันถูกลบ (memory leak + ทำงานซ้ำหลายรอบ)
+// เลยแยกส่วนนี้ออกมาเป็นฟังก์ชันที่เรียกครั้งเดียวตอน boot แล้ว query nav/section สดทุกครั้งที่ทำงาน
+// แทนการจับ reference ของ nav element เดิมไว้ตายตัว
+function bindGlobalNavBehavior() {
   const root = document.getElementById('__root__');
   const scroller = root || window;
 
-  // ── Scrolled class for nav background ──
-  scroller.addEventListener('scroll', ()=>{
+  scroller.addEventListener('scroll', () => {
     const scrollTop = root ? root.scrollTop : window.scrollY;
-    nav.classList.toggle('scrolled', scrollTop > 50);
+    const nav = document.querySelector('nav');
+    if (nav) nav.classList.toggle('scrolled', scrollTop > 50);
   }, { passive:true });
 
-  // ── Active section via IntersectionObserver ──
   const visibleMap = new Map();
   const navObs = new IntersectionObserver(entries => {
     entries.forEach(e => visibleMap.set(e.target.id, e.intersectionRatio));
@@ -91,16 +99,23 @@ function createNav(t) {
       const r = visibleMap.get(id) ?? 0;
       if (r > bestRatio) { bestRatio = r; bestId = id; }
     });
-    nav.querySelectorAll('.nav-link').forEach(b => {
+    document.querySelectorAll('.nav-link').forEach(b => {
       b.classList.toggle('active', b.dataset.navid === bestId);
     });
   }, {
     root: root || null,
     threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
   });
-  document.querySelectorAll('section[id]').forEach(s => navObs.observe(s));
 
-  return nav;
+  return {
+    // เรียกทุกครั้งหลัง section ถูกสร้างใหม่ เพราะ IntersectionObserver ผูกกับ element
+    // instance เดิมไม่ได้ถ้า element นั้นถูกลบไปแล้ว ต้อง disconnect แล้ว observe DOM ชุดใหม่
+    reobserveSections() {
+      navObs.disconnect();
+      visibleMap.clear();
+      document.querySelectorAll('section[id]').forEach(s => navObs.observe(s));
+    },
+  };
 }
 
 // ── Mobile side-drawer overlay ───────────────────────────────
@@ -281,11 +296,42 @@ function injectMeta() {
   });
 }
 
+// ── Content build (nav + sections + footer) ─────────────────
+// เรียกได้หลายครั้ง (ตอนโหลดครั้งแรก + ทุกครั้งที่ภาษาเปลี่ยน) เพราะ query/bind
+// effect ทุกตัวข้างในใหม่จาก DOM ปัจจุบันเสมอ ไม่มี state ค้างจากรอบก่อน
+function buildContent(t) {
+  const root = document.getElementById('__root__');
+  root.innerHTML = '';
+  root.appendChild(createNav(t));
+  root.appendChild(renderHero(CONFIG, t));
+  root.appendChild(renderAbout(CONFIG, t));
+  root.appendChild(renderSkills(CONFIG, t));
+  root.appendChild(renderProjects(CONFIG, t));
+  root.appendChild(renderDonate(CONFIG, t));
+  root.appendChild(renderContact(CONFIG, t));
+  root.appendChild(createFooter(t));
+
+  // effect เหล่านี้ query element จาก DOM ปัจจุบัน ณ ตอนเรียก ปลอดภัยที่จะเรียกซ้ำทุกครั้ง
+  // ที่ rebuild เพราะ element ชุดเก่าถูกลบไปแล้ว (listener เก่าหลุดไปพร้อมกันไม่ค้าง)
+  initAnimations();
+  initSpotlight();
+  initMagneticButtons();
+  initTiltCards();
+  initTextScramble();
+  initCounters();
+  initRipple();
+  initParticleBurst();
+  initSkillGlow();
+
+  if (_navBehavior) _navBehavior.reobserveSections();
+}
+
 // ── Main render ───────────────────────────────────────────────
 let _ready = false;
+let _navBehavior = null;
+let _lastLang = null;
 
 async function render() {
-  const root = document.getElementById('__root__');
   const t = createT(getSettings());
 
   if (!_ready) {
@@ -295,39 +341,28 @@ async function render() {
     // Show/hide based on saved setting immediately
     _fpsOverlay.setVisible(!!getSettings().showFps);
     const { panel, trigger, backdrop } = createSettingsPanel();
-
-    root.innerHTML = '';
-    root.appendChild(createNav(t));
-    root.appendChild(renderHero(CONFIG, t));
-    root.appendChild(renderAbout(CONFIG, t));
-    root.appendChild(renderSkills(CONFIG, t));
-    root.appendChild(renderProjects(CONFIG, t));
-    root.appendChild(renderDonate(CONFIG, t));
-    root.appendChild(renderContact(CONFIG, t));
-    root.appendChild(createFooter(t));
     document.body.appendChild(backdrop);
     document.body.appendChild(trigger);
     document.body.appendChild(panel);
 
-    _ready = true;
-
-    // initSmoothScroll must run first — registers window.__go
-    initSmoothScroll();
-    initAnimations();
+    // สิ่งเหล่านี้ผูก listener กับ node ถาวร (root/window/document.body) หรือไม่ผูกกับภาษาเลย
+    // เรียกครั้งเดียวพอตลอดอายุหน้าเว็บ ห้ามเรียกซ้ำตอน rebuild เนื้อหา ไม่งั้น listener ซ้อน
+    _navBehavior = bindGlobalNavBehavior();
+    initSmoothScroll(); // ต้องมาก่อน buildContent เพราะ section ใน buildContent ใช้ window.__go ผ่าน onclick
     initScrollProgress();
-    initSpotlight();
-
-    // 25002500 Extra effects 2500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500250025002500
-    initMagneticButtons();
-    initTiltCards();
-    initTextScramble();
-    initCounters();
-    initRipple();
-    initParticleBurst();
     initParallax();
-    initSkillGlow();
     initSparkleTrail();
+
+    buildContent(t);
+    _ready = true;
+    _lastLang = t.lang;
+  } else if (t.lang !== _lastLang) {
+    // ภาษาเปลี่ยนจริง — rebuild แค่เนื้อหา ไม่แตะ background canvas/cursor ที่กำลังรันอยู่
+    buildContent(t);
+    _lastLang = t.lang;
   }
+  // ถ้าเป็นการเปลี่ยน setting อื่น (theme, perfMode, ฯลฯ) ที่ไม่ใช่ lang จะไม่ rebuild เนื้อหา
+  // เพราะไม่จำเป็น (กัน scramble/counter เล่นซ้ำโดยไม่มีเหตุผลทุกครั้งที่แก้ setting อื่น)
 
   syncCursor();
   syncBg();

@@ -196,12 +196,16 @@ export function initParticleBurst() {
 // ── 7. Parallax on hero deco lines ──────────────────────────
 export function initParallax() {
   const root = document.getElementById('__root__');
-  const decos = document.querySelectorAll('.deco-line');
-  const heroSide = document.querySelector('.hero-side');
-  if (!decos.length) return;
-
   const scroller = root || window;
+
+  // เดิม query .deco-line/.hero-side แค่ตอน init ครั้งเดียว — ถ้าเนื้อหาถูกสร้างใหม่ทีหลัง
+  // (เช่นตอนสลับภาษาแล้ว rebuild section) elements ตัวเก่าจะหลุดอ้างอิง parallax เลยหยุดทำงาน
+  // เปลี่ยนมา query สดทุกครั้งที่ scroll แทน เพื่อให้ทำงานกับ DOM ชุดล่าสุดเสมอ โดยไม่ต้อง init ซ้ำ
+  // (initParallax ยังคงเรียกแค่ครั้งเดียวตอนโหลดหน้า — ป้องกัน scroll listener ซ้อนบน root/window)
   scroller.addEventListener('scroll', () => {
+    const decos = document.querySelectorAll('.deco-line');
+    const heroSide = document.querySelector('.hero-side');
+    if (!decos.length) return;
     const scrollTop = root ? root.scrollTop : window.scrollY;
     const ratio = scrollTop / (window.innerHeight || 800);
     decos.forEach((d, i) => {

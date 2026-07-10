@@ -249,7 +249,7 @@ export function createSettingsPanel() {
         const val = btn.dataset.value;
         saveSettings({ [key]: val });
         build();           // full rebuild so labels retranslate
-        dispatchPageRerender();
+        dispatchPageRerender(); // app.js เช็คเองว่า lang เปลี่ยนจริงไหมก่อน rebuild เนื้อหาเว็บ
       });
     });
 
