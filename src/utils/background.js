@@ -183,7 +183,10 @@ export function initBackground() {
     const perf = getSettings().perfMode === 'performance';
     const dotB  = (isDark()?0.60:0.55)*cM;
     const lineB = (isDark()?0.20:0.18)*cM;
-    const grid  = perf ? buildSpatialGrid(LJ_RADIUS) : null; // สร้างใหม่ทุกเฟรม เพราะอนุภาคขยับตลอด
+    // idx ใช้กันเส้นเชื่อมซ้ำตอนหา neighbor จาก grid (วาดคู่ p-q แค่ครั้งเดียวตอน q.idx>p.idx)
+    particles.forEach((p,i) => { p.idx = i; });
+    // grid สำหรับ Lennard-Jones เท่านั้น (มีผลแค่ perf mode) — โหมดอื่นไม่ต้องเสียเวลาสร้าง
+    const grid = perf ? buildSpatialGrid(CONNECT) : null;
 
     particles.forEach(p => {
       const flow = Math.sin(p.x*0.004+t*0.00025)*Math.PI + Math.cos(p.y*0.004+t*0.00018)*Math.PI*0.6;
@@ -200,7 +203,7 @@ export function initBackground() {
           if (bd>10 && bd<300) { const f=0.0009*(300-bd)/300; p.vx+=(bdx/bd)*f; p.vy+=(bdy/bd)*f; }
         });
         // Lennard-Jones กับอนุภาคที่ "ใกล้จริง" ตาม grid (ก่อนหน้านี้บั๊ก เช็คแค่ particles[0..14])
-        for (const q of nearbyParticles(grid, LJ_RADIUS, p)) {
+        for (const q of nearbyParticles(grid, CONNECT, p)) {
           if (q===p) continue;
           const dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy);
           if (d<LJ_RADIUS && d>1) { const s6=Math.pow(20/d,6),f=0.005*(2*s6*s6-s6)/d; p.vx-=(dx/d)*f; p.vy-=(dy/d)*f; }
@@ -215,13 +218,20 @@ export function initBackground() {
       if(p.y<-10)p.y=H+10; if(p.y>H+10)p.y=-10;
     });
 
-    for (let i=0;i<particles.length;i++) for (let j=i+1;j<particles.length;j++) {
-      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, d=Math.hypot(dx,dy);
-      if (d<CONNECT) {
-        ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y);
-        ctx.strokeStyle=`rgba(${cR},${cG},${cB},${(1-d/CONNECT)*lineB})`; ctx.lineWidth=0.8; ctx.stroke();
+    // เดิม O(n²) วนคู่ทุกอนุภาค (สูงสุด ~19,900 คู่ตอน 200 อนุภาค) — ตอนนี้ดึงเฉพาะ
+    // เพื่อนบ้านจาก grid ต่ออนุภาค เฉลี่ยเบากว่ามากเมื่อกระจายอนุภาคทั่วจอ
+    // ต้อง rebuild grid ใหม่รอบนี้เพราะตำแหน่งขยับไปแล้วจาก loop ด้านบน
+    const gridAfterMove = buildSpatialGrid(CONNECT);
+    particles.forEach(p => {
+      for (const q of nearbyParticles(gridAfterMove, CONNECT, p)) {
+        if (q.idx <= p.idx) continue; // กันวาดเส้นซ้ำ (p-q กับ q-p)
+        const dx=p.x-q.x, dy=p.y-q.y, d=Math.hypot(dx,dy);
+        if (d<CONNECT) {
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle=`rgba(${cR},${cG},${cB},${(1-d/CONNECT)*lineB})`; ctx.lineWidth=0.8; ctx.stroke();
+        }
       }
-    }
+    });
     particles.forEach(p => {
       const d=Math.hypot(p.x-mouse.x,p.y-mouse.y);
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
@@ -493,10 +503,18 @@ export function initBackground() {
 
       p.x+=Math.cos(angle)*1.6; p.y+=Math.sin(angle)*1.6;
       if(p.trail.length<2)return;
-      for(let i=1;i<p.trail.length;i++){
-        const frac=i/p.trail.length;
-        ctx.beginPath();ctx.moveTo(p.trail[i-1].x,p.trail[i-1].y);ctx.lineTo(p.trail[i].x,p.trail[i].y);
-        ctx.strokeStyle=`rgba(${cR},${cG},${cB},${frac*base*0.65})`;ctx.lineWidth=0.7+frac*0.6;ctx.stroke();
+      // เดิม stroke() ทีละ segment (สูงสุด 19 ครั้ง/จุด × 130 จุด = ~2,470 ครั้ง/เฟรม)
+      // รวมเป็น bucket ละ 5 จุดต่อ path เดียว
+      const FBUCKET=5;
+      for (let start=1; start<p.trail.length; start+=FBUCKET) {
+        const end = Math.min(start+FBUCKET, p.trail.length);
+        const midFrac = ((start+end)/2)/p.trail.length;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[start-1].x, p.trail[start-1].y);
+        for (let i=start; i<end; i++) ctx.lineTo(p.trail[i].x, p.trail[i].y);
+        ctx.strokeStyle=`rgba(${cR},${cG},${cB},${midFrac*base*0.65})`;
+        ctx.lineWidth=0.7+midFrac*0.6;
+        ctx.stroke();
       }
     });
   }
