@@ -51,10 +51,30 @@ export function initBackground() {
   // ── Cached accent ─────────────────────────────────────────────
   let cR=198, cG=241, cB=53, cM=1.3;
 
+  // เดิม drawAurora/drawOrb สร้าง createRadialGradient + fillRect เต็มจอใหม่ทุกเฟรม
+  // (รวมสูงสุด ~4-5 ครั้ง/เฟรม) ซึ่งหนักเพราะต้อง rasterize gradient ครอบทั้งจอซ้ำๆ
+  // แคชเป็น texture เล็ก (256x256) ไว้ แล้วแค่ drawImage ขยาย/ย้ายตำแหน่งแทน — สร้าง
+  // texture ใหม่เฉพาะตอน accent color เปลี่ยนจริง (ไม่ใช่ทุกเฟรม)
+  let glowTexture = null;
+  function rebuildGlowTexture() {
+    const SIZE = 256;
+    const tex = document.createElement('canvas');
+    tex.width = tex.height = SIZE;
+    const tctx = tex.getContext('2d');
+    const g = tctx.createRadialGradient(SIZE/2,SIZE/2,0,SIZE/2,SIZE/2,SIZE/2);
+    g.addColorStop(0,    `rgba(${cR},${cG},${cB},1)`);
+    g.addColorStop(0.41, `rgba(${cR},${cG},${cB},0.28)`);
+    g.addColorStop(1,    `rgba(${cR},${cG},${cB},0)`);
+    tctx.fillStyle = g;
+    tctx.fillRect(0,0,SIZE,SIZE);
+    glowTexture = tex;
+  }
+
   function syncAccent() {
     const hex = getSettings().accent || '#C6F135';
     const {r,g,b} = hexToRgb(hex);
     cR=r; cG=g; cB=b; cM=alphaMult({r,g,b});
+    rebuildGlowTexture();
   }
   syncAccent();
   const unsub = onSettingsChange(() => syncAccent());
@@ -96,15 +116,15 @@ export function initBackground() {
 
   function drawAurora(t) {
     const base = (isDark() ? 0.065 : 0.110) * cM;
+    if (!glowTexture) return;
+    ctx.save();
+    ctx.globalAlpha = base;
     BLOBS.forEach(n => {
       const {cx,cy} = blobPos(n, t);
       const rad = n.r * Math.max(W,H);
-      const g = ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
-      g.addColorStop(0,    `rgba(${cR},${cG},${cB},${base})`);
-      g.addColorStop(0.42, `rgba(${cR},${cG},${cB},${base*0.28})`);
-      g.addColorStop(1,    `rgba(${cR},${cG},${cB},0)`);
-      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+      ctx.drawImage(glowTexture, cx-rad, cy-rad, rad*2, rad*2);
     });
+    ctx.restore();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -114,13 +134,12 @@ export function initBackground() {
 
   function drawOrb() {
     orb.x += (orb.tx-orb.x)*0.08; orb.y += (orb.ty-orb.y)*0.08; orb.boost *= 0.90;
-    if (orb.x < -500) return;
+    if (orb.x < -500 || !glowTexture) return;
     const a = (isDark()?0.11:0.14)*cM, rad = 185+orb.boost*55;
-    const g = ctx.createRadialGradient(orb.x,orb.y,0,orb.x,orb.y,rad);
-    g.addColorStop(0,    `rgba(${cR},${cG},${cB},${a})`);
-    g.addColorStop(0.38, `rgba(${cR},${cG},${cB},${a*0.4})`);
-    g.addColorStop(1,    `rgba(${cR},${cG},${cB},0)`);
-    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.drawImage(glowTexture, orb.x-rad, orb.y-rad, rad*2, rad*2);
+    ctx.restore();
   }
 
   // ════════════════════════════════════════════════════════════
