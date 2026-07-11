@@ -79,8 +79,6 @@ export const TRANSLATIONS = {
     settings_perf_medium:  'Medium (60fps)',
     settings_perf_eco:    'Eco (Low CPU)',
     settings_perf_performance: 'Performance (Auto)',
-    settings_perf_medium_hint:   'Particles + Stars + Cursor glow — 60fps',
-    settings_perf_eco_hint:     'Minimal layers — saves CPU / battery',
     settings_perf_performance_hint: 'All 3B1B layers + full physics — adapts to CPU',
     settings_showfps:   'Show FPS Counter',
     settings_fps_quality_ultra:  'Ultra quality',
@@ -164,8 +162,6 @@ export const TRANSLATIONS = {
     settings_perf_medium:  'ระดับกลาง (60fps)',
     settings_perf_eco:    'ประหยัด CPU',
     settings_perf_performance: 'Performance (อัตโนมัติ)',
-    settings_perf_medium_hint:   'Particles + Stars + Cursor glow — 60fps',
-    settings_perf_eco_hint:     'Aurora + Grid เท่านั้น — ประหยัด CPU',
     settings_perf_performance_hint: 'ทุก Layer รวม 3B1B + Physics — ปรับตาม CPU',
     settings_showfps:   'แสดง FPS Counter',
     settings_fps_quality_ultra:  'คุณภาพสูงสุด',
@@ -195,5 +191,7 @@ export function getLocale(settings) {
 export function createT(settings) {
   const locale = getLocale(settings);
   const dict   = TRANSLATIONS[locale] || TRANSLATIONS.en;
-  return (key) => dict[key] ?? TRANSLATIONS.en[key] ?? key;
+  const t = (key) => dict[key] ?? TRANSLATIONS.en[key] ?? key;
+  t.lang = locale; // ใช้เทียบใน app.js ว่าภาษาเปลี่ยนจริงไหม
+  return t;
 }
