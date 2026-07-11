@@ -9,10 +9,9 @@
  *   C. Wave Interference   — mouse adds a 4th wave source at cursor
  *   D. Vector Flow Field   — mouse creates a local vortex in the field
  *   E. 4D Hypersphere      — mouse tilt controls XY rotation plane
- *   F. Times-Table Cardioid — mouse x-position scrubs the multiplier k,
+ *   F. Times-Table Cardioid — mouse x-position steers the multiplier k,
  *                             morphing cardioid/nephroid/rose patterns live
- *   G. Mandelbrot Set      — slow drifting zoom into seahorse valley;
- *                             hovering inside its frame steers the zoom target
+ *                             (smoothed — doesn't snap instantly to cursor)
  *
  * Interaction extras: click spawns a radiating "starburst" on top of the
  * existing ripple, for a punchier hit-confirm feel.
@@ -632,135 +631,58 @@ export function initBackground() {
   // 3B1B F — TIMES-TABLE CARDIOID (multiplication table mod n)
   // จุด n จุดบนวงกลม เชื่อมจุด i ไปยังจุด (i*k) mod n — เมื่อ k เปลี่ยนค่า
   // จะได้ลวดลาย cardioid/nephroid/rose ที่ morph ไปเรื่อยๆ (Mathologer-style)
-  // เมาส์แกน x ใช้ "scrub" ค่า k โดยตรง ทำให้เล่นแบบ interactive ได้ทันที
+  //
+  // ตัว k "steer" ด้วยตำแหน่งเมาส์แกน x แต่ไม่สแนปตรงๆ (เดิมทำให้ภาพวาปเร็ว
+  // เกินไปตอนขยับเมาส์ไว) เลย lerp เข้าเป้าหมายทีละนิดต่อเฟรมแทน นอกจากนี้
+  // เพิ่มการหมุนช้าๆ ทั้งภาพ + ไล่ความจางตามระยะคอร์ด ให้ดูมีชีวิตไม่แข็งทื่อ
   // ════════════════════════════════════════════════════════════
-  const MULT_TABLE_POINTS  = 180;      // จำนวนจุดบนวงกลม
-  const MULT_TABLE_K_MIN   = 2;        // ตัวคูณ k ต่ำสุด
-  const MULT_TABLE_K_MAX   = 45;       // ตัวคูณ k สูงสุด
-  const MULT_TABLE_K_SPEED = 0.000045; // ความเร็ว auto-drift ของ k เมื่อไม่มีเมาส์
-  const MULT_TABLE_RADIUS_FRAC = 0.42; // รัศมีวงกลม เทียบกับ min(W,H)
+  const MULT_TABLE_POINTS      = 180;      // จำนวนจุดบนวงกลม
+  const MULT_TABLE_K_MIN       = 2;        // ตัวคูณ k ต่ำสุด
+  const MULT_TABLE_K_MAX       = 45;       // ตัวคูณ k สูงสุด
+  const MULT_TABLE_K_SPEED     = 0.000045; // ความเร็ว auto-drift ของ k เมื่อไม่มีเมาส์
+  const MULT_TABLE_K_LERP      = 0.025;    // อัตรา smoothing ต่อเฟรมตอนเข้าใกล้ค่า k เป้าหมาย (ยิ่งน้อยยิ่งนุ่ม)
+  const MULT_TABLE_RADIUS_FRAC = 0.42;     // รัศมีวงกลม เทียบกับ min(W,H)
+  const MULT_TABLE_ROTATE_SPEED = 0.00005; // ความเร็วหมุนของภาพทั้งชุด (กันดูนิ่งแข็ง)
+  const MULT_TABLE_BREATHE_AMT  = 0.015;   // สัดส่วนรัศมีที่ "หายใจ" เข้าออกช้าๆ
+  const MULT_TABLE_BREATHE_SPEED = 0.00028;
+
+  let multTableK = MULT_TABLE_K_MIN; // ค่า k ที่ smooth แล้ว คงอยู่ข้ามเฟรม
 
   function drawMultTable(t) {
     const base = (isDark() ? 0.16 : 0.13) * cM;
     const cx = W * 0.5, cy = H * 0.5;
-    const R = Math.min(W, H) * MULT_TABLE_RADIUS_FRAC;
+    const breathe = 1 + Math.sin(t * MULT_TABLE_BREATHE_SPEED) * MULT_TABLE_BREATHE_AMT;
+    const R = Math.min(W, H) * MULT_TABLE_RADIUS_FRAC * breathe;
     const n = MULT_TABLE_POINTS;
+    const rot = t * MULT_TABLE_ROTATE_SPEED;
 
-    // k ลอยตามเวลาโดย default แต่ถ้ามีเมาส์ ตำแหน่ง x จะ scrub ค่า k แทน
+    // k ลอยตามเวลาโดย default แต่ถ้ามีเมาส์ ตำแหน่ง x จะเป็นเป้าหมายแทน
     const autoK = MULT_TABLE_K_MIN +
       (Math.sin(t * MULT_TABLE_K_SPEED) * 0.5 + 0.5) * (MULT_TABLE_K_MAX - MULT_TABLE_K_MIN);
     const hasMouse = mouse.x > 0 && mouse.x < W;
-    const k = hasMouse
+    const targetK = hasMouse
       ? MULT_TABLE_K_MIN + (mouse.x / W) * (MULT_TABLE_K_MAX - MULT_TABLE_K_MIN)
       : autoK;
+    multTableK += (targetK - multTableK) * MULT_TABLE_K_LERP; // ค่อยๆ ไล่เข้าเป้าหมาย ไม่วาป
+    const k = multTableK;
 
     ctx.save();
     ctx.lineWidth = 0.5;
     for (let i = 0; i < n; i++) {
-      const a1 = (i / n) * Math.PI * 2;
+      const a1 = (i / n) * Math.PI * 2 + rot;
       const j = Math.floor(i * k) % n;
-      const a2 = (j / n) * Math.PI * 2;
+      const a2 = (j / n) * Math.PI * 2 + rot;
+
+      // ไล่ความจางตามระยะคอร์ด — เส้นสั้นชัด เส้นยาวจาง ให้เห็นมิติมากกว่าเส้นเท่ากันหมด
+      const angDist = Math.min(Math.abs(i - j), n - Math.abs(i - j)) / (n / 2);
+      const alpha = base * (0.35 + 0.65 * (1 - angDist));
+
       ctx.beginPath();
       ctx.moveTo(cx + Math.cos(a1) * R, cy + Math.sin(a1) * R);
       ctx.lineTo(cx + Math.cos(a2) * R, cy + Math.sin(a2) * R);
-      ctx.strokeStyle = `rgba(${cR},${cG},${cB},${base})`;
+      ctx.strokeStyle = `rgba(${cR},${cG},${cB},${alpha})`;
       ctx.stroke();
     }
-    ctx.restore();
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // 3B1B G — MANDELBROT SET (drifting zoom into seahorse valley)
-  //
-  // Escape-time fractal คำนวณทีละพิกเซลหนักเกินกว่าจะทำทุกเฟรมที่ full-res
-  // เลยเรนเดอร์ลง offscreen buffer ความละเอียดต่ำ (เหมือน glowTexture caching
-  // ด้านบน) แล้ว throttle การคำนวณใหม่เป็นช่วงๆ — ระหว่างนั้นแค่ drawImage
-  // ขยายภาพเดิมซึ่งถูกมาก เมาส์ที่แช่อยู่ในกรอบจะค่อยๆ เบนจุดซูมไปทางนั้น
-  // ════════════════════════════════════════════════════════════
-  const MANDELBROT_RES           = 160;    // px ของ offscreen buffer (กว้าง=สูง)
-  const MANDELBROT_ITER_BASE     = 42;     // จำนวนรอบวนพื้นฐานตอน zoom=1
-  const MANDELBROT_ITER_SCALE    = 18;     // เพิ่มรอบวนต่อ log2(zoom) — ยิ่งซูมลึกยิ่งต้องวนมากขึ้นถึงจะเห็นรายละเอียด
-  const MANDELBROT_ITER_CAP      = 260;    // เพดานรอบวน กันหลุด budget ตอนซูมลึกมากๆ
-  const MANDELBROT_RECOMPUTE_MS  = 100;    // throttle: คำนวณใหม่ทุกกี่ ms
-  const MANDELBROT_ZOOM_STEP     = 1.018;  // อัตราซูมต่อการคำนวณหนึ่งครั้ง
-  const MANDELBROT_ZOOM_RESET_AT = 4e4;    // ซูมลึกสุดก่อน reset (กัน float คลาดเคลื่อน)
-  const MANDELBROT_FRAC          = 0.32;   // ขนาดกรอบบนจอ เทียบกับ min(W,H)
-  const MANDELBROT_PLANE_WIDTH   = 3.2;    // ความกว้างระนาบเชิงซ้อนตอน zoom=1
-  const MANDELBROT_PRESET        = { re: -0.7436438870371587, im: 0.13182590420532012 }; // seahorse valley
-
-  const mandelbrotBuf = document.createElement('canvas');
-  mandelbrotBuf.width = mandelbrotBuf.height = MANDELBROT_RES;
-  const mandelbrotCtx = mandelbrotBuf.getContext('2d');
-  let mandelbrotImgData = mandelbrotCtx.createImageData(MANDELBROT_RES, MANDELBROT_RES);
-  let mandelbrotZoom = 1;
-  let mandelbrotLastCompute = 0;
-  let mandelbrotTarget = { ...MANDELBROT_PRESET };
-
-  function mandelbrotRect() {
-    const size = Math.min(W, H) * MANDELBROT_FRAC;
-    return { x: W * 0.06, y: H * 0.60, size };
-  }
-
-  function iterForZoom(zoom) {
-    // ยิ่งซูมลึก ยิ่งต้องวนมากขึ้นถึงจะแยกจุดในเซต/นอกเซตออกจากกันได้ถูกต้อง
-    return Math.min(MANDELBROT_ITER_CAP, Math.round(MANDELBROT_ITER_BASE + Math.log2(zoom) * MANDELBROT_ITER_SCALE));
-  }
-
-  function computeMandelbrot() {
-    const data = mandelbrotImgData.data;
-    const res = MANDELBROT_RES;
-    const scale = MANDELBROT_PLANE_WIDTH / mandelbrotZoom;
-    const maxIter = iterForZoom(mandelbrotZoom);
-    const { re: cx, im: cy } = mandelbrotTarget;
-    for (let py = 0; py < res; py++) {
-      const y0 = cy + (py / res - 0.5) * scale;
-      for (let px = 0; px < res; px++) {
-        const x0 = cx + (px / res - 0.5) * scale;
-        let x = 0, y = 0, iter = 0;
-        while (x * x + y * y <= 4 && iter < maxIter) {
-          const xt = x * x - y * y + x0;
-          y = 2 * x * y + y0;
-          x = xt;
-          iter++;
-        }
-        const idx = (py * res + px) * 4;
-        if (iter === maxIter) {
-          data[idx] = data[idx + 1] = data[idx + 2] = data[idx + 3] = 0; // ในเซตเอง — โปร่งใส
-        } else {
-          const glow = iter / maxIter;
-          data[idx]   = cR;
-          data[idx+1] = cG;
-          data[idx+2] = cB;
-          data[idx+3] = Math.min(255, glow * 255 * 1.6);
-        }
-      }
-    }
-    mandelbrotCtx.putImageData(mandelbrotImgData, 0, 0);
-
-    mandelbrotZoom *= MANDELBROT_ZOOM_STEP;
-    if (mandelbrotZoom > MANDELBROT_ZOOM_RESET_AT) mandelbrotZoom = 1;
-  }
-
-  function drawMandelbrot(t) {
-    const { x: rx, y: ry, size } = mandelbrotRect();
-
-    if (t - mandelbrotLastCompute > MANDELBROT_RECOMPUTE_MS) {
-      mandelbrotLastCompute = t;
-      // เมาส์แช่อยู่ในกรอบ → ค่อยๆ เบนจุด zoom-target ไปทางตำแหน่งเมาส์แทน preset
-      if (mouse.x >= rx && mouse.x <= rx + size && mouse.y >= ry && mouse.y <= ry + size) {
-        const scale = MANDELBROT_PLANE_WIDTH / mandelbrotZoom;
-        mandelbrotTarget = {
-          re: mandelbrotTarget.re + ((mouse.x - rx) / size - 0.5) * scale * 0.02,
-          im: mandelbrotTarget.im + ((mouse.y - ry) / size - 0.5) * scale * 0.02,
-        };
-      }
-      computeMandelbrot();
-    }
-
-    const base = (isDark() ? 0.85 : 0.70) * cM;
-    ctx.save();
-    ctx.globalAlpha = base;
-    ctx.drawImage(mandelbrotBuf, rx, ry, size, size);
     ctx.restore();
   }
 
@@ -812,7 +734,7 @@ export function initBackground() {
 
     if (mode==='performance') {
       if (adaptStep<2) { updateDrawLorenz(); drawHyperSphere(t); drawMultTable(t); }
-      if (adaptStep<1) { drawEpicycles(t); drawFlowField(t); drawMandelbrot(t); }
+      if (adaptStep<1) { drawEpicycles(t); drawFlowField(t); }
       if (adaptStep===0) { drawWaveInterference(t); }
     }
   }
