@@ -9,6 +9,13 @@
  *   C. Wave Interference   — mouse adds a 4th wave source at cursor
  *   D. Vector Flow Field   — mouse creates a local vortex in the field
  *   E. 4D Hypersphere      — mouse tilt controls XY rotation plane
+ *   F. Times-Table Cardioid — mouse x-position scrubs the multiplier k,
+ *                             morphing cardioid/nephroid/rose patterns live
+ *   G. Mandelbrot Set      — slow drifting zoom into seahorse valley;
+ *                             hovering inside its frame steers the zoom target
+ *
+ * Interaction extras: click spawns a radiating "starburst" on top of the
+ * existing ripple, for a punchier hit-confirm feel.
  *
  * Physics: Lennard-Jones between particles + blob gravity + flow field
  */
@@ -292,8 +299,46 @@ export function initBackground() {
       ctx.strokeStyle=`rgba(${cR},${cG},${cB},${r.life*(isDark()?0.18:0.13)*cM})`;ctx.lineWidth=1;ctx.stroke();
     });
   }
-  function onClickRipple(e){for(let i=0;i<3;i++)ripples.push({x:e.clientX,y:e.clientY,r:0,maxR:80+i*30,life:1-i*0.22});orb.boost=1;}
+  function onClickRipple(e){for(let i=0;i<3;i++)ripples.push({x:e.clientX,y:e.clientY,r:0,maxR:80+i*30,life:1-i*0.22});orb.boost=1;spawnBurst(e.clientX,e.clientY);}
   window.addEventListener('click',onClickRipple,{passive:true});
+
+  // ════════════════════════════════════════════════════════════
+  // CLICK STARBURST — เอฟเฟ็คเส้นรัศมีระเบิดออกตอนคลิก ซ้อนบน ripple เดิม
+  // ให้ความรู้สึก "hit confirm" ที่ชัดและเวอร์ขึ้น โดยยังคง cost ต่ำ
+  // (ต่อคลิกวาดแค่ BURST_RAYS เส้น, อายุสั้น, กวาดทิ้งเองอัตโนมัติ)
+  // ════════════════════════════════════════════════════════════
+  const BURST_RAYS  = 14;   // จำนวนเส้นรัศมีต่อการระเบิดหนึ่งครั้ง
+  const BURST_LEN   = 90;   // ความยาวสูงสุดของเส้น (px, ก่อนคูณ random)
+  const BURST_DECAY = 0.05; // อัตราจางต่อเฟรม (ยิ่งมาก ยิ่งสั้น)
+  let bursts = [];
+
+  function spawnBurst(x, y) {
+    const rays = [];
+    for (let i = 0; i < BURST_RAYS; i++) {
+      const angle = (i / BURST_RAYS) * Math.PI * 2 + Math.random() * 0.3;
+      rays.push({ angle, len: BURST_LEN * (0.6 + Math.random() * 0.8) });
+    }
+    bursts.push({ x, y, rays, life: 1 });
+  }
+
+  function drawBursts() {
+    bursts = bursts.filter(b => b.life > 0);
+    bursts.forEach(b => {
+      b.life -= BURST_DECAY;
+      const ease = b.life * b.life; // ease-out — จางเร็วขึ้นตอนท้ายอายุ
+      const grow = (1 - b.life) * 1; // 0..1 สัดส่วนที่เส้นยืดออกจากศูนย์กลางแล้ว
+      b.rays.forEach(r => {
+        const ex = b.x + Math.cos(r.angle) * r.len * grow;
+        const ey = b.y + Math.sin(r.angle) * r.len * grow;
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y);
+        ctx.lineTo(ex, ey);
+        ctx.strokeStyle = `rgba(${cR},${cG},${cB},${ease * (isDark() ? 0.55 : 0.42) * cM})`;
+        ctx.lineWidth = 1.2 * ease + 0.3;
+        ctx.stroke();
+      });
+    });
+  }
 
   // ════════════════════════════════════════════════════════════
   // GRID
@@ -584,6 +629,142 @@ export function initBackground() {
   }
 
   // ════════════════════════════════════════════════════════════
+  // 3B1B F — TIMES-TABLE CARDIOID (multiplication table mod n)
+  // จุด n จุดบนวงกลม เชื่อมจุด i ไปยังจุด (i*k) mod n — เมื่อ k เปลี่ยนค่า
+  // จะได้ลวดลาย cardioid/nephroid/rose ที่ morph ไปเรื่อยๆ (Mathologer-style)
+  // เมาส์แกน x ใช้ "scrub" ค่า k โดยตรง ทำให้เล่นแบบ interactive ได้ทันที
+  // ════════════════════════════════════════════════════════════
+  const MULT_TABLE_POINTS  = 180;      // จำนวนจุดบนวงกลม
+  const MULT_TABLE_K_MIN   = 2;        // ตัวคูณ k ต่ำสุด
+  const MULT_TABLE_K_MAX   = 45;       // ตัวคูณ k สูงสุด
+  const MULT_TABLE_K_SPEED = 0.000045; // ความเร็ว auto-drift ของ k เมื่อไม่มีเมาส์
+  const MULT_TABLE_RADIUS_FRAC = 0.42; // รัศมีวงกลม เทียบกับ min(W,H)
+
+  function drawMultTable(t) {
+    const base = (isDark() ? 0.16 : 0.13) * cM;
+    const cx = W * 0.5, cy = H * 0.5;
+    const R = Math.min(W, H) * MULT_TABLE_RADIUS_FRAC;
+    const n = MULT_TABLE_POINTS;
+
+    // k ลอยตามเวลาโดย default แต่ถ้ามีเมาส์ ตำแหน่ง x จะ scrub ค่า k แทน
+    const autoK = MULT_TABLE_K_MIN +
+      (Math.sin(t * MULT_TABLE_K_SPEED) * 0.5 + 0.5) * (MULT_TABLE_K_MAX - MULT_TABLE_K_MIN);
+    const hasMouse = mouse.x > 0 && mouse.x < W;
+    const k = hasMouse
+      ? MULT_TABLE_K_MIN + (mouse.x / W) * (MULT_TABLE_K_MAX - MULT_TABLE_K_MIN)
+      : autoK;
+
+    ctx.save();
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < n; i++) {
+      const a1 = (i / n) * Math.PI * 2;
+      const j = Math.floor(i * k) % n;
+      const a2 = (j / n) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a1) * R, cy + Math.sin(a1) * R);
+      ctx.lineTo(cx + Math.cos(a2) * R, cy + Math.sin(a2) * R);
+      ctx.strokeStyle = `rgba(${cR},${cG},${cB},${base})`;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 3B1B G — MANDELBROT SET (drifting zoom into seahorse valley)
+  //
+  // Escape-time fractal คำนวณทีละพิกเซลหนักเกินกว่าจะทำทุกเฟรมที่ full-res
+  // เลยเรนเดอร์ลง offscreen buffer ความละเอียดต่ำ (เหมือน glowTexture caching
+  // ด้านบน) แล้ว throttle การคำนวณใหม่เป็นช่วงๆ — ระหว่างนั้นแค่ drawImage
+  // ขยายภาพเดิมซึ่งถูกมาก เมาส์ที่แช่อยู่ในกรอบจะค่อยๆ เบนจุดซูมไปทางนั้น
+  // ════════════════════════════════════════════════════════════
+  const MANDELBROT_RES           = 160;    // px ของ offscreen buffer (กว้าง=สูง)
+  const MANDELBROT_ITER_BASE     = 42;     // จำนวนรอบวนพื้นฐานตอน zoom=1
+  const MANDELBROT_ITER_SCALE    = 18;     // เพิ่มรอบวนต่อ log2(zoom) — ยิ่งซูมลึกยิ่งต้องวนมากขึ้นถึงจะเห็นรายละเอียด
+  const MANDELBROT_ITER_CAP      = 260;    // เพดานรอบวน กันหลุด budget ตอนซูมลึกมากๆ
+  const MANDELBROT_RECOMPUTE_MS  = 100;    // throttle: คำนวณใหม่ทุกกี่ ms
+  const MANDELBROT_ZOOM_STEP     = 1.018;  // อัตราซูมต่อการคำนวณหนึ่งครั้ง
+  const MANDELBROT_ZOOM_RESET_AT = 4e4;    // ซูมลึกสุดก่อน reset (กัน float คลาดเคลื่อน)
+  const MANDELBROT_FRAC          = 0.32;   // ขนาดกรอบบนจอ เทียบกับ min(W,H)
+  const MANDELBROT_PLANE_WIDTH   = 3.2;    // ความกว้างระนาบเชิงซ้อนตอน zoom=1
+  const MANDELBROT_PRESET        = { re: -0.7436438870371587, im: 0.13182590420532012 }; // seahorse valley
+
+  const mandelbrotBuf = document.createElement('canvas');
+  mandelbrotBuf.width = mandelbrotBuf.height = MANDELBROT_RES;
+  const mandelbrotCtx = mandelbrotBuf.getContext('2d');
+  let mandelbrotImgData = mandelbrotCtx.createImageData(MANDELBROT_RES, MANDELBROT_RES);
+  let mandelbrotZoom = 1;
+  let mandelbrotLastCompute = 0;
+  let mandelbrotTarget = { ...MANDELBROT_PRESET };
+
+  function mandelbrotRect() {
+    const size = Math.min(W, H) * MANDELBROT_FRAC;
+    return { x: W * 0.06, y: H * 0.60, size };
+  }
+
+  function iterForZoom(zoom) {
+    // ยิ่งซูมลึก ยิ่งต้องวนมากขึ้นถึงจะแยกจุดในเซต/นอกเซตออกจากกันได้ถูกต้อง
+    return Math.min(MANDELBROT_ITER_CAP, Math.round(MANDELBROT_ITER_BASE + Math.log2(zoom) * MANDELBROT_ITER_SCALE));
+  }
+
+  function computeMandelbrot() {
+    const data = mandelbrotImgData.data;
+    const res = MANDELBROT_RES;
+    const scale = MANDELBROT_PLANE_WIDTH / mandelbrotZoom;
+    const maxIter = iterForZoom(mandelbrotZoom);
+    const { re: cx, im: cy } = mandelbrotTarget;
+    for (let py = 0; py < res; py++) {
+      const y0 = cy + (py / res - 0.5) * scale;
+      for (let px = 0; px < res; px++) {
+        const x0 = cx + (px / res - 0.5) * scale;
+        let x = 0, y = 0, iter = 0;
+        while (x * x + y * y <= 4 && iter < maxIter) {
+          const xt = x * x - y * y + x0;
+          y = 2 * x * y + y0;
+          x = xt;
+          iter++;
+        }
+        const idx = (py * res + px) * 4;
+        if (iter === maxIter) {
+          data[idx] = data[idx + 1] = data[idx + 2] = data[idx + 3] = 0; // ในเซตเอง — โปร่งใส
+        } else {
+          const glow = iter / maxIter;
+          data[idx]   = cR;
+          data[idx+1] = cG;
+          data[idx+2] = cB;
+          data[idx+3] = Math.min(255, glow * 255 * 1.6);
+        }
+      }
+    }
+    mandelbrotCtx.putImageData(mandelbrotImgData, 0, 0);
+
+    mandelbrotZoom *= MANDELBROT_ZOOM_STEP;
+    if (mandelbrotZoom > MANDELBROT_ZOOM_RESET_AT) mandelbrotZoom = 1;
+  }
+
+  function drawMandelbrot(t) {
+    const { x: rx, y: ry, size } = mandelbrotRect();
+
+    if (t - mandelbrotLastCompute > MANDELBROT_RECOMPUTE_MS) {
+      mandelbrotLastCompute = t;
+      // เมาส์แช่อยู่ในกรอบ → ค่อยๆ เบนจุด zoom-target ไปทางตำแหน่งเมาส์แทน preset
+      if (mouse.x >= rx && mouse.x <= rx + size && mouse.y >= ry && mouse.y <= ry + size) {
+        const scale = MANDELBROT_PLANE_WIDTH / mandelbrotZoom;
+        mandelbrotTarget = {
+          re: mandelbrotTarget.re + ((mouse.x - rx) / size - 0.5) * scale * 0.02,
+          im: mandelbrotTarget.im + ((mouse.y - ry) / size - 0.5) * scale * 0.02,
+        };
+      }
+      computeMandelbrot();
+    }
+
+    const base = (isDark() ? 0.85 : 0.70) * cM;
+    ctx.save();
+    ctx.globalAlpha = base;
+    ctx.drawImage(mandelbrotBuf, rx, ry, size, size);
+    ctx.restore();
+  }
+
+  // ════════════════════════════════════════════════════════════
   // MAIN LOOP
   // ════════════════════════════════════════════════════════════
   let lastEco=0; const ECO_MS=1000/14;
@@ -625,13 +806,13 @@ export function initBackground() {
     if (mode==='eco') { drawGrid(t); return; }
 
     drawStars();
-    spawnRipple(); drawRipples();
+    spawnRipple(); drawRipples(); drawBursts();
     drawGrid(t);
     drawParticles(t);
 
     if (mode==='performance') {
-      if (adaptStep<2) { updateDrawLorenz(); drawHyperSphere(t); }
-      if (adaptStep<1) { drawEpicycles(t); drawFlowField(t); }
+      if (adaptStep<2) { updateDrawLorenz(); drawHyperSphere(t); drawMultTable(t); }
+      if (adaptStep<1) { drawEpicycles(t); drawFlowField(t); drawMandelbrot(t); }
       if (adaptStep===0) { drawWaveInterference(t); }
     }
   }
