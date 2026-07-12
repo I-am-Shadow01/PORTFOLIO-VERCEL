@@ -670,11 +670,15 @@ export function initBackground() {
     ctx.lineWidth = 0.5;
     for (let i = 0; i < n; i++) {
       const a1 = (i / n) * Math.PI * 2 + rot;
-      const j = Math.floor(i * k) % n;
-      const a2 = (j / n) * Math.PI * 2 + rot;
+      // ตำแหน่งปลายทางเป็นค่าต่อเนื่อง (i*k) mod n — ไม่ floor เป็น index จำนวนเต็ม
+      // เพราะ k เป็นค่าไหลลื่นตลอดเวลา ถ้า floor แล้ว index จะกระโดดกะทันหันตอน k
+      // ขยับแค่นิดเดียว (โดยเฉพาะ i มากๆ) ทำให้เส้นดูสะดุด/กระตุกเป็นบั๊ก
+      const jPos = (i * k) % n;
+      const a2 = (jPos / n) * Math.PI * 2 + rot;
 
       // ไล่ความจางตามระยะคอร์ด — เส้นสั้นชัด เส้นยาวจาง ให้เห็นมิติมากกว่าเส้นเท่ากันหมด
-      const angDist = Math.min(Math.abs(i - j), n - Math.abs(i - j)) / (n / 2);
+      const rawDist = Math.abs(i - jPos);
+      const angDist = Math.min(rawDist, n - rawDist) / (n / 2);
       const alpha = base * (0.35 + 0.65 * (1 - angDist));
 
       ctx.beginPath();
