@@ -13,9 +13,10 @@ export function renderContact({ contact }, t) {
       <p class="contact-sub reveal d2">${contact.subheading}</p>
       <div class="contact-grid">
         ${contact.links.map((link, i) => {
-          const ext = !link.href.startsWith('mailto');
+          const isCopyOnly = link.copyable && !/^(https?:|mailto:)/.test(link.href);
+          const ext = !isCopyOnly && !link.href.startsWith('mailto');
           return `
-            <a href="${link.href}"
+            <a href="${isCopyOnly ? '#' : link.href}"
                ${ext ? 'target="_blank" rel="noopener noreferrer"' : ''}
                class="contact-item reveal d${(i % 3) + 1}${link.copyable ? ' copyable' : ''}"
                ${link.copyable ? `data-copy="${link.value}"` : ''}

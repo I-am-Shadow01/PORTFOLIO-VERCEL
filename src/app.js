@@ -314,7 +314,6 @@ function buildContent(t) {
   // effect เหล่านี้ query element จาก DOM ปัจจุบัน ณ ตอนเรียก ปลอดภัยที่จะเรียกซ้ำทุกครั้ง
   // ที่ rebuild เพราะ element ชุดเก่าถูกลบไปแล้ว (listener เก่าหลุดไปพร้อมกันไม่ค้าง)
   initAnimations();
-  initSpotlight();
   initMagneticButtons();
   initTiltCards();
   initTextScramble();
