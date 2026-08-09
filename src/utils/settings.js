@@ -6,7 +6,8 @@
 const STORAGE_KEY = 'pf_settings';
 
 export const ACCENT_PRESETS = [
-  { name: 'Lime',     value: '#C6F135' },   // default
+  { name: 'Champagne', value: '#D8B777' },  // default
+  { name: 'Lime',     value: '#C6F135' },
   { name: 'Cyan',     value: '#22D3EE' },
   { name: 'Violet',   value: '#A78BFA' },
   { name: 'Rose',     value: '#FB7185' },
@@ -19,10 +20,10 @@ export const ACCENT_PRESETS = [
 export const DEFAULTS = {
   theme:    'system',
   lang:     'system',
-  accent:   '#C6F135',
+  accent:   '#D8B777',
   fontSize: 'md',
   anim:     true,
-  cursor:   true,
+  cursor:   false,
   bgfx:     true,           // interactive canvas background
   perfMode: 'medium',       // 'eco' | 'medium' | 'performance'
   showFps:  false,          // FPS overlay
