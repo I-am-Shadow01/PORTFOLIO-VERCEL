@@ -1514,3 +1514,68 @@ footer{
 .nav-link.active::after {
   left: 0; right: 0;
 }
+
+/* ══════════════════════════════════════════════════════════════
+ * V2 EFFECTS — ripple host / burst / sparkle trail / settings v2
+ * ══════════════════════════════════════════════════════════════ */
+
+/* Ripple host — แทนการยัด inline style overflow:hidden จาก JS */
+.ripple-host{ position:relative; overflow:hidden; }
+.ripple-ink{
+  position:absolute; border-radius:50%; pointer-events:none;
+  background: var(--ac1);
+  transform: scale(0);
+}
+
+/* Particle burst dots ( pooled, animated by WAAPI ) */
+.burst-dot{
+  position:fixed; border-radius:50%; pointer-events:none; z-index:99999;
+  transform:translate(-50%,-50%);
+  will-change:transform,opacity;
+}
+
+/* Cursor sparkle trail dots */
+.spark-dot{
+  position:fixed; left:0; top:0; border-radius:50%;
+  pointer-events:none; z-index:88888;
+  background: var(--ac);
+  opacity:0;
+  will-change:transform,opacity;
+  box-shadow:0 0 6px var(--acg);
+}
+
+/* Settings v2 controls */
+.sp-slider-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin-bottom:8px;
+}
+.sp-slider-out{
+  font-size:.72rem; color:var(--tx3); font-weight:500;
+  min-width:42px; text-align:right; font-variant-numeric:tabular-nums;
+}
+.sp-range{
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px; border-radius:2px;
+  background:linear-gradient(to right, var(--ac) 0%, var(--ac) var(--fill,50%), var(--g2) var(--fill,50%));
+  outline-offset:4px;
+}
+.sp-range::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--ac); border:2px solid var(--bg);
+  box-shadow:0 0 8px var(--acg); cursor:pointer;
+}
+.sp-range::-moz-range-thumb{
+  width:14px; height:14px; border-radius:50%;
+  background:var(--ac); border:2px solid var(--bg);
+  box-shadow:0 0 8px var(--acg); cursor:pointer;
+}
+.sp-shortcuts-hint{
+  font-size:.70rem; color:var(--tx3); line-height:1.6;
+  border-top:1px dashed var(--b0); padding-top:10px;
+}
+
+/* Motion intensity (settings → --motion) drives CSS animation speed */
+.ticker-inner{ animation-duration: calc(32s / var(--motion, 1)); }
+.avail-dot{ animation-duration: calc(2.4s / var(--motion, 1)); }
+.typed-cur{ animation-duration: calc(1.1s / var(--motion, 1)); }

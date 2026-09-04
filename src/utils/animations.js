@@ -3,7 +3,11 @@
  * Scroll-triggered reveal animations via IntersectionObserver
  */
 
+let _observer = null;
+
 export function initAnimations() {
+  // rebuild เนื้อหา (สลับภาษา) จะเรียกซ้ำ — disconnect ตัวเก่าก่อน กัน observer ค้าง
+  _observer?.disconnect();
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach(entry => {
@@ -18,6 +22,8 @@ export function initAnimations() {
       rootMargin: '0px 0px -50px 0px',
     }
   );
+
+  _observer = observer;
 
   // Observe all .reveal elements
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));

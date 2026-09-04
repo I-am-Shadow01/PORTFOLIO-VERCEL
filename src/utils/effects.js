@@ -1,98 +1,123 @@
 /**
- * effects.js — Extra visual flair
+ * effects.js — Extra visual flair (v2: one shared frame loop, pooled nodes)
+ *
  * Magnetic buttons · 3D tilt · Text scramble · Counter · Ripple · Particle trail · Parallax
+ *
+ * สิ่งที่เปลี่ยนจากเวอร์ชันเดิม (resource management):
+ *   • เดิมแต่ละ effect ผูก listener + rAF ของตัวเอง → ตอนนี้ใช้ loop กลางจาก loop.js
+ *     ทั้ง magnetic/tilt/parallax/sparkle วิ่งในเฟรมเดียวกันกับ background
+ *   • magnetic/tilt ใช้ delegated listener เดียว (pointerover/out บน document)
+ *     แทนการผูก mousemove แยกทุกปุ่ม/การ์ด (เดิม ~30 listener)
+ *   • particle burst ใช้ pooled span + Web Animations API (ไม่สร้าง/ทิ้ง DOM ทุกคลิก
+ *     และให้ compositor จัดการ transition แทน main thread)
+ *   • ripple ไม่ยัด inline style overflow:hidden อีกต่อไป — ใช้ CSS class .ripple-host
+ *   • skill glow เดิมตั้ง --glow ที่ไม่มี CSS ตัวไหนใช้เลย → ลบ (CSS :hover ทำอยู่แล้ว)
+ *   • ทุกอย่างเคารพ prefers-reduced-motion และหยุดตอน pointer หยุดนิ่ง (sparkle)
  */
 
-// ── 1. Magnetic Buttons ──────────────────────────────────────
-export function initMagneticButtons() {
-  const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+import { onFrame, onResize, getPointer, getScrollState, getLoopInfo } from './loop.js';
+import { onSettingsChange, getSettings } from './settings.js';
 
-  document.querySelectorAll('.btn, .footer-top, .nav-logo').forEach(el => {
-    let raf;
-    el.addEventListener('mousemove', e => {
-      const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx) * 0.28;
-      const dy = (e.clientY - cy) * 0.28;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        el.style.transform = `translate(${dx}px,${dy}px)`;
-      });
-    });
-    el.addEventListener('mouseleave', () => {
-      cancelAnimationFrame(raf);
-      el.style.transform = '';
-    });
-  });
+let bound = false;
+let animOn = true;
+
+// ── shared hover registry (delegated) ────────────────────────
+const MAGNET_SEL = '.btn, .footer-top, .nav-logo';
+const TILT_SEL = '.project-card, .skill-cat, .stat-card, .terminal-card, .contact-item';
+const TILT = 14;
+
+const hover = { magnet: null, tilt: null, magnetRect: null, tiltRect: null };
+
+function onOver(e) {
+  const m = e.target.closest?.(MAGNET_SEL);
+  if (m && m !== hover.magnet) {
+    hover.magnet = m;
+    hover.magnetRect = m.getBoundingClientRect();
+  }
+  const t = e.target.closest?.(TILT_SEL);
+  if (t && t !== hover.tilt) {
+    hover.tilt = t;
+    hover.tiltRect = t.getBoundingClientRect();
+  }
+}
+function onOut(e) {
+  if (hover.magnet && !hover.magnet.contains(e.relatedTarget)) {
+    hover.magnet.style.transform = '';
+    hover.magnet = null; hover.magnetRect = null;
+  }
+  if (hover.tilt && !hover.tilt.contains(e.relatedTarget)) {
+    const el = hover.tilt;
+    el.style.transition = 'transform 0.5s cubic-bezier(.23,1,.32,1)';
+    el.style.transform = '';
+    hover.tilt = null; hover.tiltRect = null;
+  }
 }
 
-// ── 2. 3D Tilt on Cards ──────────────────────────────────────
-export function initTiltCards() {
-  const TILT = 14;
-  document.querySelectorAll('.project-card, .skill-cat, .stat-card, .terminal-card, .contact-item').forEach(card => {
-    let raf;
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width  - 0.5;
-      const y = (e.clientY - r.top)  / r.height - 0.5;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        card.style.transform = `perspective(700px) rotateX(${-y * TILT}deg) rotateY(${x * TILT}deg) translateZ(8px)`;
-        card.style.transition = 'transform 0.08s ease';
-      });
-    });
-    card.addEventListener('mouseleave', () => {
-      cancelAnimationFrame(raf);
-      card.style.transform = '';
-      card.style.transition = 'transform 0.5s cubic-bezier(.23,1,.32,1)';
-    });
-  });
+// ── 1+2. Magnetic + Tilt (ขับเคลื่อนจาก loop กลาง) ─────────────
+function tickHover(pointer) {
+  if (hover.magnet) {
+    const r = hover.magnetRect;
+    if (r) {
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const dx = (pointer.x - cx) * 0.28, dy = (pointer.y - cy) * 0.28;
+      hover.magnet.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`;
+    }
+  }
+  if (hover.tilt) {
+    const r = hover.tiltRect;
+    if (r && r.width > 0) {
+      const x = (pointer.x - r.left) / r.width - 0.5;
+      const y = (pointer.y - r.top) / r.height - 0.5;
+      hover.tilt.style.transition = 'transform 0.08s ease';
+      hover.tilt.style.transform =
+        `perspective(700px) rotateX(${(-y * TILT).toFixed(2)}deg) rotateY(${(x * TILT).toFixed(2)}deg) translateZ(8px)`;
+    }
+  }
 }
 
-// ── 3. Text Scramble on .section-title ──────────────────────
+// ── 3. Text Scramble ─────────────────────────────────────────
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01';
+let scrambleObs = null;
+const scrambleTasks = new Set();
 
 function scrambleReveal(el) {
   const original = el.textContent;
   const len = original.length;
+  const totalFrames = Math.min(90, len * 3.5);
   let frame = 0;
-  const totalFrames = len * 3.5;
-
-  function tick() {
+  const task = () => {
     let out = '';
+    const reveal = frame / totalFrames;
     for (let i = 0; i < len; i++) {
-      if (original[i] === ' ') { out += ' '; continue; }
-      const reveal = frame / totalFrames;
-      const pos    = i / len;
-      if (pos < reveal) {
-        out += original[i];
-      } else {
-        out += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-      }
+      const ch = original[i];
+      if (ch === ' ') { out += ' '; continue; }
+      out += (i / len) < reveal ? ch
+           : SCRAMBLE_CHARS[(Math.random() * SCRAMBLE_CHARS.length) | 0];
     }
     el.textContent = out;
     frame++;
-    if (frame <= totalFrames + 4) requestAnimationFrame(tick);
-    else el.textContent = original;
-  }
-  tick();
+    if (frame > totalFrames + 4) { el.textContent = original; scrambleTasks.delete(task); }
+  };
+  scrambleTasks.add(task);
 }
 
 export function initTextScramble() {
-  const obs = new IntersectionObserver(entries => {
+  scrambleObs?.disconnect();
+  scrambleObs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
-        scrambleReveal(e.target);
-        obs.unobserve(e.target);
+        if (!getLoopInfo().reducedMotion && getSettings().anim !== false) scrambleReveal(e.target);
+        scrambleObs.unobserve(e.target);
       }
     });
   }, { threshold: 0.6 });
-
-  document.querySelectorAll('.section-title').forEach(el => obs.observe(el));
+  document.querySelectorAll('.section-title').forEach(el => scrambleObs.observe(el));
 }
 
 // ── 4. Counter Animations ────────────────────────────────────
+let counterObs = null;
+const counterTasks = new Set();
+
 function animateCount(el) {
   const raw = el.textContent.trim();
   const match = raw.match(/^([\d.]+)(.*)$/);
@@ -100,214 +125,215 @@ function animateCount(el) {
   const target = parseFloat(match[1]);
   const suffix = match[2] || '';
   const isFloat = raw.includes('.');
-  const duration = 1400;
   const start = performance.now();
-
-  function tick(now) {
-    const t = Math.min((now - start) / duration, 1);
+  const duration = 1400;
+  const task = () => {
+    const t = Math.min((performance.now() - start) / duration, 1);
     const ease = 1 - Math.pow(1 - t, 3);
     const val = target * ease;
     el.textContent = (isFloat ? val.toFixed(1) : Math.round(val)) + suffix;
-    if (t < 1) requestAnimationFrame(tick);
-    else el.textContent = raw;
-  }
-  requestAnimationFrame(tick);
+    if (t >= 1) { el.textContent = raw; counterTasks.delete(task); }
+  };
+  counterTasks.add(task);
 }
 
 export function initCounters() {
-  const obs = new IntersectionObserver(entries => {
+  counterObs?.disconnect();
+  counterObs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
-        animateCount(e.target);
-        obs.unobserve(e.target);
+        if (!getLoopInfo().reducedMotion && getSettings().anim !== false) animateCount(e.target);
+        counterObs.unobserve(e.target);
       }
     });
   }, { threshold: 0.8 });
-
-  document.querySelectorAll('.stat-num, .hstat-n').forEach(el => obs.observe(el));
+  document.querySelectorAll('.stat-num, .hstat-n').forEach(el => counterObs.observe(el));
 }
 
-// ── 5. Ripple on Click ───────────────────────────────────────
-export function initRipple() {
-  document.querySelectorAll('.btn, .nav-link, .mob-item, .contact-item, .project-link-btn').forEach(el => {
-    el.style.position = 'relative';
-    el.style.overflow = 'hidden';
-    el.addEventListener('click', e => {
-      const r = el.getBoundingClientRect();
-      const size = Math.max(r.width, r.height) * 2;
-      const dot  = document.createElement('span');
-      Object.assign(dot.style, {
-        position: 'absolute',
-        borderRadius: '50%',
-        background: 'rgba(198,241,53,0.25)',
-        width: size + 'px', height: size + 'px',
-        left:  (e.clientX - r.left  - size / 2) + 'px',
-        top:   (e.clientY - r.top   - size / 2) + 'px',
-        transform: 'scale(0)',
-        animation: 'ripplePop 0.55s ease-out forwards',
-        pointerEvents: 'none',
-      });
-      el.appendChild(dot);
-      dot.addEventListener('animationend', () => dot.remove());
-    });
+// ── 5. Ripple on Click (CSS class host, pooled span) ─────────
+const RIPPLE_SEL = '.btn, .nav-link, .mob-item, .contact-item, .project-link-btn';
+let ripplePool = [];
+
+function onRippleClick(e) {
+  const el = e.target.closest?.(RIPPLE_SEL);
+  if (!el || getLoopInfo().reducedMotion) return;
+  if (!el.classList.contains('ripple-host')) el.classList.add('ripple-host');
+  const r = el.getBoundingClientRect();
+  const size = Math.max(r.width, r.height) * 2;
+  const dot = ripplePool.pop() || document.createElement('span');
+  dot.className = 'ripple-ink';
+  Object.assign(dot.style, {
+    width: size + 'px', height: size + 'px',
+    left: (e.clientX - r.left - size / 2) + 'px',
+    top:  (e.clientY - r.top  - size / 2) + 'px',
   });
+  el.appendChild(dot);
+  const anim = dot.animate(
+    [{ transform: 'scale(0)', opacity: 1 }, { transform: 'scale(1)', opacity: 0 }],
+    { duration: 550, easing: 'ease-out' }
+  );
+  anim.onfinish = () => { dot.remove(); ripplePool.length < 12 && ripplePool.push(dot); };
+}
+export function initRipple() {
+  document.addEventListener('click', onRippleClick, { passive: true });
 }
 
-// ── 6. Particle Burst on CTA buttons ────────────────────────
-function burst(x, y) {
-  const COUNT = 16;
-  for (let i = 0; i < COUNT; i++) {
-    const p = document.createElement('span');
-    const angle  = (i / COUNT) * Math.PI * 2;
-    const dist   = 40 + Math.random() * 55;
-    const size   = 3 + Math.random() * 4;
-    const ac = getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135';
-    const colors = [ac, ac, '#fff'];
-    const color  = colors[Math.floor(Math.random() * colors.length)];
+// ── 6. Particle Burst on CTA buttons (pool + WAAPI) ──────────
+const BURST_SEL = '.btn-primary, .footer-top';
+const BURST_COUNT = 16;
+const burstPool = [];
+let accentCache = '#c6f135';
 
+function onBurst(e) {
+  const el = e.target.closest?.(BURST_SEL);
+  if (!el || getLoopInfo().reducedMotion) return;
+  const x = e.clientX, y = e.clientY;
+  const white = '#ffffff';
+  for (let i = 0; i < BURST_COUNT; i++) {
+    const p = burstPool.pop() || document.createElement('span');
+    p.className = 'burst-dot';
+    const angle = (i / BURST_COUNT) * Math.PI * 2;
+    const dist = 40 + Math.random() * 55;
+    const size = 3 + Math.random() * 4;
     Object.assign(p.style, {
-      position: 'fixed',
-      left: x + 'px', top: y + 'px',
       width: size + 'px', height: size + 'px',
-      borderRadius: '50%',
-      background: color,
-      pointerEvents: 'none',
-      zIndex: 99999,
-      transform: 'translate(-50%,-50%) scale(1)',
-      transition: `transform 0.6s ease, opacity 0.6s ease`,
+      background: Math.random() < 0.66 ? accentCache : white,
+      left: x + 'px', top: y + 'px',
     });
     document.body.appendChild(p);
-
-    requestAnimationFrame(() => {
-      p.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px)) scale(0)`;
-      p.style.opacity = '0';
-    });
-
-    setTimeout(() => p.remove(), 650);
+    const anim = p.animate([
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px)) scale(0)`, opacity: 0 },
+    ], { duration: 600, easing: 'ease-out' });
+    anim.onfinish = () => { p.remove(); burstPool.length < 48 && burstPool.push(p); };
   }
 }
-
 export function initParticleBurst() {
-  document.querySelectorAll('.btn-primary, .footer-top').forEach(el => {
-    el.addEventListener('click', e => burst(e.clientX, e.clientY));
-  });
+  document.addEventListener('click', onBurst, { passive: true });
 }
 
-// ── 7. Parallax on hero deco lines ──────────────────────────
-export function initParallax() {
-  const root = document.getElementById('__root__');
-  const scroller = root || window;
-
-  // เดิม query .deco-line/.hero-side แค่ตอน init ครั้งเดียว — ถ้าเนื้อหาถูกสร้างใหม่ทีหลัง
-  // (เช่นตอนสลับภาษาแล้ว rebuild section) elements ตัวเก่าจะหลุดอ้างอิง parallax เลยหยุดทำงาน
-  // เปลี่ยนมา query สดทุกครั้งที่ scroll แทน เพื่อให้ทำงานกับ DOM ชุดล่าสุดเสมอ โดยไม่ต้อง init ซ้ำ
-  // (initParallax ยังคงเรียกแค่ครั้งเดียวตอนโหลดหน้า — ป้องกัน scroll listener ซ้อนบน root/window)
-  scroller.addEventListener('scroll', () => {
-    const decos = document.querySelectorAll('.deco-line');
-    const heroSide = document.querySelector('.hero-side');
-    if (!decos.length) return;
-    const scrollTop = root ? root.scrollTop : window.scrollY;
-    const ratio = scrollTop / (window.innerHeight || 800);
-    decos.forEach((d, i) => {
-      const dir   = i % 2 === 0 ? 1 : -1;
-      const speed = 0.18 + i * 0.06;
-      d.style.transform = `translateY(${dir * ratio * speed * 80}px)`;
-    });
-    if (heroSide) heroSide.style.transform = `translateY(${ratio * 0.12 * 80}px)`;
-  }, { passive: true });
+// ── 7. Parallax on hero deco lines (loop + cache, refresh ตอน rebuild) ──
+let decos = [], heroSide = null;
+function refreshParallaxTargets() {
+  decos = [...document.querySelectorAll('.deco-line')];
+  heroSide = document.querySelector('.hero-side');
 }
 
-// ── 8. Skill tag hover glow  ─────────────────────────────────
-export function initSkillGlow() {
-  document.querySelectorAll('.skill-tag, .about-tag, .project-tech').forEach(tag => {
-    tag.addEventListener('mouseenter', () => {
-      tag.style.setProperty('--glow', '1');
-    });
-    tag.addEventListener('mouseleave', () => {
-      tag.style.removeProperty('--glow');
-    });
-  });
-}
-
-// ── 9. Cursor Sparkle Trail ──────────────────────────────────
-let _sparkleActive = false;
-let _sparkleKill = null;
-
-export function initSparkleTrail() {
-  if (_sparkleActive) return;
-  _sparkleActive = true;
-
-  const trail = [];
-  const MAX = 18;
-
-  // อ่าน accent color จริงจาก CSS var (ตามธีมที่ผู้ใช้ตั้งใน settings) แทนสีตายตัว
-  function currentAccent() {
-    return getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135';
+function tickParallax() {
+  if (!decos.length) return;
+  const scroll = getScrollState();
+  const ratio = scroll.y / (window.innerHeight || 800);
+  for (let i = 0; i < decos.length; i++) {
+    const dir = i % 2 === 0 ? 1 : -1;
+    const speed = 0.18 + i * 0.06;
+    decos[i].style.transform = `translateY(${(dir * ratio * speed * 80).toFixed(1)}px)`;
   }
-  // เฉด "อ่อนกว่า" accent เล็กน้อยสำหรับหางท้าย trail — ผสมกับดำแทน hardcode เลขฮาร์ดโค้ด
-  function dimmed(hex) {
-    const h = hex.replace('#', '');
-    if (h.length !== 6) return hex;
-    const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-    const mix = c => Math.round(c * 0.78).toString(16).padStart(2,'0');
-    return `#${mix(r)}${mix(g)}${mix(b)}`;
-  }
+  if (heroSide) heroSide.style.transform = `translateY(${(ratio * 0.12 * 80).toFixed(1)}px)`;
+}
 
-  function Dot() {
+// ── 8. Cursor Sparkle Trail (pool + loop + หยุดตอนนิ่ง) ───────
+const TRAIL_MAX = 18;
+let trailEnabled = true;
+let trailDots = null;
+let trailAcc = 0;
+
+function ensureTrail() {
+  if (trailDots) return;
+  trailDots = Array.from({ length: TRAIL_MAX }, () => {
     const el = document.createElement('div');
-    Object.assign(el.style, {
-      position: 'fixed',
-      borderRadius: '50%',
-      pointerEvents: 'none',
-      zIndex: 88888,
-      width: '5px', height: '5px',
-      background: currentAccent(),
-      transform: 'translate(-50%,-50%)',
-      transition: 'opacity 0.3s ease',
-    });
+    el.className = 'spark-dot';
     document.body.appendChild(el);
-    this.el = el;
-    this.x = 0; this.y = 0;
-    this.life = 0;
-  }
-
-  for (let i = 0; i < MAX; i++) trail.push(new Dot());
-
-  let mx = 0, my = 0, idx = 0;
-  function onMove(e) { mx = e.clientX; my = e.clientY; }
-  document.addEventListener('mousemove', onMove);
-
-  let raf;
-  function frame() {
-    const dot = trail[idx % MAX];
-    const accent = currentAccent();
-    dot.x = mx; dot.y = my;
-    const age = (idx % MAX) / MAX;
-    dot.el.style.left = mx + 'px';
-    dot.el.style.top  = my + 'px';
-    dot.el.style.opacity = '0.7';
-    dot.el.style.width  = (2 + age * 4) + 'px';
-    dot.el.style.height = (2 + age * 4) + 'px';
-    dot.el.style.background = age < 0.5 ? accent : dimmed(accent);
-
-    // fade old dots
-    trail.forEach((d, i) => {
-      const diff = ((idx - i) % MAX + MAX) % MAX;
-      d.el.style.opacity = Math.max(0, 0.7 - diff / MAX);
-    });
-
-    idx++;
-    raf = requestAnimationFrame(frame);
-  }
-  raf = requestAnimationFrame(frame);
-
-  _sparkleKill = () => {
-    cancelAnimationFrame(raf);
-    document.removeEventListener('mousemove', onMove);
-    trail.forEach(d => d.el.remove());
-    _sparkleActive = false;
-    _sparkleKill = null;
-  };
-
-  return _sparkleKill;
+    return { el, life: 0 };
+  });
 }
+function destroyTrail() {
+  if (!trailDots) return;
+  trailDots.forEach(d => d.el.remove());
+  trailDots = null;
+}
+
+let trailIdx = 0;
+function tickTrail(info) {
+  const pointer = getPointer();
+  if (!trailEnabled) { destroyTrail(); return; }
+  const moving = pointer.inside && pointer.idle < 120;
+  if (!trailDots) {
+    if (!moving) return;        // ยังไม่เคยวาดและเมาส์นิ่ง → ไม่ต้องสร้าง DOM
+    ensureTrail();
+  }
+  if (moving) {
+    trailAcc += info.dt;
+    while (trailAcc >= 16) {
+      trailAcc -= 16;
+      const dot = trailDots[trailIdx % TRAIL_MAX];
+      trailIdx++;
+      dot.life = 1;
+      const age = (trailIdx % TRAIL_MAX) / TRAIL_MAX;
+      const size = 2 + age * 4;
+      dot.el.style.transform =
+        `translate3d(${pointer.x}px,${pointer.y}px,0) translate(-50%,-50%)`;
+      dot.el.style.width = size + 'px';
+      dot.el.style.height = size + 'px';
+    }
+  }
+  // จางจุดที่ยังมีชีวิต — พอจางหมดและเมาส์นิ่งแล้ว ค่อยเก็บ DOM ทั้งชุด
+  let alive = false;
+  for (let i = 0; i < TRAIL_MAX; i++) {
+    const d = trailDots[i];
+    if (d.life > 0) {
+      d.life -= 0.045;
+      d.el.style.opacity = Math.max(0, d.life * 0.7).toFixed(2);
+      if (d.life > 0) alive = true;
+    }
+  }
+  if (!alive && !moving) destroyTrail();
+}
+
+// ── single frame subscription ────────────────────────────────
+function tick(info) {
+  const pointer = getPointer();
+  if (!info.reducedMotion && animOn) {
+    tickHover(pointer);
+    tickTrail(info);
+  }
+  tickParallax();   // ผูกกับ scroll — ยังทำงานเพราะไม่ใช่ "animation" แบบวน
+  for (const t of scrambleTasks) t();
+  for (const t of counterTasks) t();
+}
+
+export function initEffects() {
+  if (bound) return refreshAfterRebuild();
+  bound = true;
+
+  document.addEventListener('pointerover', onOver, { passive: true });
+  document.addEventListener('pointerout', onOut, { passive: true });
+  initRipple();
+  initParticleBurst();
+
+  onSettingsChange(s => {
+    accentCache = s.accent || '#c6f135';
+    animOn = s.anim !== false;
+    trailEnabled = s.trail !== false && animOn;
+    if (!trailEnabled) destroyTrail();
+  });
+  animOn = getSettings().anim !== false;
+  trailEnabled = getSettings().trail !== false && animOn;
+  accentCache = (() => {
+    try {
+      return getComputedStyle(document.documentElement).getPropertyValue('--ac').trim() || '#c6f135';
+    } catch { return '#c6f135'; }
+  })();
+
+  onResize(() => { hover.magnetRect = null; hover.tiltRect = null; refreshParallaxTargets(); });
+  window.addEventListener('pf:content-rebuilt', refreshAfterRebuild);
+  onFrame(tick);
+  refreshAfterRebuild();
+}
+
+function refreshAfterRebuild() {
+  refreshParallaxTargets();
+  initTextScramble();
+  initCounters();
+}
+
+

@@ -1,3 +1,5 @@
+import { onFrame } from '../utils/loop.js';
+
 export function renderHero({ meta, about }, t) {
   const s = document.createElement('section');
   s.id = 'hero';
@@ -55,18 +57,23 @@ export function renderHero({ meta, about }, t) {
     </div>
   `;
 
-  // Typing animation
+  // Typing animation — ขับด้วย loop กลาง และหยุดตัวเองเมื่อ element ถูกถอดจาก DOM
+  // (เดิมใช้ setTimeout วนไม่รู้จบ → ตอนสลับภาษาแล้ว rebuild, chain เก่ายังวิ่ง
+  //  เขียนใส่ node ที่หลุดไปแล้วตลอดไป = leak)
   const el = s.querySelector('.typed-text');
-  let ri=0, ci=0, del=false;
-  function tick() {
+  let ri = 0, ci = 0, del = false, acc = 0, nextIn = 900;
+  const unsub = onFrame(info => {
+    if (!el.isConnected) { unsub(); return; }   // เนื้อหาถูก rebuild → จบ chain นี้
+    acc += info.dt;
+    if (acc < nextIn) return;
+    acc = 0;
     const cur = meta.roles[ri];
-    el.textContent = del ? cur.slice(0,--ci) : cur.slice(0,++ci);
-    let d = del ? 38 : 82;
-    if (!del && ci===cur.length) { d=2400; del=true; }
-    else if (del && ci===0) { del=false; ri=(ri+1)%meta.roles.length; d=380; }
-    setTimeout(tick, d);
-  }
-  setTimeout(tick, 900);
+    el.textContent = del ? cur.slice(0, --ci) : cur.slice(0, ++ci);
+    nextIn = del ? 38 : 82;
+    if (!del && ci === cur.length) { nextIn = 2400; del = true; }
+    else if (del && ci === 0) { del = false; ri = (ri + 1) % meta.roles.length; nextIn = 380; }
+    nextIn /= Math.max(0.25, info.motion);   // Motion ใน settings เร่ง/ผ่อนได้
+  });
 
   // Glitch on name hover
   const name = s.querySelector('.hero-name');

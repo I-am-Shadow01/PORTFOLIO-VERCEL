@@ -9,8 +9,9 @@ import { initCursor }           from './utils/cursor.js';
 import { initAnimations }       from './utils/animations.js';
 import { initBackground }       from './utils/background.js';
 import { initSmoothScroll }     from './utils/smoothscroll.js';
-import { initMagneticButtons, initTiltCards, initTextScramble, initCounters, initRipple, initParticleBurst, initParallax, initSkillGlow, initSparkleTrail } from './utils/effects.js';
-import { loadSettings, applySettings, watchSystemTheme, getSettings } from './utils/settings.js';
+import { initEffects }          from './utils/effects.js';
+import { onFrame, getScrollState, getLoopInfo } from './utils/loop.js';
+import { loadSettings, applySettings, watchSystemTheme, getSettings, saveSettings } from './utils/settings.js';
 import { createSettingsPanel }  from './components/settings-panel.js';
 import { createT }              from './i18n.js';
 
@@ -18,11 +19,11 @@ import { createT }              from './i18n.js';
 function createNav(t) {
   const nav = document.createElement('nav');
   const items = [
-    { id:'about',    key:'nav_about'    },
-    { id:'skills',   key:'nav_skills'   },
-    { id:'projects', key:'nav_projects' },
-    { id:'donate',   key:'nav_donate'   },
-    { id:'contact',  key:'nav_contact'  },
+    { id: 'about',    key: 'nav_about'    },
+    { id: 'skills',   key: 'nav_skills'   },
+    { id: 'projects', key: 'nav_projects' },
+    { id: 'donate',   key: 'nav_donate'   },
+    { id: 'contact',  key: 'nav_contact'  },
   ];
 
   nav.innerHTML = `
@@ -30,7 +31,7 @@ function createNav(t) {
       ${CONFIG.meta.firstName}<span>.</span>
     </button>
     <ul class="nav-links" role="list">
-      ${items.map(i=>`
+      ${items.map(i => `
         <li>
           <button class="nav-link" data-navid="${i.id}" onclick="window.__go('${i.id}')">
             ${t(i.key)}
@@ -46,70 +47,66 @@ function createNav(t) {
   let overlay = null;
 
   burger.addEventListener('click', () => overlay ? closeMobile() : openMobile());
-  document.addEventListener('keydown', e => { if (e.key==='Escape' && overlay) closeMobile(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay) closeMobile(); });
 
   function openMobile() {
     burger.classList.add('open');
-    burger.setAttribute('aria-expanded','true');
+    burger.setAttribute('aria-expanded', 'true');
     overlay = buildOverlay(items, t, closeMobile);
     document.body.appendChild(overlay);
-    // rAF ให้ browser paint initial state ก่อน แล้วค่อย add .open
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        overlay.classList.add('open');
-      });
+      requestAnimationFrame(() => { overlay && overlay.classList.add('open'); });
     });
     document.body.style.overflow = 'hidden';
   }
 
   function closeMobile() {
     burger.classList.remove('open');
-    burger.setAttribute('aria-expanded','false');
+    burger.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
     if (!overlay) return;
     overlay.classList.remove('open');
     const el = overlay; overlay = null;
-    el.addEventListener('transitionend', ()=>el.remove(), { once:true });
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+    el.focus?.();
   }
 
   return nav;
 }
 
-// เดิมโค้ด scroll-listener + IntersectionObserver ของ nav ถูกสร้างใหม่ทุกครั้งที่ createNav() ทำงาน
-// แต่ผูกกับ scroller (root/window) ที่เป็น node ถาวร — ถ้าเรียก createNav() ซ้ำ (เช่นตอนสลับภาษา
-// แล้ว rebuild เนื้อหา) จะเพิ่ม listener ซ้อนไปเรื่อยๆ ไม่มีวันถูกลบ (memory leak + ทำงานซ้ำหลายรอบ)
-// เลยแยกส่วนนี้ออกมาเป็นฟังก์ชันที่เรียกครั้งเดียวตอน boot แล้ว query nav/section สดทุกครั้งที่ทำงาน
-// แทนการจับ reference ของ nav element เดิมไว้ตายตัว
+/**
+ * พฤติกรรม nav ที่ผูกครั้งเดียวตอน boot (scroll + section highlight)
+ * — เดิมผูก scroll listener แยก และ query nav ทุก scroll event; ตอนนี้ใช้
+ * scroll state จาก loop กลาง (passive listener เดียวทั้งเว็บ) แล้ว query DOM
+ * สดเฉพาะตอนจำเป็น
+ */
 function bindGlobalNavBehavior() {
-  const root = document.getElementById('__root__');
-  const scroller = root || window;
-
-  scroller.addEventListener('scroll', () => {
-    const scrollTop = root ? root.scrollTop : window.scrollY;
-    const nav = document.querySelector('nav');
-    if (nav) nav.classList.toggle('scrolled', scrollTop > 50);
-  }, { passive:true });
-
+  const ORDER = ['hero', 'about', 'skills', 'projects', 'donate', 'contact'];
   const visibleMap = new Map();
+
   const navObs = new IntersectionObserver(entries => {
     entries.forEach(e => visibleMap.set(e.target.id, e.intersectionRatio));
     let bestId = 'hero', bestRatio = -1;
-    const order = ['hero','about','skills','projects','donate','contact'];
-    order.forEach(id => {
+    for (const id of ORDER) {
       const r = visibleMap.get(id) ?? 0;
       if (r > bestRatio) { bestRatio = r; bestId = id; }
-    });
+    }
     document.querySelectorAll('.nav-link').forEach(b => {
       b.classList.toggle('active', b.dataset.navid === bestId);
     });
-  }, {
-    root: root || null,
-    threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+  }, { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] });
+
+  // scroll-driven UI (nav.scrolled) — อ่านจาก loop ไม่ผูก listener เอง
+  let lastScrolled = null;
+  onFrame(() => {
+    const scrolled = getScrollState().y > 50;
+    if (scrolled !== lastScrolled) {
+      lastScrolled = scrolled;
+      document.querySelector('nav')?.classList.toggle('scrolled', scrolled);
+    }
   });
 
   return {
-    // เรียกทุกครั้งหลัง section ถูกสร้างใหม่ เพราะ IntersectionObserver ผูกกับ element
-    // instance เดิมไม่ได้ถ้า element นั้นถูกลบไปแล้ว ต้อง disconnect แล้ว observe DOM ชุดใหม่
     reobserveSections() {
       navObs.disconnect();
       visibleMap.clear();
@@ -122,9 +119,9 @@ function bindGlobalNavBehavior() {
 function buildOverlay(items, t, onClose) {
   const ov = document.createElement('div');
   ov.className = 'mob-overlay';
-  ov.setAttribute('role','dialog');
-  ov.setAttribute('aria-modal','true');
-  ov.setAttribute('aria-label','Navigation menu');
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.setAttribute('aria-label', 'Navigation menu');
   ov.innerHTML = `
     <div class="mob-glass"><div class="mob-glass-inner">
 
@@ -141,11 +138,11 @@ function buildOverlay(items, t, onClose) {
 
       <!-- Nav links -->
       <nav class="mob-nav">
-        ${items.map((item,i)=>`
+        ${items.map((item, i) => `
           <button class="mob-item" style="--i:${i}"
             onclick="this.closest('.mob-overlay').__close(); setTimeout(()=>window.__go('${item.id}'),120)">
-            <span class="mob-num">0${i+1}</span>
-            <span class="mob-label">${t('nav_'+item.id)}</span>
+            <span class="mob-num">0${i + 1}</span>
+            <span class="mob-label">${t('nav_' + item.id)}</span>
             <span class="mob-arrow">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
@@ -161,14 +158,12 @@ function buildOverlay(items, t, onClose) {
     </div></div>
   `;
   ov.__close = onClose;
-  // Close on backdrop click (outside the drawer panel)
   ov.addEventListener('click', e => { if (e.target === ov) onClose(); });
-  // Wire close button
   ov.querySelector('.mob-close').addEventListener('click', onClose);
   return ov;
 }
 
-// ── Footer ───────────────────────────────────────────────────
+// ── Footer ──────────────────────────────────────────────────
 function createFooter(t) {
   const footer = document.createElement('footer');
   footer.innerHTML = `
@@ -183,53 +178,54 @@ function createFooter(t) {
   return footer;
 }
 
-// ── Scroll progress bar ───────────────────────────────────────
+// ── Scroll progress bar (อ่านค่าจาก loop กลาง — ไม่มี listener เอง) ──
 function initScrollProgress() {
-  const bar = Object.assign(document.createElement('div'), { className:'scroll-progress' });
+  const bar = Object.assign(document.createElement('div'), { className: 'scroll-progress' });
   document.body.appendChild(bar);
-  const root = document.getElementById('__root__');
-  const scroller = root || window;
-  scroller.addEventListener('scroll', ()=>{
-    const scrollTop = root ? root.scrollTop : window.scrollY;
-    const scrollHeight = root ? root.scrollHeight - root.clientHeight : document.body.scrollHeight - window.innerHeight;
-    bar.style.width = Math.min(scrollTop / scrollHeight * 100, 100) + '%';
-  }, { passive:true });
-}
-
-// ── Spotlight on project cards ────────────────────────────────
-function initSpotlight() {
-  document.querySelectorAll('.project-card').forEach(card=>{
-    card.addEventListener('mousemove', e=>{
-      const r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', `${e.clientX-r.left}px`);
-      card.style.setProperty('--my', `${e.clientY-r.top}px`);
-    });
+  let last = -1;
+  onFrame(() => {
+    const p = Math.min(getScrollState().progress * 100, 100);
+    if (Math.abs(p - last) > 0.25) {   // เขียน DOM เฉพาะตอนเปลี่ยนจริง
+      last = p;
+      bar.style.width = p + '%';
+    }
   });
 }
 
-
-// ── FPS Overlay ───────────────────────────────────────────────
+// ── FPS Overlay (node ถาวร — ไม่ rebuild innerHTML ทุกวินาทีแบบเดิม) ──
 function createFpsOverlay() {
   const el = document.createElement('div');
   el.id = 'fps-overlay';
   el.className = 'fps-overlay';
+
+  const numEl = document.createElement('span');
+  numEl.className = 'fps-num';
+  numEl.textContent = '--';
+  const unitEl = document.createElement('span');
+  unitEl.className = 'fps-unit';
+  unitEl.textContent = 'fps';
+  const top = document.createElement('div');
+  top.className = 'fps-top';
+  top.append(numEl, unitEl);
+
+  const BARS = 24;
+  const barsWrap = document.createElement('div');
+  barsWrap.className = 'fps-bars';
+  const bars = [];
+  for (let i = 0; i < BARS; i++) {
+    const b = document.createElement('i');
+    b.style.height = '9px';
+    b.style.background = '#444';
+    barsWrap.appendChild(b);
+    bars.push(b);
+  }
+  el.append(top, barsWrap);
   document.body.appendChild(el);
 
-  let history = new Array(24).fill(60);
+  const history = new Array(BARS).fill(60);
+  let histIdx = 0;
   let visible = false;
-  // Show "--" immediately so user knows it loaded
-  el.innerHTML = `<div class="fps-top"><span class="fps-num">--</span><span class="fps-unit">fps</span></div><div class="fps-bars">${new Array(24).fill('<i style="height:9px;background:#444"></i>').join('')}</div>`;
-
-  function update(fps) {
-    history.push(fps); history.shift();
-    const color = fps >= 50 ? '#4ade80' : fps >= 30 ? '#fbbf24' : '#f87171';
-    const bars = history.map(f => {
-      const h = Math.max(1, Math.round((f / 60) * 16));
-      const c = f >= 50 ? '#4ade80' : f >= 30 ? '#fbbf24' : '#f87171';
-      return `<i style="height:${h}px;background:${c}"></i>`;
-    }).join('');
-    el.innerHTML = `<div class="fps-top"><span class="fps-num" style="color:${color}">${fps}</span><span class="fps-unit">fps</span></div><div class="fps-bars">${bars}</div>`;
-  }
+  let lastShown = -1;
 
   function setVisible(v) {
     visible = v;
@@ -237,68 +233,50 @@ function createFpsOverlay() {
     el.style.pointerEvents = v ? 'auto' : 'none';
   }
 
-  // Count rAF ticks for real rendered FPS (not background canvas fps)
-  let last = performance.now(), count = 0;
-  function tick(t) {
-    count++;
-    if (t - last >= 1000) {
-      update(count);
-      count = 0; last = t;
+  // อัปเดต 2 ครั้ง/วินาที และเฉพาะตอนเปิดอยู่เท่านั้น (ปิด = cost เป็น 0)
+  onFrame(info => {
+    if (!visible || info.frame % 30 !== 0) return;
+    const fps = info.fps;
+    history[histIdx] = fps;
+    histIdx = (histIdx + 1) % BARS;
+    if (fps !== lastShown) {
+      lastShown = fps;
+      numEl.textContent = String(fps);
+      numEl.style.color = fps >= 50 ? '#4ade80' : fps >= 30 ? '#fbbf24' : '#f87171';
     }
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+    for (let i = 0; i < BARS; i++) {
+      const f = history[(histIdx + i) % BARS];
+      bars[i].style.height = Math.max(1, Math.round((f / 60) * 16)) + 'px';
+      bars[i].style.background = f >= 50 ? '#4ade80' : f >= 30 ? '#fbbf24' : '#f87171';
+    }
+  });
 
   return { el, setVisible };
 }
 
-// ── Cursor ────────────────────────────────────────────────────
-let _cur = null;
-function syncCursor() {
-  const on = getSettings().cursor;
-  if (on && !_cur)  _cur = initCursor();
-  if (!on && _cur) { _cur(); _cur = null; }
-}
-
-// ── Background canvas ─────────────────────────────────────────
-let _bg = null;
-let _lastPerfMode = null;
-let _fpsOverlay = null;
-function syncBg() {
-  const s = getSettings();
-  const on = s.bgfx;
-  if (_bg && on && (s.perfMode||'medium') !== (_lastPerfMode||'medium')) { _bg(); _bg = null; }
-  _lastPerfMode = s.perfMode;
-  if (on && !_bg) _bg = initBackground();
-  if (!on && _bg) { _bg(); _bg = null; }
-  if (_fpsOverlay) _fpsOverlay.setVisible(!!s.showFps);
-}
-
 // ── Load CSS ──────────────────────────────────────────────────
 function loadStyles() {
-  return new Promise(res=>{
+  return new Promise(res => {
     if (document.querySelector('link[href*="styles.css"]')) return res();
     const l = document.createElement('link');
-    l.rel='stylesheet'; l.href='./src/styles.css';
-    l.onload=res; l.onerror=res;
+    l.rel = 'stylesheet'; l.href = './src/styles.css';
+    l.onload = res; l.onerror = res;
     document.head.appendChild(l);
   });
 }
 
 function injectMeta() {
   document.title = `${CONFIG.meta.fullName} — Portfolio`;
-  [{ name:'description', content:`${CONFIG.meta.fullName} — ${CONFIG.meta.roles[0]}` },
-   { name:'theme-color', content:'#080810' }]
-  .forEach(m=>{
-    let el = document.head.querySelector(`meta[name="${m.name}"]`);
-    if (!el) { el=document.createElement('meta'); document.head.appendChild(el); }
-    Object.entries(m).forEach(([k,v])=>el.setAttribute(k,v));
-  });
+  [{ name: 'description', content: `${CONFIG.meta.fullName} — ${CONFIG.meta.roles[0]}` },
+   { name: 'theme-color', content: '#080810' }]
+    .forEach(m => {
+      let el = document.head.querySelector(`meta[name="${m.name}"]`);
+      if (!el) { el = document.createElement('meta'); document.head.appendChild(el); }
+      Object.entries(m).forEach(([k, v]) => el.setAttribute(k, v));
+    });
 }
 
 // ── Content build (nav + sections + footer) ─────────────────
-// เรียกได้หลายครั้ง (ตอนโหลดครั้งแรก + ทุกครั้งที่ภาษาเปลี่ยน) เพราะ query/bind
-// effect ทุกตัวข้างในใหม่จาก DOM ปัจจุบันเสมอ ไม่มี state ค้างจากรอบก่อน
 function buildContent(t) {
   const root = document.getElementById('__root__');
   root.innerHTML = '';
@@ -311,18 +289,52 @@ function buildContent(t) {
   root.appendChild(renderContact(CONFIG, t));
   root.appendChild(createFooter(t));
 
-  // effect เหล่านี้ query element จาก DOM ปัจจุบัน ณ ตอนเรียก ปลอดภัยที่จะเรียกซ้ำทุกครั้ง
-  // ที่ rebuild เพราะ element ชุดเก่าถูกลบไปแล้ว (listener เก่าหลุดไปพร้อมกันไม่ค้าง)
   initAnimations();
-  initMagneticButtons();
-  initTiltCards();
-  initTextScramble();
-  initCounters();
-  initRipple();
-  initParticleBurst();
-  initSkillGlow();
 
+  // effect ทุกตัวใช้ delegated listener → ไม่ต้อง bind ใหม่ตอน rebuild
+  // แค่บอกว่าเนื้อหาเปลี่ยน เพื่อให้ refresh cache (parallax targets, observers)
+  window.dispatchEvent(new CustomEvent('pf:content-rebuilt'));
   if (_navBehavior) _navBehavior.reobserveSections();
+}
+
+// ── Cursor ────────────────────────────────────────────────────
+let _cur = null;
+function syncCursor() {
+  const on = getSettings().cursor && !getLoopInfo().reducedMotion;
+  if (on && !_cur)  _cur = initCursor();
+  if (!on && _cur) { _cur(); _cur = null; }
+}
+
+// ── Background canvas ─────────────────────────────────────────
+// perfMode/accent/theme เปลี่ยน → background รับเองผ่าน settings subscription
+// (เดิมทำลายแล้วสร้าง canvas ใหม่ทุกครั้งที่เปลี่ยน perfMode → ภาพวาป + เสีย state)
+let _bg = null;
+let _fpsOverlay = null;
+function syncBg() {
+  const s = getSettings();
+  if (s.bgfx && !_bg) _bg = initBackground();
+  if (!s.bgfx && _bg) { _bg(); _bg = null; }
+  if (_fpsOverlay) _fpsOverlay.setVisible(!!s.showFps);
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────
+function initShortcuts(openSettings) {
+  document.addEventListener('keydown', e => {
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      const k = e.key.toLowerCase();
+      if (k === 's') { e.preventDefault(); openSettings(); }
+      else if (k === 't') {
+        e.preventDefault();
+        const cur = getSettings().theme;
+        const next = cur === 'dark' ? 'light' : cur === 'light' ? 'system' : 'dark';
+        saveSettings({ theme: next });
+      }
+      else if (k === 'f') {
+        e.preventDefault();
+        saveSettings({ showFps: !getSettings().showFps });
+      }
+    }
+  });
 }
 
 // ── Main render ───────────────────────────────────────────────
@@ -337,31 +349,25 @@ async function render() {
     await loadStyles();
     injectMeta();
     _fpsOverlay = createFpsOverlay();
-    // Show/hide based on saved setting immediately
     _fpsOverlay.setVisible(!!getSettings().showFps);
     const { panel, trigger, backdrop } = createSettingsPanel();
     document.body.appendChild(backdrop);
     document.body.appendChild(trigger);
     document.body.appendChild(panel);
 
-    // สิ่งเหล่านี้ผูก listener กับ node ถาวร (root/window/document.body) หรือไม่ผูกกับภาษาเลย
-    // เรียกครั้งเดียวพอตลอดอายุหน้าเว็บ ห้ามเรียกซ้ำตอน rebuild เนื้อหา ไม่งั้น listener ซ้อน
     _navBehavior = bindGlobalNavBehavior();
-    initSmoothScroll(); // ต้องมาก่อน buildContent เพราะ section ใน buildContent ใช้ window.__go ผ่าน onclick
+    initSmoothScroll();
     initScrollProgress();
-    initParallax();
-    initSparkleTrail();
+    initEffects();          // ครั้งเดียวตลอดอายุหน้า (delegated ทั้งชุด)
+    initShortcuts(() => trigger.click());
 
     buildContent(t);
     _ready = true;
     _lastLang = t.lang;
   } else if (t.lang !== _lastLang) {
-    // ภาษาเปลี่ยนจริง — rebuild แค่เนื้อหา ไม่แตะ background canvas/cursor ที่กำลังรันอยู่
     buildContent(t);
     _lastLang = t.lang;
   }
-  // ถ้าเป็นการเปลี่ยน setting อื่น (theme, perfMode, ฯลฯ) ที่ไม่ใช่ lang จะไม่ rebuild เนื้อหา
-  // เพราะไม่จำเป็น (กัน scramble/counter เล่นซ้ำโดยไม่มีเหตุผลทุกครั้งที่แก้ setting อื่น)
 
   syncCursor();
   syncBg();
