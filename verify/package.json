@@ -1,0 +1,14 @@
+{
+  "name": "portfolio-verify",
+  "private": true,
+  "type": "module",
+  "description": "Headless harness: boots the real app (jsdom) + benchmarks the canvas engine (@napi-rs/canvas). Not part of the deployed site.",
+  "scripts": {
+    "smoke": "node smoke.mjs ..",
+    "bench": "node bench.mjs .."
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "@napi-rs/canvas": "^0.1.0"
+  }
+}

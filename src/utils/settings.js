@@ -5,6 +5,9 @@
 
 const STORAGE_KEY = 'pf_settings';
 
+// loop.js ไม่ import settings.js กลับ → ไม่มี circular import
+import { setMotionScale } from './loop.js';
+
 export const ACCENT_PRESETS = [
   { name: 'Lime',     value: '#C6F135' },   // default
   { name: 'Cyan',     value: '#22D3EE' },
@@ -23,9 +26,12 @@ export const DEFAULTS = {
   fontSize: 'md',
   anim:     true,
   cursor:   true,
+  trail:    true,           // cursor sparkle trail
   bgfx:     true,           // interactive canvas background
   perfMode: 'medium',       // 'eco' | 'medium' | 'performance'
+  adaptive: true,           // auto quality: resolution & layers adapt to hold fps
   showFps:  false,          // FPS overlay
+  motion:   100,            // 20..140 (%) — ความเร็วแอนิเมชันทั้งเว็บ
 };
 
 const FS_MAP = { sm: '14px', md: '16px', lg: '18px' };
@@ -36,14 +42,21 @@ let _listeners = [];
 
 // ─── Persistence ──────────────────────────────────────────
 export function loadSettings() {
+  let hadSaved = false;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const saved = JSON.parse(raw);
       _settings = { ...DEFAULTS, ...saved };
+      hadSaved = true;
     }
   } catch (e) {
     _settings = { ...DEFAULTS };
+  }
+  // ครั้งแรก + เครื่องผู้ใช้ขอ reduced-motion → เริ่มต้นแบบประหยัดการเคลื่อนไหว
+  // (ผู้ใช้ยังแก้กลับได้ภายหลัง — ค่านี้จะถูก save ทันทีที่แตะ setting ตัวใดตัวหนึ่ง)
+  if (!hadSaved && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+    _settings = { ..._settings, anim: false, cursor: false, trail: false, perfMode: 'eco', motion: 40 };
   }
   return { ..._settings };
 }
@@ -142,6 +155,11 @@ export function applySettings(s) {
 
   // Font size
   html.style.fontSize = FS_MAP[s.fontSize] || '16px';
+
+  // Motion intensity — ขับทั้ง CSS animation (ticker ฯลฯ) และ JS loop
+  const pct = Math.max(20, Math.min(140, Number(s.motion) || 100));
+  html.style.setProperty('--motion', (pct / 100).toFixed(2));
+  setMotionScale(pct / 100);
 
   // Animations
   html.classList.toggle('no-anim', !s.anim);

@@ -1,8 +1,9 @@
 /**
- * utils/cursor.js
- * Custom cursor — adds .cursor-active to <body> for CSS cursor:none
- * Returns a cleanup function
+ * utils/cursor.js — Custom cursor (v2: ขับเคลื่อนจาก loop กลาง ไม่มี rAF ของตัวเอง)
+ * Adds .cursor-active to <body> for CSS cursor:none. Returns a cleanup function.
  */
+
+import { onFrame, getPointer } from './loop.js';
 
 export function initCursor() {
   // Skip on touch-primary devices
@@ -13,15 +14,8 @@ export function initCursor() {
   document.body.append(dot, ring);
   document.body.classList.add('cursor-active');
 
-  let mx = -200, my = -200, rx = -200, ry = -200;
-  let raf, active = true;
-
-  const onMove = (e) => {
-    mx = e.clientX;
-    my = e.clientY;
-    dot.style.left = mx + 'px';
-    dot.style.top  = my + 'px';
-  };
+  let rx = -200, ry = -200;
+  let visible = false;
 
   const HOVER = [
     'a', 'button', '[role="button"]',
@@ -35,10 +29,9 @@ export function initCursor() {
   const onOut   = e => { if (e.target.closest(HOVER)) ring.classList.remove('hover'); };
   const onDown  = () => ring.classList.add('click');
   const onUp    = () => ring.classList.remove('click');
-  const onLeave = () => { dot.style.opacity = '0'; ring.style.opacity = '0'; };
-  const onEnter = () => { dot.style.opacity = '1'; ring.style.opacity = '1'; };
+  const onLeave = () => { dot.style.opacity = '0'; ring.style.opacity = '0'; visible = false; };
+  const onEnter = () => { dot.style.opacity = '1'; ring.style.opacity = '1'; visible = true; };
 
-  document.addEventListener('mousemove',  onMove);
   document.addEventListener('mouseover',  onOver,  { passive: true });
   document.addEventListener('mouseout',   onOut,   { passive: true });
   document.addEventListener('mousedown',  onDown);
@@ -46,22 +39,24 @@ export function initCursor() {
   document.addEventListener('mouseleave', onLeave);
   document.addEventListener('mouseenter', onEnter);
 
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function loop() {
-    if (!active) return;
-    rx = lerp(rx, mx, 0.13);
-    ry = lerp(ry, my, 0.13);
-    ring.style.left = rx + 'px';
-    ring.style.top  = ry + 'px';
-    raf = requestAnimationFrame(loop);
-  }
-  loop();
+  // dot ตามทันที, ring ค่อยๆ เลื้อยตาม — ทำในเฟรมเดียวกับ background
+  const unsub = onFrame(() => {
+    const p = getPointer();
+    if (p.inside) {
+      if (!visible) { visible = true; dot.style.opacity = '1'; ring.style.opacity = '1'; rx = p.x; ry = p.y; }
+      // ใช้ left/top ตาม CSS เดิม (will-change:left,top) เพื่อให้ .hover/.click
+      // ที่คุม transform ผ่าน CSS ยังทำงานได้
+      dot.style.left = p.x + 'px';
+      dot.style.top  = p.y + 'px';
+      rx += (p.x - rx) * 0.13;
+      ry += (p.y - ry) * 0.13;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+    }
+  });
 
-  // ── Cleanup ──────────────────────────────────────────
   return function cleanup() {
-    active = false;
-    cancelAnimationFrame(raf);
-    document.removeEventListener('mousemove',  onMove);
+    unsub();
     document.removeEventListener('mouseover',  onOver);
     document.removeEventListener('mouseout',   onOut);
     document.removeEventListener('mousedown',  onDown);
@@ -70,7 +65,6 @@ export function initCursor() {
     document.removeEventListener('mouseenter', onEnter);
     dot.remove();
     ring.remove();
-    // Remove cursor-active so native cursor returns
     document.body.classList.remove('cursor-active');
   };
 }
