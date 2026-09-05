@@ -18,7 +18,8 @@ export function renderContact({ contact }, t) {
           return `
             <a href="${isCopyOnly ? '#' : link.href}"
                ${ext ? 'target="_blank" rel="noopener noreferrer"' : ''}
-               class="contact-item reveal d${(i % 3) + 1}${link.copyable ? ' copyable' : ''}"
+               class="contact-item reveal d${(i % 3) + 1} stagger-item${link.copyable ? ' copyable' : ''}"
+               style="--i:${i}"
                ${link.copyable ? `data-copy="${link.value}"` : ''}
                aria-label="${link.label}: ${link.value}">
               ${link.copyable ? `<span class="copy-toast" aria-live="polite">${t('copied')}</span>` : ''}

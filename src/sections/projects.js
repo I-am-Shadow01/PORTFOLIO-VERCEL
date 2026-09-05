@@ -57,7 +57,7 @@ export function renderProjects({ projects }, t) {
 
           <div class="project-footer">
             <div class="project-techs" aria-label="Technologies">
-              ${p.tech.map(tag => `<span class="project-tech">${tag}</span>`).join('')}
+              ${p.tech.map((tag, j) => `<span class="project-tech stagger-item" style="--i:${j}">${tag}</span>`).join('')}
             </div>
             ${(p.github || p.demo) ? `
               <a href="${p.demo || p.github}" target="_blank" rel="noopener noreferrer"

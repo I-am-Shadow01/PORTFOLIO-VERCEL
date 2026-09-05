@@ -75,8 +75,8 @@ export function renderDonate({ donate }, t) {
           </div>
 
           <div class="donate-amounts" role="group" aria-label="${t('donate_amount_label')}">
-            ${(pp.presetAmounts || []).map((amt) => `
-              <button type="button" class="donate-amount-btn" data-amount="${amt}">${amt}</button>
+            ${(pp.presetAmounts || []).map((amt, i) => `
+              <button type="button" class="donate-amount-btn stagger-item" style="--i:${i}" data-amount="${amt}">${amt}</button>
             `).join('')}
           </div>
 
@@ -124,7 +124,8 @@ export function renderDonate({ donate }, t) {
           <div class="contact-grid">
             ${validLinks.map((link, i) => `
               <a href="${link.href}" target="_blank" rel="noopener noreferrer"
-                 class="contact-item reveal d${(i % 3) + 1}"
+                 class="contact-item reveal d${(i % 3) + 1} stagger-item"
+                 style="--i:${i}"
                  aria-label="${link.label}: ${link.value}">
                 <div class="contact-icon" aria-hidden="true">${link.icon}</div>
                 <div class="contact-info">
