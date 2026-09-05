@@ -55,6 +55,12 @@ export function renderHero({ meta, about }, t) {
       <div class="hero-side-line"></div>
       <span class="hero-yr">${new Date().getFullYear()}</span>
     </div>
+    <button class="scroll-cue" type="button" aria-label="${t('scroll')}" onclick="window.__go('about')">
+      <span class="scroll-cue-label">${t('scroll')}</span>
+      <span class="scroll-cue-mouse" aria-hidden="true">
+        <span class="scroll-cue-wheel"></span>
+      </span>
+    </button>
   `;
 
   // Typing animation — ขับด้วย loop กลาง และหยุดตัวเองเมื่อ element ถูกถอดจาก DOM

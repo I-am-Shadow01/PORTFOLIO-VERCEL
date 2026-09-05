@@ -1579,3 +1579,165 @@ footer{
 .ticker-inner{ animation-duration: calc(32s / var(--motion, 1)); }
 .avail-dot{ animation-duration: calc(2.4s / var(--motion, 1)); }
 .typed-cur{ animation-duration: calc(1.1s / var(--motion, 1)); }
+
+/* ══════════════════════════════════════════════════════════════
+ * V3 — MOTION POLISH & PER-SECTION ANIMATIONS
+ * ══════════════════════════════════════════════════════════════ */
+
+/* ── Reveal: smoother spring-feel entrance (opacity/transform only) ── */
+.reveal{
+  transform:translateY(30px);
+  transition:opacity .7s cubic-bezier(.22,.61,.36,1),
+             transform .7s cubic-bezier(.22,.61,.36,1);
+}
+.reveal.in{ transform:translateY(0) }
+
+/* ── Staggered child pop-in ───────────────────────────────────────────
+ * ทาสี class .stagger-item + inline --i ไว้ตั้งแต่ render — element
+ * เริ่มต้นซ่อนเฉพาะเมื่ออยู่ใน container ที่ยังไม่ .in เท่านั้น
+ * (contact-item ใช้ .reveal เองก็เลยไม่โดนกฎนี้) */
+.stagger-item{
+  animation:staggerPop .55s cubic-bezier(.34,1.4,.64,1) both;
+  animation-delay:calc(var(--i,0) * 55ms + 120ms);
+  animation-play-state:paused;
+}
+.reveal:not(.in) .stagger-item{ opacity:0 }
+.reveal.in .stagger-item,
+.stagger-item.reveal.in{ animation-play-state:running }
+@keyframes staggerPop{
+  0%{ opacity:0; transform:translateY(14px) scale(.92) }
+  100%{ opacity:1; }   /* ไม่ล็อก transform ตอนจบ → ไม่ชน tilt/magnet inline */
+}
+
+/* ── Section eyebrow: label + line draw in when section enters ─────── */
+.section-eyebrow .section-line{
+  background:linear-gradient(to right,var(--ac),var(--b1) 55%,transparent);
+  background-size:200% 100%;
+  background-position:100% 0;
+  transition:background-position .9s cubic-bezier(.22,.61,.36,1) .15s;
+}
+.section-eyebrow.in .section-line{ background-position:0 0 }
+.reveal:not(.in) .section-label{ opacity:.35 }
+.section-label{ transition:opacity .5s ease }
+
+/* ── Hero scroll cue ────────────────────────────────────────────────── */
+.scroll-cue{
+  position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  background:none;border:none;cursor:pointer;z-index:2;
+  color:var(--tx3);
+  opacity:0;animation:cueIn .8s ease 1.1s forwards;
+}
+.scroll-cue-label{
+  font-size:.58rem;letter-spacing:.32em;text-transform:uppercase;
+  writing-mode:vertical-rl;
+  transition:color var(--dur);
+}
+.scroll-cue:hover .scroll-cue-label{ color:var(--ac) }
+.scroll-cue-mouse{
+  width:22px;height:34px;border:1.5px solid var(--b2);border-radius:12px;
+  display:flex;justify-content:center;padding-top:6px;
+  transition:border-color var(--dur);
+}
+.scroll-cue:hover .scroll-cue-mouse{ border-color:var(--ac) }
+.scroll-cue-wheel{
+  width:3px;height:7px;border-radius:2px;background:var(--ac);
+  animation:wheelDrop 1.8s cubic-bezier(.4,0,.4,1) infinite;
+}
+@keyframes wheelDrop{
+  0%{ transform:translateY(0);opacity:1 }
+  70%{ transform:translateY(11px);opacity:0 }
+  71%{ transform:translateY(0);opacity:0 }
+  100%{ transform:translateY(0);opacity:1 }
+}
+@keyframes cueIn{
+  from{ opacity:0;transform:translateX(-50%) translateY(10px) }
+  to{ opacity:1;transform:translateX(-50%) translateY(0) }
+}
+@media(max-width:640px){ .scroll-cue{ display:none } }
+
+/* ── Buttons: arrow nudge on hover + active press ──────────────────── */
+.btn svg{ transition:transform var(--dur) var(--spring) }
+.btn-primary:hover svg{ transform:translateX(4px) }
+.btn:active{ transform:translateY(1px) scale(.98) }
+
+/* ── Terminal: lines type in row by row ────────────────────────────── */
+.terminal-card:not(.reveal) .term-line,
+.terminal-card.reveal .term-line{
+  animation:termLineIn .45s ease both;
+  animation-delay:calc(var(--i,0) * 130ms);
+  animation-play-state:paused;
+}
+.term-line:nth-child(1){ --i:0 } .term-line:nth-child(2){ --i:1 }
+.term-line:nth-child(3){ --i:2 } .term-line:nth-child(4){ --i:3 }
+.term-line:nth-child(5){ --i:4 } .term-line:nth-child(6){ --i:5 }
+.term-line:nth-child(7){ --i:6 }
+.terminal-card.reveal.in .term-line{ animation-play-state:running }
+.terminal-card.reveal:not(.in) .term-line{ opacity:0 }
+@keyframes termLineIn{
+  from{ opacity:0; transform:translateX(-8px) }
+  to{ opacity:1; transform:translateX(0) }
+}
+
+/* ── Project card micro-interactions ───────────────────────────────── */
+.project-icon{ transition:transform .45s var(--spring), border-color var(--dur), background var(--dur) }
+.project-card:hover .project-icon{ transform:scale(1.12) rotate(-6deg); border-color:var(--ac) }
+.project-card:hover .project-num{ transform:translateX(-4px) }
+.project-num{ transition:color var(--dur), transform var(--durs) var(--spring) }
+.project-link-btn{ transition:border-color var(--dur),color var(--dur),
+  transform var(--dur) var(--spring),background var(--dur), box-shadow var(--dur) }
+.project-link-btn:hover{ box-shadow:0 4px 18px var(--ac0) }
+
+/* ── Contact: icon pop on card hover ───────────────────────────────── */
+.contact-icon{ transition:border-color var(--dur),background var(--dur),
+  transform .45s var(--spring), color var(--dur) }
+.contact-item:hover .contact-icon{ transform:scale(1.1) rotate(-4deg); color:var(--ac) }
+.contact-item:hover .contact-info{ transform:translateX(2px) }
+.contact-info{ transition:transform var(--dur) var(--spring) }
+
+/* ── Skill category count badge pop ────────────────────────────────── */
+.skill-cat-count{ transition:transform var(--dur) var(--spring), color var(--dur), border-color var(--dur) }
+.skill-cat:hover .skill-cat-count{ transform:scale(1.15); color:var(--ac); border-color:var(--ac1) }
+
+/* ── Donate: QR pop + amount button press ──────────────────────────── */
+.donate-qr-canvas-wrap{ animation:qrPop .7s var(--spring) .2s both }
+@keyframes qrPop{
+  from{ opacity:0; transform:scale(.85) }
+  to{ opacity:1; transform:scale(1) }
+}
+.donate-amount-btn:active{ transform:scale(.94) }
+.donate-amount-btn.active{ box-shadow:0 4px 16px var(--acg) }
+.donate-qr-card .contact-icon{ transition:transform .45s var(--spring), border-color var(--dur), background var(--dur) }
+.donate-copy-btn:hover .contact-icon{ transform:scale(1.1) rotate(-4deg); border-color:var(--ac1); background:var(--ac0) }
+
+/* ── Footer back-to-top arrow nudge ────────────────────────────────── */
+.footer-top svg{ transition:transform var(--dur) var(--spring) }
+.footer-top:hover svg{ transform:translateY(-3px) }
+
+/* ── Nav logo dot pulse on hover ───────────────────────────────────── */
+.nav-logo span{ transition:text-shadow var(--dur) }
+.nav-logo:hover span{ text-shadow:0 0 14px var(--acg) }
+
+/* ── Performance: skip layout/paint for sections far off-screen ──────
+ * (contain-intrinsic-size คุมขนาดประมาณเดิมไว้ให้ scrollbar ไม่เพี้ยน;
+ *  hero เว้นไว้เพราะต้อง render ทันทีตอนเปิดหน้า) */
+#about,#skills,#projects,#donate,#contact{
+  content-visibility:auto;
+  contain-intrinsic-size:auto 900px;
+}
+
+/* ── Motion intensity settings scale the new CSS animations too ────── */
+.scroll-cue-wheel{ animation-duration:calc(1.8s / var(--motion,1)) }
+.stagger-item{ animation-duration:calc(.55s / var(--motion,1)) }
+.term-line{ animation-duration:calc(.45s / var(--motion,1)) }
+
+/* ── No-anim / reduced-motion: everything above collapses gracefully ─ */
+.no-anim .stagger-item,
+.no-anim .term-line{
+  opacity:1 !important; animation:none !important; transform:none !important;
+}
+@media(prefers-reduced-motion:reduce){
+  .stagger-item,.term-line{ opacity:1 !important; animation:none !important; transform:none !important }
+  .section-eyebrow .section-line{ transition:none !important }
+  .scroll-cue{ animation:none !important; opacity:1 }
+}

@@ -19,8 +19,8 @@ export function renderAbout({ about }, t) {
           ${about.bio.map(p => `<p>${p}</p>`).join('')}
         </div>
         <div class="about-tags reveal d3">
-          ${about.tags.map(tag => `
-            <span class="about-tag">
+          ${about.tags.map((tag, i) => `
+            <span class="about-tag stagger-item" style="--i:${i}">
               <span class="about-tag-dot"></span>${tag}
             </span>
           `).join('')}
@@ -37,20 +37,20 @@ export function renderAbout({ about }, t) {
             <span class="t-title">~/whoami</span>
           </div>
           <div class="terminal-body">
-            <p><span class="t-prompt">$</span> <span class="t-cmd">whoami</span></p>
-            <p class="t-out">${about.bio[0].replace(/`([^`]+)`/g, '<code>$1</code>')}</p>
-            <p class="t-blank"></p>
-            <p><span class="t-prompt">$</span> <span class="t-cmd">cat skills.txt</span></p>
-            <p class="t-out t-accent">${about.tags.join('  •  ')}</p>
-            <p class="t-blank"></p>
-            <p><span class="t-prompt">$</span> <span class="t-cursor-blink">▌</span></p>
+            <p class="term-line"><span class="t-prompt">$</span> <span class="t-cmd">whoami</span></p>
+            <p class="t-out term-line">${about.bio[0].replace(/`([^`]+)`/g, '<code>$1</code>')}</p>
+            <p class="t-blank term-line"></p>
+            <p class="term-line"><span class="t-prompt">$</span> <span class="t-cmd">cat skills.txt</span></p>
+            <p class="t-out t-accent term-line">${about.tags.join('  •  ')}</p>
+            <p class="t-blank term-line"></p>
+            <p class="term-line"><span class="t-prompt">$</span> <span class="t-cursor-blink">▌</span></p>
           </div>
         </div>
 
         <!-- Stats -->
         <div class="about-stats reveal d2">
-          ${about.stats.map(s => `
-            <div class="stat-card">
+          ${about.stats.map((s, i) => `
+            <div class="stat-card stagger-item" style="--i:${i}">
               <div class="stat-num">${s.number}</div>
               <div class="stat-label">${s.label}</div>
             </div>

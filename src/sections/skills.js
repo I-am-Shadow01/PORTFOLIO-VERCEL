@@ -36,7 +36,7 @@ export function renderSkills({ skills }, t) {
             <span class="skill-cat-count">${cat.tags.length}</span>
           </div>
           <div class="skill-tags">
-            ${cat.tags.map(tag => `<span class="skill-tag">${tag}</span>`).join('')}
+            ${cat.tags.map((tag, j) => `<span class="skill-tag stagger-item" style="--i:${j}">${tag}</span>`).join('')}
           </div>
         </div>
       `).join('')}

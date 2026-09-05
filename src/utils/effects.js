@@ -15,7 +15,7 @@
  *   • ทุกอย่างเคารพ prefers-reduced-motion และหยุดตอน pointer หยุดนิ่ง (sparkle)
  */
 
-import { onFrame, onResize, getPointer, getScrollState, getLoopInfo } from './loop.js';
+import { onFrame, onResize, getPointer, getScrollState, getLoopInfo, getViewport } from './loop.js';
 import { onSettingsChange, getSettings } from './settings.js';
 
 let bound = false;
@@ -29,6 +29,9 @@ const TILT = 14;
 const hover = { magnet: null, tilt: null, magnetRect: null, tiltRect: null };
 
 function onOver(e) {
+  // pointer: coarse (จอสัมผัส) ไม่มี hover — ไม่ต้องลงทะเบียน magnet/tilt
+  // (เดิมแตะการ์ดบนมือถือค้างแล้ว tilt transform ติดไปเรื่อย)
+  if (e.pointerType === 'touch') return;
   const m = e.target.closest?.(MAGNET_SEL);
   if (m && m !== hover.magnet) {
     hover.magnet = m;
@@ -42,24 +45,44 @@ function onOver(e) {
 }
 function onOut(e) {
   if (hover.magnet && !hover.magnet.contains(e.relatedTarget)) {
-    hover.magnet.style.transform = '';
+    const el = hover.magnet;
+    el.style.transform = '';
+    el.style.transition = '';        // คืน transition ให้ CSS (เดิม inline ตกค้างอยู่ถาวร)
     hover.magnet = null; hover.magnetRect = null;
   }
   if (hover.tilt && !hover.tilt.contains(e.relatedTarget)) {
     const el = hover.tilt;
     el.style.transition = 'transform 0.5s cubic-bezier(.23,1,.32,1)';
     el.style.transform = '';
+    // พอ transition จบ ล้าง inline style ทิ้ง — ไม่งั้น transition color/border ของการ์ด
+    // จะถูก inline transform-transition ทับจน hover ธรรมดาแข็งกระด้าง
+    const clear = () => { el.style.transition = ''; el.removeEventListener('transitionend', clear); };
+    el.addEventListener('transitionend', clear);
+    setTimeout(clear, 600);          // เผื่อ transitionend ไม่ยิง (ถูก interrupt)
     hover.tilt = null; hover.tiltRect = null;
   }
 }
 
 // ── 1+2. Magnetic + Tilt (ขับเคลื่อนจาก loop กลาง) ─────────────
-function tickHover(pointer) {
+// rect ถูก cache ตอน pointerover — แต่ผู้ใช้อาจ scroll ขณะ hover อยู่
+// ทำให้ pivot เพี้ยน → refresh เมิน scroll เร็วกว่า threshold (ไม่เรียก
+// getBoundingClientRect ทุกเฟรม = ไม่บังคับ layout ถาวร)
+function refreshHoverRects() {
+  if (hover.magnet) hover.magnetRect = hover.magnet.getBoundingClientRect();
+  if (hover.tilt)   hover.tiltRect   = hover.tilt.getBoundingClientRect();
+}
+
+function tickHover(pointer, scroll) {
+  // อุปกรณ์ touch (มือถือ/แท็บเล็ต) ไม่มี hover จริง — ข้าม effect ทั้งคู่
+  if (getViewport().touch) return;
+  if (scroll.vel > 120) refreshHoverRects();
+
   if (hover.magnet) {
     const r = hover.magnetRect;
     if (r) {
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const dx = (pointer.x - cx) * 0.28, dy = (pointer.y - cy) * 0.28;
+      hover.magnet.style.transition = 'transform 0.12s ease-out';
       hover.magnet.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`;
     }
   }
@@ -214,21 +237,35 @@ export function initParticleBurst() {
 
 // ── 7. Parallax on hero deco lines (loop + cache, refresh ตอน rebuild) ──
 let decos = [], heroSide = null;
+let heroEl = null;
+let heroInView = true;
+let heroInObs = null;
+
 function refreshParallaxTargets() {
   decos = [...document.querySelectorAll('.deco-line')];
   heroSide = document.querySelector('.hero-side');
+  heroEl = document.getElementById('hero');
+  // ใช้ IntersectionObserver บอกสถานะ hero — เลิกคำนวณ/เขียน DOM ทั้งชุด
+  // ตอน hero อยู่นอกจอ (เดิมเขียน transform ทุกเฟรมตลอดทั้งหน้า)
+  heroInObs?.disconnect();
+  heroInObs = new IntersectionObserver(es => {
+    heroInView = es.some(e => e.isIntersecting);
+    if (!heroInView) { decos.forEach(d => d.style.translate = ''); if (heroSide) heroSide.style.translate = ''; }
+  }, { threshold: 0 });
+  if (heroEl) heroInObs.observe(heroEl);
 }
 
-function tickParallax() {
-  if (!decos.length) return;
-  const scroll = getScrollState();
+function tickParallax(scroll) {
+  if (!decos.length || !heroInView) return;
   const ratio = scroll.y / (window.innerHeight || 800);
   for (let i = 0; i < decos.length; i++) {
     const dir = i % 2 === 0 ? 1 : -1;
     const speed = 0.18 + i * 0.06;
-    decos[i].style.transform = `translateY(${(dir * ratio * speed * 80).toFixed(1)}px)`;
+    // ใช้ CSS `translate` (แยกจาก transform) — ไม่ไปทับ keyframes decoFloat
+    // ที่ animate transform อยู่ เดิม parallax ลบ animation ทางอ้อม
+    decos[i].style.translate = `0 ${(dir * ratio * speed * 80).toFixed(1)}px`;
   }
-  if (heroSide) heroSide.style.transform = `translateY(${(ratio * 0.12 * 80).toFixed(1)}px)`;
+  if (heroSide) heroSide.style.translate = `0 ${(ratio * 0.12 * 80).toFixed(1)}px`;
 }
 
 // ── 8. Cursor Sparkle Trail (pool + loop + หยุดตอนนิ่ง) ───────
@@ -291,14 +328,14 @@ function tickTrail(info) {
 
 // ── single frame subscription ────────────────────────────────
 function tick(info) {
-  const pointer = getPointer();
+  const scroll = getScrollState();
   if (!info.reducedMotion && animOn) {
-    tickHover(pointer);
+    tickHover(getPointer(), scroll);
     tickTrail(info);
   }
-  tickParallax();   // ผูกกับ scroll — ยังทำงานเพราะไม่ใช่ "animation" แบบวน
-  for (const t of scrambleTasks) t();
-  for (const t of counterTasks) t();
+  tickParallax(scroll);   // ผูกกับ scroll — ยังทำงานเพราะไม่ใช่ "animation" แบบวน
+  if (scrambleTasks.size) for (const t of scrambleTasks) t();
+  if (counterTasks.size)  for (const t of counterTasks)  t();
 }
 
 export function initEffects() {
