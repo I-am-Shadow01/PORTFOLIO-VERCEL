@@ -12,15 +12,15 @@ export const CONFIG = {
     fullName: 'CID KAGENOU',
     roles: {
       en: ['Developer in the Shadows', 'AI / LLM Experimenter', 'Physics Seeker'],
-      th: ['นักพัฒนาแห่งเงา', 'ผู้ทดลอง AI / LLM', 'ผู้แสวงหาความจริงแห่งฟิสิกส์'],
+      th: ['ผู้รังสรรค์จากเงามืด', 'ผู้ทดลองปัญญาแห่งจักรกล', 'ผู้ตามหาความจริงที่ซ่อนอยู่ในฟิสิกส์'],
     },
     greeting: {
       en: 'From the shadows, I build.',
-      th: 'เมื่อมีแสง เงาจึงถือกำเนิด.',
+      th: 'เมื่อแสงถือกำเนิด เงาย่อมตื่นขึ้นตาม.',
     },
     location: {
       en: 'Trat, Thailand 🇹🇭',
-      th: 'ตราด ประเทศไทย 🇹🇭',
+      th: 'ตราด · ดินแดนปลายขอบของแสง 🇹🇭',
     },
     available: true,
   },
@@ -32,24 +32,24 @@ export const CONFIG = {
         'AI/LLM, automation, native C, Android/Kotlin, and physics all live in the same shadow. What looks like complexity is usually just a structure that has not been decoded yet.',
       ],
       th: [
-        'ฉันไม่ได้สร้างระบบเพื่อให้มันเพียง “ใช้ได้” — มันต้องเร็ว นิ่ง และเคลื่อนไหวตามเจตจำนงโดยไร้ส่วนเกิน',
-        'AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ล้วนอยู่ในเงาเดียวกัน — สิ่งที่คนอื่นเรียกว่าความซับซ้อน สำหรับฉันคือกฎที่ยังไม่ถูกเปิดเผย',
+        'ฉันไม่เคยพอใจกับสิ่งที่แค่ “ใช้งานได้” — ทุกระบบควรเคลื่อนไหวอย่างเงียบงัน แม่นยำ และทิ้งไว้เพียงร่องรอยของความตั้งใจ',
+        'AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ สำหรับฉันไม่ใช่คนละโลก — มันคือเศษเสี้ยวของกฎเดียวกัน ที่ยังรอให้ใครสักคนเปิดม่านเงาออกดู',
       ],
     },
     tags: ['AI / LLM', 'Automation', 'Physics', 'Discord Bots', 'Android', 'Open Source'],
     stats: [
-      { number: '6', label: { en: 'Public Artifacts', th: 'สิ่งประดิษฐ์ที่เปิดเผย' } },
-      { number: '4', label: { en: 'Featured Constructs', th: 'ผลงานที่ถูกเปิดเผย' } },
-      { number: '4', label: { en: 'Core Languages', th: 'ภาษาหลักในคลังอาวุธ' } },
-      { number: '∞', label: { en: 'Experiments in the Dark', th: 'การทดลองในเงามืด' } },
+      { number: '6', label: { en: 'Public Artifacts', th: 'ร่องรอยที่ปล่อยสู่แสง' } },
+      { number: '4', label: { en: 'Featured Constructs', th: 'บทที่ถูกจารึกไว้' } },
+      { number: '4', label: { en: 'Core Languages', th: 'ภาษาแห่งการรังสรรค์' } },
+      { number: '∞', label: { en: 'Experiments in the Dark', th: 'การทดลองที่ยังไร้จุดจบ' } },
     ],
   },
 
   skills: [
-    { category: { en: 'Languages', th: 'ภาษาแห่งคำสั่ง' }, tags: ['C', 'Python', 'JavaScript', 'Kotlin', 'HTML/CSS'] },
-    { category: { en: 'AI & Automation', th: 'ปัญญาและจักรกล' }, tags: ['Gemini API', 'LLM Tooling', 'Discord Bots', 'yt-dlp', 'FFmpeg'] },
-    { category: { en: 'App & Web', th: 'โลกดิจิทัล' }, tags: ['Jetpack Compose', 'Media3', 'Chrome Extension', 'Vanilla JS', 'Vercel'] },
-    { category: { en: 'Tools & Systems', th: 'เครื่องมือและระบบ' }, tags: ['Git', 'GitHub Actions', 'Docker', 'Linux / Termux', 'llama.cpp'] },
+    { category: { en: 'Languages', th: 'ถ้อยคำที่สั่งการโลก' }, tags: ['C', 'Python', 'JavaScript', 'Kotlin', 'HTML/CSS'] },
+    { category: { en: 'AI & Automation', th: 'ปัญญาที่ถือกำเนิดจากจักรกล' }, tags: ['Gemini API', 'LLM Tooling', 'Discord Bots', 'yt-dlp', 'FFmpeg'] },
+    { category: { en: 'App & Web', th: 'สิ่งที่ก่อร่างในโลกดิจิทัล' }, tags: ['Jetpack Compose', 'Media3', 'Chrome Extension', 'Vanilla JS', 'Vercel'] },
+    { category: { en: 'Tools & Systems', th: 'กลไกที่อยู่เบื้องหลัง' }, tags: ['Git', 'GitHub Actions', 'Docker', 'Linux / Termux', 'llama.cpp'] },
   ],
 
   projects: [
@@ -57,7 +57,7 @@ export const CONFIG = {
       name: 'Discord Bot in C + Gemini AI',
       description: {
         en: 'A native C Discord bot for Windows using WinHTTP + Gemini AI, with per-channel context and multithreading — quiet execution without losing tempo.',
-        th: 'บอท Discord ฝั่ง native C ที่ตัด runtime หนักออกไป เชื่อม Gemini AI ผ่าน WinHTTP พร้อม context แยกต่อ channel และ multi-threading — เคลื่อนไหวอยู่ในเงาโดยไม่เสียจังหวะ',
+        th: 'บอท Discord ที่ถูกหล่อขึ้นจาก native C เชื่อม Gemini AI ผ่าน WinHTTP พร้อม context แยกต่อ channel และ multi-threading — ไม่มีสิ่งฟุ่มเฟือย มีเพียงกลไกที่เคลื่อนไหวอย่างเงียบงัน',
       },
       tech: ['C', 'WinHTTP', 'Gemini API', 'Discord API'],
       icon: '🤖',
@@ -68,7 +68,7 @@ export const CONFIG = {
       name: 'Force Translate Unlocker',
       description: {
         en: 'A Chrome extension that strips translation barriers from websites, including SPA / React / Next.js pages. If a wall exists, remove the wall.',
-        th: 'Chrome extension ที่ฉีกข้อจำกัดการแปลซึ่งเว็บไซต์ซ่อนไว้ รองรับ SPA / React / Next.js และทำงานในเครื่องทั้งหมด — หากมีกำแพง ก็เพียงรื้อมันทิ้ง',
+        th: 'Chrome extension ที่ค่อย ๆ รื้อกำแพงการแปลซึ่งเว็บไซต์ซ่อนไว้ รองรับ SPA / React / Next.js และทำงานอยู่ภายในเครื่อง — เพราะข้อจำกัดทุกอย่าง ล้วนเป็นเพียงสิ่งที่รอวันถูกมองทะลุ',
       },
       tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
       icon: '🌐',
@@ -79,7 +79,7 @@ export const CONFIG = {
       name: 'Discord Music Bot',
       description: {
         en: 'A Discord music system controlling queue, loop, shuffle, and volume through discord.py + yt-dlp + FFmpeg — every sound moves only when commanded.',
-        th: 'ระบบเพลงบน Discord ที่ควบคุม queue, loop, shuffle และ volume ผ่าน discord.py + yt-dlp + FFmpeg — ให้ทุกเสียงเคลื่อนไหวเมื่อเงาออกคำสั่งเท่านั้น',
+        th: 'ระบบเพลงบน Discord ที่ควบคุม queue, loop, shuffle และ volume ผ่าน discord.py + yt-dlp + FFmpeg — ปล่อยให้ทุกท่วงทำนองไหลไปตามจังหวะ โดยไม่มีเสียงรบกวนจากสิ่งที่ไม่จำเป็น',
       },
       tech: ['Python', 'discord.py', 'yt-dlp', 'FFmpeg'],
       icon: '🎵',
@@ -90,7 +90,7 @@ export const CONFIG = {
       name: 'Music App for Android',
       description: {
         en: 'A standalone Android music app that searches and resolves YouTube audio inside the app with NewPipeExtractor, powered by Media3, Jetpack Compose, and an automated GitHub Actions update pipeline.',
-        th: 'แอปเพลง Android แบบ standalone ที่ค้นหาและดึงเสียงจาก YouTube ภายในตัวเองด้วย NewPipeExtractor ใช้ Media3 + Jetpack Compose และมีสายอัปเดตอัตโนมัติ — ระบบที่พึ่งพาเงาของตัวเอง ไม่ต้องรอคำสั่งจากเซิร์ฟเวอร์ภายนอก',
+        th: 'แอปเพลง Android แบบ standalone ที่ค้นหาและดึงเสียงจาก YouTube ภายในตัวเองด้วย NewPipeExtractor ใช้ Media3 + Jetpack Compose พร้อมสายอัปเดตอัตโนมัติ — ระบบที่ยืนได้ด้วยเงาของตัวเอง โดยไม่ต้องฝากชะตาไว้กับเซิร์ฟเวอร์ภายนอก',
       },
       tech: ['Kotlin', 'Jetpack Compose', 'Media3', 'NewPipeExtractor'],
       icon: '📱',
@@ -100,10 +100,10 @@ export const CONFIG = {
   ],
 
   donate: {
-    heading: { en: 'Fuel the Shadow', th: 'หล่อเลี้ยงเงา' },
+    heading: { en: 'Fuel the Shadow', th: 'จุดประกายให้เงายังคงเดินต่อ' },
     subheading: {
       en: 'If something born in the shadows proved useful, you may fuel the next experiment. ☕',
-      th: 'หากสิ่งที่ถือกำเนิดจากเงานี้มีประโยชน์กับคุณ จะส่งพลังให้การทดลองครั้งต่อไปก็ยินดี ☕',
+      th: 'หากสิ่งที่ถือกำเนิดจากเงานี้เคยช่วยอะไรคุณได้แม้เพียงเล็กน้อย คุณก็สามารถทิ้งประกายเล็ก ๆ ไว้ให้การทดลองครั้งถัดไป ☕',
     },
     promptpay: {
       enabled: true,
@@ -125,10 +125,10 @@ export const CONFIG = {
   },
 
   contact: {
-    heading: { en: 'Enter the Shadow Network', th: 'ส่งสัญญาณสู่เงา' },
+    heading: { en: 'Enter the Shadow Network', th: 'ฝากถ้อยคำไว้ในเงา' },
     subheading: {
       en: 'Have something worthy of being built, or a problem the system still cannot solve? Send a signal into the dark.',
-      th: 'มีบางสิ่งที่คู่ควรจะถูกสร้าง หรือปัญหาที่ยังไม่มีใครเปิดโปงกฎของมัน? ส่งสัญญาณมา แล้วเงาจะเป็นผู้ตอบเอง',
+      th: 'หากมีบางสิ่งที่ควรถูกสร้าง หรือปัญหาที่ยังไม่มีใครมองเห็นโครงสร้างของมัน ลองฝากถ้อยคำไว้ในเงา — บางทีคำตอบอาจย้อนกลับมาในเวลาที่เหมาะสม',
     },
     links: [
       { label: 'Email', value: 'naphatsaranmek@gmail.com', icon: '✉', href: 'mailto:naphatsaranmek@gmail.com', copyable: true },
