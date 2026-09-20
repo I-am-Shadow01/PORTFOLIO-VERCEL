@@ -94,29 +94,29 @@ export const TRANSLATIONS = {
   },
   th: {
     // Nav
-    nav_about:    'เกี่ยวกับ',
-    nav_skills:   'ทักษะ',
-    nav_projects: 'โปรเจกต์',
-    nav_donate:   'สนับสนุน',
-    nav_contact:  'ติดต่อ',
+    nav_about:    'ตัวตนในเงา',
+    nav_skills:   'คลังอาวุธ',
+    nav_projects: 'สิ่งที่ถูกสร้าง',
+    nav_donate:   'หล่อเลี้ยงเงา',
+    nav_contact:  'ส่งสัญญาณ',
 
     // Hero
-    available:    'พร้อมรับงาน',
-    scroll:       'เลื่อนลง',
-    cta_projects: 'ดูโปรเจกต์',
-    cta_contact:  'ติดต่อฉัน',
+    available:    'เงายังพร้อมเคลื่อนไหว',
+    scroll:       'ดำดิ่งลงไป',
+    cta_projects: 'เปิดคลังผลงาน',
+    cta_contact:  'ส่งสัญญาณสู่เงา',
 
     // Section labels
-    label_about:    'เกี่ยวกับ',
-    label_skills:   'ทักษะ',
-    label_projects: 'โปรเจกต์',
-    label_contact:  'ติดต่อ',
-    label_donate:   'สนับสนุน',
+    label_about:    'ตัวตนในเงา',
+    label_skills:   'คลังอาวุธ',
+    label_projects: 'สิ่งที่ถูกสร้าง',
+    label_contact:  'ช่องทางแห่งเงา',
+    label_donate:   'พลังหล่อเลี้ยง',
 
     // Section titles
-    title_about:    'ฉันคือใคร',
-    title_skills:   'เทคโนโลยีที่ใช้',
-    title_projects: 'สิ่งที่ฉันสร้าง',
+    title_about:    'ผู้ที่ยืนอยู่หลังม่านเงา',
+    title_skills:   'คลังอาวุธแห่งระบบ',
+    title_projects: 'ร่องรอยที่ทิ้งไว้ในโลกนี้',
 
     // Donate
     donate_amount_label:      'จำนวนเงิน',
@@ -133,13 +133,13 @@ export const TRANSLATIONS = {
 
     // Projects
     github: 'GitHub',
-    demo:   'ดูตัวอย่าง',
+    demo:   'เปิดประตูสู่ของจริง',
 
     // Contact
-    copied: 'คัดลอกแล้ว!',
+    copied: 'บันทึกสัญญาณแล้ว',
 
     // Footer
-    back_top: 'กลับด้านบน',
+    back_top: 'กลับสู่จุดกำเนิด',
 
     // Settings
     settings_title:       'การตั้งค่า',
