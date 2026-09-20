@@ -14,6 +14,7 @@ import { onFrame, getScrollState, getLoopInfo } from './utils/loop.js';
 import { loadSettings, applySettings, watchSystemTheme, getSettings, saveSettings } from './utils/settings.js';
 import { createSettingsPanel }  from './components/settings-panel.js';
 import { createT }              from './i18n.js';
+import { localize }             from './utils/localize.js';
 
 // ── Nav ──────────────────────────────────────────────────────
 function createNav(t) {
@@ -153,7 +154,7 @@ function buildOverlay(items, t, onClose) {
 
       <!-- Footer -->
       <div class="mob-footer">
-        <span>${CONFIG.meta.location}&nbsp;·&nbsp;${new Date().getFullYear()}</span>
+        <span>${localize(CONFIG.meta.location, t.lang)}&nbsp;·&nbsp;${new Date().getFullYear()}</span>
       </div>
     </div></div>
   `;
@@ -265,9 +266,10 @@ function loadStyles() {
   });
 }
 
-function injectMeta() {
+function injectMeta(t) {
   document.title = `${CONFIG.meta.fullName} — Portfolio`;
-  [{ name: 'description', content: `${CONFIG.meta.fullName} — ${CONFIG.meta.roles[0]}` },
+  const roles = localize(CONFIG.meta.roles, t.lang);
+  [{ name: 'description', content: `${CONFIG.meta.fullName} — ${roles[0]}` },
    { name: 'theme-color', content: '#080810' }]
     .forEach(m => {
       let el = document.head.querySelector(`meta[name="${m.name}"]`);
@@ -347,7 +349,7 @@ async function render() {
 
   if (!_ready) {
     await loadStyles();
-    injectMeta();
+    injectMeta(t);
     _fpsOverlay = createFpsOverlay();
     _fpsOverlay.setVisible(!!getSettings().showFps);
     const { panel, trigger, backdrop } = createSettingsPanel();
@@ -365,6 +367,7 @@ async function render() {
     _ready = true;
     _lastLang = t.lang;
   } else if (t.lang !== _lastLang) {
+    injectMeta(t);
     buildContent(t);
     _lastLang = t.lang;
   }
