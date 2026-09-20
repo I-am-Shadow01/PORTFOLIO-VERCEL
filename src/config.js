@@ -1,7 +1,7 @@
 /**
  * ╔══════════════════════════════════════════════╗
  * ║          PORTFOLIO CONFIG                    ║
- * ║  แก้ข้อมูลทั้งหมดได้ที่นี่ที่เดียว           ║
+ * ║     ทุกสิ่งถูกควบคุมจากเงาเพียงจุดเดียว     ║
  * ╚══════════════════════════════════════════════╝
  */
 
@@ -13,11 +13,11 @@ export const CONFIG = {
     lastName: 'KAGENOU',
     fullName: 'CID KAGENOU',
     roles: [
-      'Student Developer',
-      'AI / LLM Enthusiast',
-      'Physics Enthusiast',
+      'Developer in the Shadows',
+      'AI / LLM Experimenter',
+      'Physics Seeker',
     ],
-    greeting: 'Hello, World.',
+    greeting: 'From the shadows, I build.',
     location: 'Trat, Thailand 🇹🇭',
     available: true,
   },
@@ -25,15 +25,15 @@ export const CONFIG = {
   // ─── About / Bio ──────────────────────────────
   about: {
     bio: [
-      `นักเรียนและ developer ที่ชอบสร้างเครื่องมือจริง เน้น AI/LLM, automation, performance และการแก้ปัญหาให้ตรงจุด`,
-      `สนใจฟิสิกส์ โดยเฉพาะ high-energy physics และชอบทดลองเทคโนโลยีตั้งแต่ native C, Python bots, browser extensions ไปจนถึง Android/Kotlin`,
+      `ผมไม่ได้สร้างสิ่งต่าง ๆ เพื่อให้มันแค่ “ทำงานได้” — ผมสร้างให้มันเร็ว นิ่ง และเชื่อฟังเจตจำนงของระบบอย่างสมบูรณ์`,
+      `ในเงามีทั้ง AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ — สิ่งที่คนอื่นมองว่าเป็นความซับซ้อน สำหรับผมมันเป็นแค่โครงสร้างที่ยังถอดรหัสไม่หมด`,
     ],
     tags: ['AI / LLM', 'Automation', 'Physics', 'Discord Bots', 'Android', 'Open Source'],
     stats: [
-      { number: '6',  label: 'Public Repos' },
-      { number: '4',  label: 'Featured Projects' },
+      { number: '6',  label: 'Public Artifacts' },
+      { number: '4',  label: 'Featured Constructs' },
       { number: '4',  label: 'Core Languages' },
-      { number: '∞',  label: 'Experiments' },
+      { number: '∞',  label: 'Experiments in the Dark' },
     ],
   },
 
@@ -58,13 +58,10 @@ export const CONFIG = {
   ],
 
   // ─── Projects ─────────────────────────────────
-  // icon: emoji หรือ text สั้นๆ
-  // github: URL หรือ null
-  // demo: URL หรือ null
   projects: [
     {
       name: 'Discord Bot in C + Gemini AI',
-      description: 'บอท Discord แบบ native C สำหรับ Windows ใช้ WinHTTP เชื่อม Gemini AI, รองรับ context ต่อ channel และทำงานแบบ multi-threaded',
+      description: 'บอท Discord ฝั่ง native C ที่ตัด runtime หนักออกไป เชื่อม Gemini AI ผ่าน WinHTTP พร้อม context แยกต่อ channel และ multi-threading — ทำงานเงียบ ๆ แต่ไม่เสียจังหวะ',
       tech: ['C', 'WinHTTP', 'Gemini API', 'Discord API'],
       icon: '🤖',
       github: 'https://github.com/I-am-Shadow01/discord-bot-c',
@@ -72,7 +69,7 @@ export const CONFIG = {
     },
     {
       name: 'Force Translate Unlocker',
-      description: 'Chrome extension ที่ลบตัวบล็อกการแปลจากเว็บไซต์อัตโนมัติ รองรับ SPA / React / Next.js และทำงานทั้งหมดในเครื่อง',
+      description: 'Chrome extension ที่ลบข้อจำกัดการแปลซึ่งเว็บพยายามซ่อนไว้ รองรับ SPA / React / Next.js และทำงานในเครื่องทั้งหมด — ถ้ามีกำแพง ก็แค่รื้อมันออก',
       tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
       icon: '🌐',
       github: 'https://github.com/I-am-Shadow01/force-translate-unlocker',
@@ -80,7 +77,7 @@ export const CONFIG = {
     },
     {
       name: 'Discord Music Bot',
-      description: 'บอทเพลง Discord ที่ใช้ discord.py + yt-dlp รองรับ queue, loop, shuffle, volume และ music control panel',
+      description: 'ระบบเพลงบน Discord ที่ควบคุม queue, loop, shuffle และ volume ผ่าน discord.py + yt-dlp + FFmpeg — ให้เสียงเดินตามคำสั่งโดยไม่สร้างความวุ่นวายเกินจำเป็น',
       tech: ['Python', 'discord.py', 'yt-dlp', 'FFmpeg'],
       icon: '🎵',
       github: 'https://github.com/I-am-Shadow01/discord-music-bot',
@@ -88,7 +85,7 @@ export const CONFIG = {
     },
     {
       name: 'Music App for Android',
-      description: 'แอปเล่นเพลง Android แบบ standalone ค้นหาและดึงเสียงจาก YouTube ในแอปด้วย NewPipeExtractor พร้อม Media3 และระบบอัปเดตผ่าน GitHub Actions',
+      description: 'แอปเพลง Android แบบ standalone ที่ค้นหาและดึงเสียงจาก YouTube ภายในตัวเองด้วย NewPipeExtractor ใช้ Media3 และ Jetpack Compose พร้อมสายอัปเดตอัตโนมัติผ่าน GitHub Actions',
       tech: ['Kotlin', 'Jetpack Compose', 'Media3', 'NewPipeExtractor'],
       icon: '📱',
       github: 'https://github.com/I-am-Shadow01/music-app',
@@ -97,12 +94,10 @@ export const CONFIG = {
   ],
 
   // ─── Donate / Support ──────────────────────────
-  // แก้ค่าทั้งหมดในนี้ที่เดียว — ห้ามแก้ใน sections/donate.js
   donate: {
-    heading: 'Buy Me a Coffee',
-    subheading: 'ถ้าโปรเจกต์หรือ tool ที่ผมทำมีประโยชน์ เลี้ยงกาแฟกันได้ครับ ☕',
+    heading: 'Fuel the Shadow',
+    subheading: 'ถ้าเครื่องมือจากเงามีประโยชน์กับคุณ จะเติมพลังให้การทดลองครั้งต่อไปก็ยินดี ☕',
 
-    // PromptPay QR — สร้าง QR ฝั่ง client ทั้งหมด
     promptpay: {
       enabled: true,
       id: '0889304036',
@@ -125,14 +120,13 @@ export const CONFIG = {
       accountName: 'CID KAGENOU',
     },
 
-    // ยังไม่มีช่องทางอื่นที่ยืนยันแล้ว จึงไม่แสดง placeholder
     links: [],
   },
 
   // ─── Contact & Social ─────────────────────────
   contact: {
-    heading: "Let's Work Together",
-    subheading: 'มีโปรเจกต์น่าสนใจ อยากร่วมงาน หรือแค่อยากทักทาย? ยินดีเสมอ',
+    heading: 'Enter the Shadow Network',
+    subheading: 'มีโปรเจกต์ที่คู่ควรจะถูกสร้าง หรือปัญหาที่ระบบยังแก้ไม่ได้? ส่งสัญญาณมา แล้วค่อยดูว่าความมืดจะตอบกลับหรือไม่',
     links: [
       {
         label: 'Email',
