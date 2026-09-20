@@ -1,3 +1,5 @@
+import { localize } from '../utils/localize.js';
+
 /**
  * sections/skills.js — with animated skill bars + tech ticker
  */
@@ -32,7 +34,7 @@ export function renderSkills({ skills }, t) {
       ${skills.map((cat, i) => `
         <div class="skill-cat reveal d${(i % 4) + 1}">
           <div class="skill-cat-header">
-            <p class="skill-cat-title">${cat.category}</p>
+            <p class="skill-cat-title">${localize(cat.category, t.lang)}</p>
             <span class="skill-cat-count">${cat.tags.length}</span>
           </div>
           <div class="skill-tags">
