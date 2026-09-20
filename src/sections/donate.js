@@ -1,3 +1,5 @@
+import { localize } from '../utils/localize.js';
+
 /**
  * sections/donate.js
  *
@@ -63,8 +65,8 @@ export function renderDonate({ donate }, t) {
       <span class="section-label">${t('label_donate')}</span>
       <span class="section-line"></span>
     </div>
-    <h2 class="section-title reveal d1">${donate.heading}</h2>
-    <p class="contact-sub reveal d2">${donate.subheading}</p>
+    <h2 class="section-title reveal d1">${localize(donate.heading, t.lang)}</h2>
+    <p class="contact-sub reveal d2">${localize(donate.subheading, t.lang)}</p>
 
     <div class="donate-grid">
       ${pp.enabled ? `
