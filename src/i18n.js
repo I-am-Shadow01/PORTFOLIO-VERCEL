@@ -94,29 +94,29 @@ export const TRANSLATIONS = {
   },
   th: {
     // Nav
-    nav_about:    'เรื่องราวของฉัน',
-    nav_skills:   'สิ่งที่ใช้รังสรรค์',
-    nav_projects: 'ร่องรอยที่สร้างไว้',
-    nav_donate:   'ส่งพลังให้เงา',
-    nav_contact:  'ฝากถ้อยคำ',
+    nav_about:    'เกี่ยวกับ',
+    nav_skills:   'ทักษะ',
+    nav_projects: 'โปรเจกต์',
+    nav_donate:   'สนับสนุน',
+    nav_contact:  'ติดต่อ',
 
     // Hero
-    available:    'ยังคงรอการเคลื่อนไหวครั้งต่อไป',
-    scroll:       'ก้าวลึกลงไป',
-    cta_projects: 'ตามรอยสิ่งที่สร้างไว้',
-    cta_contact:  'ฝากถ้อยคำไว้ในเงา',
+    available:    'พร้อมทำโปรเจกต์ใหม่',
+    scroll:       'เลื่อนลง',
+    cta_projects: 'ดูโปรเจกต์',
+    cta_contact:  'ติดต่อ',
 
     // Section labels
-    label_about:    'เรื่องราว',
-    label_skills:   'สิ่งที่ใช้รังสรรค์',
-    label_projects: 'ร่องรอย',
-    label_contact:  'เสียงจากอีกฟาก',
-    label_donate:   'ประกายเล็ก ๆ',
+    label_about:    'เกี่ยวกับ',
+    label_skills:   'ทักษะ',
+    label_projects: 'โปรเจกต์',
+    label_contact:  'ติดต่อ',
+    label_donate:   'สนับสนุน',
 
     // Section titles
-    title_about:    'ตัวตนที่ซ่อนอยู่หลังม่านเงา',
-    title_skills:   'สิ่งที่ใช้ร้อยเรียงโลกดิจิทัล',
-    title_projects: 'ร่องรอยที่ครั้งหนึ่งเคยถูกสร้างขึ้น',
+    title_about:    'ในเงานั้นมีอะไรอยู่',
+    title_skills:   'สิ่งที่ใช้สร้าง',
+    title_projects: 'สิ่งที่สร้างไว้',
 
     // Donate
     donate_amount_label:      'จำนวนเงิน',
@@ -133,13 +133,13 @@ export const TRANSLATIONS = {
 
     // Projects
     github: 'GitHub',
-    demo:   'ก้าวเข้าไปดู',
+    demo:   'ดูตัวอย่าง',
 
     // Contact
-    copied: 'เก็บถ้อยคำไว้แล้ว',
+    copied: 'คัดลอกแล้ว',
 
     // Footer
-    back_top: 'ย้อนกลับสู่จุดเริ่มต้น',
+    back_top: 'กลับด้านบน',
 
     // Settings
     settings_title:       'การตั้งค่า',
