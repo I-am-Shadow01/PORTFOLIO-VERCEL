@@ -1,8 +1,12 @@
+import { localize } from '../utils/localize.js';
+
 /**
  * sections/about.js — enhanced
  */
 
 export function renderAbout({ about }, t) {
+  const lang = t.lang;
+  const bio = localize(about.bio, lang);
   const section = document.createElement('section');
   section.id = 'about';
 
@@ -16,7 +20,7 @@ export function renderAbout({ about }, t) {
       <div class="about-text-col">
         <h2 class="section-title reveal d1">${t('title_about')}</h2>
         <div class="about-bio reveal d2">
-          ${about.bio.map(p => `<p>${p}</p>`).join('')}
+          ${bio.map(p => `<p>${p}</p>`).join('')}
         </div>
         <div class="about-tags reveal d3">
           ${about.tags.map((tag, i) => `
@@ -38,7 +42,7 @@ export function renderAbout({ about }, t) {
           </div>
           <div class="terminal-body">
             <p class="term-line"><span class="t-prompt">$</span> <span class="t-cmd">whoami</span></p>
-            <p class="t-out term-line">${about.bio[0].replace(/`([^`]+)`/g, '<code>$1</code>')}</p>
+            <p class="t-out term-line">${bio[0].replace(/`([^`]+)`/g, '<code>$1</code>')}</p>
             <p class="t-blank term-line"></p>
             <p class="term-line"><span class="t-prompt">$</span> <span class="t-cmd">cat skills.txt</span></p>
             <p class="t-out t-accent term-line">${about.tags.join('  •  ')}</p>
@@ -52,7 +56,7 @@ export function renderAbout({ about }, t) {
           ${about.stats.map((s, i) => `
             <div class="stat-card stagger-item" style="--i:${i}">
               <div class="stat-num">${s.number}</div>
-              <div class="stat-label">${s.label}</div>
+              <div class="stat-label">${localize(s.label, lang)}</div>
             </div>
           `).join('')}
         </div>
