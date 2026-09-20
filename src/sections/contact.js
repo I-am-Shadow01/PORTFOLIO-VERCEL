@@ -1,3 +1,5 @@
+import { localize } from '../utils/localize.js';
+
 /**
  * sections/contact.js
  */
@@ -9,8 +11,8 @@ export function renderContact({ contact }, t) {
   section.innerHTML = `
     <p class="section-label reveal">${t('label_contact')}</p>
     <div class="contact-inner">
-      <h2 class="section-title reveal d1">${contact.heading}</h2>
-      <p class="contact-sub reveal d2">${contact.subheading}</p>
+      <h2 class="section-title reveal d1">${localize(contact.heading, t.lang)}</h2>
+      <p class="contact-sub reveal d2">${localize(contact.subheading, t.lang)}</p>
       <div class="contact-grid">
         ${contact.links.map((link, i) => {
           const isCopyOnly = link.copyable && !/^(https?:|mailto:)/.test(link.href);
