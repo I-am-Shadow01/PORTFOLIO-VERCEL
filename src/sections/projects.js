@@ -1,3 +1,5 @@
+import { localize } from '../utils/localize.js';
+
 /**
  * sections/projects.js — enhanced cards
  */
@@ -53,7 +55,7 @@ export function renderProjects({ projects }, t) {
           </div>
 
           <h3 class="project-name">${p.name}</h3>
-          <p class="project-desc">${p.description}</p>
+          <p class="project-desc">${localize(p.description, t.lang)}</p>
 
           <div class="project-footer">
             <div class="project-techs" aria-label="Technologies">
