@@ -1,6 +1,10 @@
 import { onFrame } from '../utils/loop.js';
+import { localize } from '../utils/localize.js';
 
 export function renderHero({ meta, about }, t) {
+  const lang = t.lang;
+  const roles = localize(meta.roles, lang);
+  const stats = about.stats;
   const s = document.createElement('section');
   s.id = 'hero';
   s.innerHTML = `
@@ -11,7 +15,7 @@ export function renderHero({ meta, about }, t) {
       <span class="deco-line deco-4">npm run deploy</span>
     </div>
     <div class="hero-content">
-      <p class="hero-eyebrow reveal"><span class="eyebrow-dot"></span>${meta.greeting}</p>
+      <p class="hero-eyebrow reveal"><span class="eyebrow-dot"></span>${localize(meta.greeting, lang)}</p>
       <h1 class="hero-name reveal d1">
         <span class="name-first">${meta.firstName}</span><span class="name-last">${meta.lastName}</span><span class="name-dot">.</span>
       </h1>
@@ -36,10 +40,10 @@ export function renderHero({ meta, about }, t) {
         <button class="btn btn-ghost" onclick="window.__go('contact')">${t('cta_contact')}</button>
       </div>
       <div class="hero-stats glass reveal d5">
-        ${about.stats.map(s=>`
+        ${stats.map(s=>`
           <div class="hstat">
             <span class="hstat-n">${s.number}</span>
-            <span class="hstat-l">${s.label}</span>
+            <span class="hstat-l">${localize(s.label, lang)}</span>
           </div>
         `).join('<div class="hstat-sep"></div>')}
       </div>
@@ -50,7 +54,7 @@ export function renderHero({ meta, about }, t) {
           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
           <circle cx="12" cy="10" r="3"/>
         </svg>
-        ${meta.location}
+        ${localize(meta.location, lang)}
       </span>
       <div class="hero-side-line"></div>
       <span class="hero-yr">${new Date().getFullYear()}</span>
@@ -73,11 +77,11 @@ export function renderHero({ meta, about }, t) {
     acc += info.dt;
     if (acc < nextIn) return;
     acc = 0;
-    const cur = meta.roles[ri];
+    const cur = roles[ri];
     el.textContent = del ? cur.slice(0, --ci) : cur.slice(0, ++ci);
     nextIn = del ? 38 : 82;
     if (!del && ci === cur.length) { nextIn = 2400; del = true; }
-    else if (del && ci === 0) { del = false; ri = (ri + 1) % meta.roles.length; nextIn = 380; }
+    else if (del && ci === 0) { del = false; ri = (ri + 1) % roles.length; nextIn = 380; }
     nextIn /= Math.max(0.25, info.motion);   // Motion ใน settings เร่ง/ผ่อนได้
   });
 
