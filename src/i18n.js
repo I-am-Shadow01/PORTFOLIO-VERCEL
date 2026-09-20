@@ -94,29 +94,29 @@ export const TRANSLATIONS = {
   },
   th: {
     // Nav
-    nav_about:    'ตัวตนในเงา',
-    nav_skills:   'คลังอาวุธ',
-    nav_projects: 'สิ่งที่ถูกสร้าง',
-    nav_donate:   'หล่อเลี้ยงเงา',
-    nav_contact:  'ส่งสัญญาณ',
+    nav_about:    'เรื่องราวของฉัน',
+    nav_skills:   'สิ่งที่ใช้รังสรรค์',
+    nav_projects: 'ร่องรอยที่สร้างไว้',
+    nav_donate:   'ส่งพลังให้เงา',
+    nav_contact:  'ฝากถ้อยคำ',
 
     // Hero
-    available:    'เงายังพร้อมเคลื่อนไหว',
-    scroll:       'ดำดิ่งลงไป',
-    cta_projects: 'เปิดคลังผลงาน',
-    cta_contact:  'ส่งสัญญาณสู่เงา',
+    available:    'ยังคงรอการเคลื่อนไหวครั้งต่อไป',
+    scroll:       'ก้าวลึกลงไป',
+    cta_projects: 'ตามรอยสิ่งที่สร้างไว้',
+    cta_contact:  'ฝากถ้อยคำไว้ในเงา',
 
     // Section labels
-    label_about:    'ตัวตนในเงา',
-    label_skills:   'คลังอาวุธ',
-    label_projects: 'สิ่งที่ถูกสร้าง',
-    label_contact:  'ช่องทางแห่งเงา',
-    label_donate:   'พลังหล่อเลี้ยง',
+    label_about:    'เรื่องราว',
+    label_skills:   'สิ่งที่ใช้รังสรรค์',
+    label_projects: 'ร่องรอย',
+    label_contact:  'เสียงจากอีกฟาก',
+    label_donate:   'ประกายเล็ก ๆ',
 
     // Section titles
-    title_about:    'ผู้ที่ยืนอยู่หลังม่านเงา',
-    title_skills:   'คลังอาวุธแห่งระบบ',
-    title_projects: 'ร่องรอยที่ทิ้งไว้ในโลกนี้',
+    title_about:    'ตัวตนที่ซ่อนอยู่หลังม่านเงา',
+    title_skills:   'สิ่งที่ใช้ร้อยเรียงโลกดิจิทัล',
+    title_projects: 'ร่องรอยที่ครั้งหนึ่งเคยถูกสร้างขึ้น',
 
     // Donate
     donate_amount_label:      'จำนวนเงิน',
@@ -133,13 +133,13 @@ export const TRANSLATIONS = {
 
     // Projects
     github: 'GitHub',
-    demo:   'เปิดประตูสู่ของจริง',
+    demo:   'ก้าวเข้าไปดู',
 
     // Contact
-    copied: 'บันทึกสัญญาณแล้ว',
+    copied: 'เก็บถ้อยคำไว้แล้ว',
 
     // Footer
-    back_top: 'กลับสู่จุดกำเนิด',
+    back_top: 'ย้อนกลับสู่จุดเริ่มต้น',
 
     // Settings
     settings_title:       'การตั้งค่า',
