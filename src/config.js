@@ -9,31 +9,31 @@ export const CONFIG = {
 
   // ─── General ──────────────────────────────────
   meta: {
-    firstName: 'CID',       // ชื่อ (ใช้ใน hero)
-    lastName: 'KAGENOU',        // นามสกุล
-    fullName: 'CID KAGENOU',   // ชื่อเต็ม (ใช้ใน nav, footer)
-    roles: [                 // หน้าที่ / ตำแหน่ง (typing animation)
-      'Full-Stack Developer',
-      'DevOps Engineer',
-      'Open Source Contributor',
+    firstName: 'CID',
+    lastName: 'KAGENOU',
+    fullName: 'CID KAGENOU',
+    roles: [
+      'Student Developer',
+      'AI / LLM Enthusiast',
+      'Physics Enthusiast',
     ],
     greeting: 'Hello, World.',
-    location: 'trat, Thailand 🇹🇭',
-    available: true,         // true = แสดง "Available for work"
+    location: 'Trat, Thailand 🇹🇭',
+    available: true,
   },
 
   // ─── About / Bio ──────────────────────────────
   about: {
     bio: [
-      `Developer ที่หลงใหลใน automation, system design, และการสร้างเครื่องมือที่ทำให้ชีวิตง่ายขึ้น`,
-      `ชอบแก้ปัญหาที่ซับซ้อนด้วย solution ที่สะอาดและ maintain ได้ง่าย — ทั้ง backend, DevOps, และ tooling`,
+      `นักเรียนและ developer ที่ชอบสร้างเครื่องมือจริง เน้น AI/LLM, automation, performance และการแก้ปัญหาให้ตรงจุด`,
+      `สนใจฟิสิกส์ โดยเฉพาะ high-energy physics และชอบทดลองเทคโนโลยีตั้งแต่ native C, Python bots, browser extensions ไปจนถึง Android/Kotlin`,
     ],
-    tags: ['Automation', 'Linux', 'Discord Bots', 'System Design', 'Open Source'],
+    tags: ['AI / LLM', 'Automation', 'Physics', 'Discord Bots', 'Android', 'Open Source'],
     stats: [
-      { number: '3+',  label: 'ปีที่ทำงาน' },
-      { number: '20+', label: 'โปรเจกต์' },
-      { number: '5+',  label: 'Tech Stacks' },
-      { number: '∞',   label: 'Coffees ☕' },
+      { number: '6',  label: 'Public Repos' },
+      { number: '4',  label: 'Featured Projects' },
+      { number: '4',  label: 'Core Languages' },
+      { number: '∞',  label: 'Experiments' },
     ],
   },
 
@@ -41,19 +41,19 @@ export const CONFIG = {
   skills: [
     {
       category: 'Languages',
-      tags: ['Python', 'JavaScript', 'TypeScript', 'Bash', 'SQL'],
+      tags: ['C', 'Python', 'JavaScript', 'Kotlin', 'HTML/CSS'],
     },
     {
-      category: 'Backend & DevOps',
-      tags: ['Node.js', 'FastAPI', 'Docker', 'Linux', 'Nginx', 'Supabase'],
+      category: 'AI & Automation',
+      tags: ['Gemini API', 'LLM Tooling', 'Discord Bots', 'yt-dlp', 'FFmpeg'],
     },
     {
-      category: 'Frontend',
-      tags: ['HTML', 'CSS', 'Vanilla JS', 'React', 'Tailwind CSS'],
+      category: 'App & Web',
+      tags: ['Jetpack Compose', 'Media3', 'Chrome Extension', 'Vanilla JS', 'Vercel'],
     },
     {
-      category: 'Tools & Ecosystem',
-      tags: ['Git', 'VS Code', 'Termux', 'FFmpeg', 'yt-dlp', 'Discord.js'],
+      category: 'Tools & Systems',
+      tags: ['Git', 'GitHub Actions', 'Docker', 'Linux / Termux', 'llama.cpp'],
     },
   ],
 
@@ -63,28 +63,36 @@ export const CONFIG = {
   // demo: URL หรือ null
   projects: [
     {
-      name: 'Discord Media Bot(ยังไม่ลงgit)',
-      description: 'บอท Discord สำหรับดาวน์โหลด media จาก YouTube และ platform อื่นๆ พร้อม persistent embed interface, quality selection, และ file management',
-      tech: ['Python', 'Discord.py', 'yt-dlp', 'FFmpeg'],
+      name: 'Discord Bot in C + Gemini AI',
+      description: 'บอท Discord แบบ native C สำหรับ Windows ใช้ WinHTTP เชื่อม Gemini AI, รองรับ context ต่อ channel และทำงานแบบ multi-threaded',
+      tech: ['C', 'WinHTTP', 'Gemini API', 'Discord API'],
       icon: '🤖',
-      github: 'https://github.com/yourusername/project',
+      github: 'https://github.com/I-am-Shadow01/discord-bot-c',
       demo: null,
     },
     {
-  name: 'Force Translate Unlocker',
-  description: 'Chrome extension ที่ลบบล็อกการแปลออกจากทุกเว็บโดยอัตโนมัติ รองรับเว็บ SPA/React/Next.js และมีปุ่มเปิด/ปิดใน popup',
-  tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
-  icon: '🌐',
-  github: 'https://github.com/I-am-Shadow01/force-translate-unlocker',
-  demo: null,
+      name: 'Force Translate Unlocker',
+      description: 'Chrome extension ที่ลบตัวบล็อกการแปลจากเว็บไซต์อัตโนมัติ รองรับ SPA / React / Next.js และทำงานทั้งหมดในเครื่อง',
+      tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
+      icon: '🌐',
+      github: 'https://github.com/I-am-Shadow01/force-translate-unlocker',
+      demo: null,
     },
     {
-      name: 'Project Three',
-      description: 'Short description ของโปรเจกต์. เพิ่ม project จริงได้ใน config.js',
-      tech: ['React', 'Supabase', 'TypeScript'],
-      icon: '🚀',
-      github: 'https://github.com/yourusername/project',
-      demo: 'https://your-demo.vercel.app',
+      name: 'Discord Music Bot',
+      description: 'บอทเพลง Discord ที่ใช้ discord.py + yt-dlp รองรับ queue, loop, shuffle, volume และ music control panel',
+      tech: ['Python', 'discord.py', 'yt-dlp', 'FFmpeg'],
+      icon: '🎵',
+      github: 'https://github.com/I-am-Shadow01/discord-music-bot',
+      demo: null,
+    },
+    {
+      name: 'Music App for Android',
+      description: 'แอปเล่นเพลง Android แบบ standalone ค้นหาและดึงเสียงจาก YouTube ในแอปด้วย NewPipeExtractor พร้อม Media3 และระบบอัปเดตผ่าน GitHub Actions',
+      tech: ['Kotlin', 'Jetpack Compose', 'Media3', 'NewPipeExtractor'],
+      icon: '📱',
+      github: 'https://github.com/I-am-Shadow01/music-app',
+      demo: null,
     },
   ],
 
@@ -94,56 +102,31 @@ export const CONFIG = {
     heading: 'Buy Me a Coffee',
     subheading: 'ถ้าโปรเจกต์หรือ tool ที่ผมทำมีประโยชน์ เลี้ยงกาแฟกันได้ครับ ☕',
 
-    // PromptPay QR — สร้าง QR ฝั่ง client ทั้งหมด (ไม่ส่งข้อมูลออกไปที่ server ไหน)
+    // PromptPay QR — สร้าง QR ฝั่ง client ทั้งหมด
     promptpay: {
       enabled: true,
-      id: '0889304036',            // เบอร์พร้อมเพย์จริงที่ยืนยันแล้วจาก K+
-      accountName: 'CID KAGENOU', // TODO: เปลี่ยนเป็นชื่อที่ขึ้นตอนสแกนจริง (ถ้าไม่ตรง)
+      id: '0889304036',
+      accountName: 'CID KAGENOU',
       currency: 'THB',
-      presetAmounts: [20, 50, 100, 200], // ปุ่มจำนวนเงินลัด แก้/เพิ่ม/ลดได้ที่นี่
+      presetAmounts: [20, 50, 100, 200],
       defaultAmount: 50,
       allowCustomAmount: true,
     },
 
-    // TrueMoney Wallet — โอนตรงเข้าเบอร์ หรือคนโอนจะส่ง "ซองของขวัญ" มาหาเบอร์นี้เองก็ได้
-    // (การสร้างซองเป็นสิ่งที่ผู้ให้ทำจากแอปของเขาเอง เว็บนี้แค่โชว์เบอร์ให้พิมพ์ตอนโอน/ตอนสร้างซอง)
     trueMoneyWallet: {
-      enabled: false, // ⚠️ ใส่เบอร์จริงแล้วเปลี่ยนเป็น true
-      phoneNumber: '081-234-5678', // TODO: เบอร์ที่ผูก TrueMoney Wallet จริง
+      enabled: false,
+      phoneNumber: '081-234-5678',
     },
 
-    // โอนเข้าบัญชีธนาคารตรงๆ (ใช้แทน/คู่กับ PromptPay ก็ได้ — เช่นยังไม่มีพร้อมเพย์)
     bankTransfer: {
-      enabled: false, // สำรองไว้เฉยๆ เพราะมีพร้อมเพย์ใช้งานได้แล้ว — เปลี่ยนเป็น true ได้ถ้าอยากมีสำรอง
+      enabled: false,
       bankName: 'KASIKORNBANK (K+)',
       accountNumber: '221-8-12719-6',
-      accountName: 'CID KAGENOU', // TODO: เปลี่ยนเป็นชื่อจริงถ้าไม่ตรง
+      accountName: 'CID KAGENOU',
     },
 
-    // ช่องทางอื่นๆ (การ์ดจะไม่ถูกแสดงถ้า href เป็นค่า placeholder ด้านล่าง)
-    links: [
-      {
-        label: 'Ko-fi',
-        value: 'Support on Ko-fi',
-        icon: '☕',
-        href: 'https://ko-fi.com/yourusername', // TODO: ใส่ลิงก์ Ko-fi จริง
-        copyable: false,
-      },
-      {
-        label: 'GitHub Sponsors',
-        value: '@I-am-Shadow01',
-        icon: 'GH',
-        href: 'https://github.com/sponsors/yourusername', // TODO: ใส่ลิงก์จริง (ต้องสมัคร GitHub Sponsors ก่อน)
-        copyable: false,
-      },
-      {
-        label: 'PayPal',
-        value: 'PayPal.me',
-        icon: '$',
-        href: 'https://paypal.me/yourusername', // TODO: ใส่ลิงก์จริง
-        copyable: false,
-      },
-    ],
+    // ยังไม่มีช่องทางอื่นที่ยืนยันแล้ว จึงไม่แสดง placeholder
+    links: [],
   },
 
   // ─── Contact & Social ─────────────────────────
@@ -156,7 +139,7 @@ export const CONFIG = {
         value: 'naphatsaranmek@gmail.com',
         icon: '✉',
         href: 'mailto:naphatsaranmek@gmail.com',
-        copyable: true,        // true = คลิกเพื่อ copy email
+        copyable: true,
       },
       {
         label: 'GitHub',
@@ -166,7 +149,7 @@ export const CONFIG = {
         copyable: false,
       },
       {
-        label: 'discord',
+        label: 'Discord',
         value: 'cid_kagenou_02',
         icon: 'DC',
         href: 'cid_kagenou_02',
