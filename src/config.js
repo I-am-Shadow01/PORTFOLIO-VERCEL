@@ -12,15 +12,15 @@ export const CONFIG = {
     fullName: 'CID KAGENOU',
     roles: {
       en: ['Developer in the Shadows', 'AI / LLM Experimenter', 'Physics Seeker'],
-      th: ['ผู้รังสรรค์จากเงามืด', 'ผู้ทดลองปัญญาแห่งจักรกล', 'ผู้ตามหาความจริงที่ซ่อนอยู่ในฟิสิกส์'],
+      th: ['Developer ในเงา', 'AI / LLM Experimenter', 'คนที่ชอบไล่ตามความจริงของฟิสิกส์'],
     },
     greeting: {
       en: 'From the shadows, I build.',
-      th: 'เมื่อแสงถือกำเนิด เงาย่อมตื่นขึ้นตาม.',
+      th: 'เมื่อมีแสง เงาจึงถือกำเนิด.',
     },
     location: {
       en: 'Trat, Thailand 🇹🇭',
-      th: 'ตราด · ดินแดนปลายขอบของแสง 🇹🇭',
+      th: 'ตราด, ประเทศไทย 🇹🇭',
     },
     available: true,
   },
@@ -32,24 +32,24 @@ export const CONFIG = {
         'AI/LLM, automation, native C, Android/Kotlin, and physics all live in the same shadow. What looks like complexity is usually just a structure that has not been decoded yet.',
       ],
       th: [
-        'ฉันไม่เคยพอใจกับสิ่งที่แค่ “ใช้งานได้” — ทุกระบบควรเคลื่อนไหวอย่างเงียบงัน แม่นยำ และทิ้งไว้เพียงร่องรอยของความตั้งใจ',
-        'AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ สำหรับฉันไม่ใช่คนละโลก — มันคือเศษเสี้ยวของกฎเดียวกัน ที่ยังรอให้ใครสักคนเปิดม่านเงาออกดู',
+        'ฉันชอบสร้างของที่ไม่ใช่แค่ใช้ได้ แต่ต้องเร็ว เรียบ และไม่มีอะไรเกินจำเป็น',
+        'สนใจ AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ — ยิ่งระบบซับซ้อน ก็ยิ่งอยากรู้ว่าข้างใต้มันทำงานยังไง',
       ],
     },
     tags: ['AI / LLM', 'Automation', 'Physics', 'Discord Bots', 'Android', 'Open Source'],
     stats: [
-      { number: '6', label: { en: 'Public Artifacts', th: 'ร่องรอยที่ปล่อยสู่แสง' } },
-      { number: '4', label: { en: 'Featured Constructs', th: 'บทที่ถูกจารึกไว้' } },
-      { number: '4', label: { en: 'Core Languages', th: 'ภาษาแห่งการรังสรรค์' } },
-      { number: '∞', label: { en: 'Experiments in the Dark', th: 'การทดลองที่ยังไร้จุดจบ' } },
+      { number: '6', label: { en: 'Public Artifacts', th: 'Public Repos' } },
+      { number: '4', label: { en: 'Featured Constructs', th: 'Featured Projects' } },
+      { number: '4', label: { en: 'Core Languages', th: 'Core Languages' } },
+      { number: '∞', label: { en: 'Experiments in the Dark', th: 'Experiments' } },
     ],
   },
 
   skills: [
-    { category: { en: 'Languages', th: 'ถ้อยคำที่สั่งการโลก' }, tags: ['C', 'Python', 'JavaScript', 'Kotlin', 'HTML/CSS'] },
-    { category: { en: 'AI & Automation', th: 'ปัญญาที่ถือกำเนิดจากจักรกล' }, tags: ['Gemini API', 'LLM Tooling', 'Discord Bots', 'yt-dlp', 'FFmpeg'] },
-    { category: { en: 'App & Web', th: 'สิ่งที่ก่อร่างในโลกดิจิทัล' }, tags: ['Jetpack Compose', 'Media3', 'Chrome Extension', 'Vanilla JS', 'Vercel'] },
-    { category: { en: 'Tools & Systems', th: 'กลไกที่อยู่เบื้องหลัง' }, tags: ['Git', 'GitHub Actions', 'Docker', 'Linux / Termux', 'llama.cpp'] },
+    { category: { en: 'Languages', th: 'Languages' }, tags: ['C', 'Python', 'JavaScript', 'Kotlin', 'HTML/CSS'] },
+    { category: { en: 'AI & Automation', th: 'AI & Automation' }, tags: ['Gemini API', 'LLM Tooling', 'Discord Bots', 'yt-dlp', 'FFmpeg'] },
+    { category: { en: 'App & Web', th: 'App & Web' }, tags: ['Jetpack Compose', 'Media3', 'Chrome Extension', 'Vanilla JS', 'Vercel'] },
+    { category: { en: 'Tools & Systems', th: 'Tools & Systems' }, tags: ['Git', 'GitHub Actions', 'Docker', 'Linux / Termux', 'llama.cpp'] },
   ],
 
   projects: [
@@ -57,7 +57,7 @@ export const CONFIG = {
       name: 'Discord Bot in C + Gemini AI',
       description: {
         en: 'A native C Discord bot for Windows using WinHTTP + Gemini AI, with per-channel context and multithreading — quiet execution without losing tempo.',
-        th: 'บอท Discord ที่ถูกหล่อขึ้นจาก native C เชื่อม Gemini AI ผ่าน WinHTTP พร้อม context แยกต่อ channel และ multi-threading — ไม่มีสิ่งฟุ่มเฟือย มีเพียงกลไกที่เคลื่อนไหวอย่างเงียบงัน',
+        th: 'บอท Discord แบบ native C บน Windows เชื่อม Gemini AI ผ่าน WinHTTP รองรับ context แยกต่อ channel และ multi-threading โดยไม่พึ่ง runtime หนัก ๆ',
       },
       tech: ['C', 'WinHTTP', 'Gemini API', 'Discord API'],
       icon: '🤖',
@@ -68,7 +68,7 @@ export const CONFIG = {
       name: 'Force Translate Unlocker',
       description: {
         en: 'A Chrome extension that strips translation barriers from websites, including SPA / React / Next.js pages. If a wall exists, remove the wall.',
-        th: 'Chrome extension ที่ค่อย ๆ รื้อกำแพงการแปลซึ่งเว็บไซต์ซ่อนไว้ รองรับ SPA / React / Next.js และทำงานอยู่ภายในเครื่อง — เพราะข้อจำกัดทุกอย่าง ล้วนเป็นเพียงสิ่งที่รอวันถูกมองทะลุ',
+        th: 'Chrome extension ที่ลบตัวบล็อกการแปลอัตโนมัติ รองรับ SPA / React / Next.js และทำงานทั้งหมดในเครื่อง — ถ้ามีกำแพง ก็รื้อมันออก',
       },
       tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
       icon: '🌐',
@@ -79,7 +79,7 @@ export const CONFIG = {
       name: 'Discord Music Bot',
       description: {
         en: 'A Discord music system controlling queue, loop, shuffle, and volume through discord.py + yt-dlp + FFmpeg — every sound moves only when commanded.',
-        th: 'ระบบเพลงบน Discord ที่ควบคุม queue, loop, shuffle และ volume ผ่าน discord.py + yt-dlp + FFmpeg — ปล่อยให้ทุกท่วงทำนองไหลไปตามจังหวะ โดยไม่มีเสียงรบกวนจากสิ่งที่ไม่จำเป็น',
+        th: 'บอทเพลง Discord ที่ใช้ discord.py + yt-dlp + FFmpeg รองรับ queue, loop, shuffle, volume และ music control panel',
       },
       tech: ['Python', 'discord.py', 'yt-dlp', 'FFmpeg'],
       icon: '🎵',
@@ -100,10 +100,10 @@ export const CONFIG = {
   ],
 
   donate: {
-    heading: { en: 'Fuel the Shadow', th: 'จุดประกายให้เงายังคงเดินต่อ' },
+    heading: { en: 'Fuel the Shadow', th: 'Fuel the Shadow' },
     subheading: {
       en: 'If something born in the shadows proved useful, you may fuel the next experiment. ☕',
-      th: 'หากสิ่งที่ถือกำเนิดจากเงานี้เคยช่วยอะไรคุณได้แม้เพียงเล็กน้อย คุณก็สามารถทิ้งประกายเล็ก ๆ ไว้ให้การทดลองครั้งถัดไป ☕',
+      th: 'ถ้า tool ที่ทำไว้มีประโยชน์กับคุณ จะเติมพลังให้โปรเจกต์ถัดไปก็ยินดี ☕',
     },
     promptpay: {
       enabled: true,
@@ -125,10 +125,10 @@ export const CONFIG = {
   },
 
   contact: {
-    heading: { en: 'Enter the Shadow Network', th: 'ฝากถ้อยคำไว้ในเงา' },
+    heading: { en: 'Enter the Shadow Network', th: 'Contact' },
     subheading: {
       en: 'Have something worthy of being built, or a problem the system still cannot solve? Send a signal into the dark.',
-      th: 'หากมีบางสิ่งที่ควรถูกสร้าง หรือปัญหาที่ยังไม่มีใครมองเห็นโครงสร้างของมัน ลองฝากถ้อยคำไว้ในเงา — บางทีคำตอบอาจย้อนกลับมาในเวลาที่เหมาะสม',
+      th: 'มีโปรเจกต์น่าสนใจ หรืออยากคุยเรื่องโค้ด AI หรือฟิสิกส์ ก็ทักมาได้',
     },
     links: [
       { label: 'Email', value: 'naphatsaranmek@gmail.com', icon: '✉', href: 'mailto:naphatsaranmek@gmail.com', copyable: true },
