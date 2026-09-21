@@ -12,11 +12,11 @@ export const CONFIG = {
     fullName: 'CID KAGENOU',
     roles: {
       en: ['Developer in the Shadows', 'AI / LLM Experimenter', 'Physics Seeker'],
-      th: ['Developer ในเงา', 'AI / LLM Experimenter', 'คนที่ชอบไล่ตามความจริงของฟิสิกส์'],
+      th: ['ผู้เดินอยู่ระหว่างแสงและเงา', 'ผู้ทดลอง AI / LLM', 'ผู้ไล่ตามกฎที่ซ่อนอยู่ในฟิสิกส์'],
     },
     greeting: {
       en: 'From the shadows, I build.',
-      th: 'เมื่อมีแสง เงาจึงถือกำเนิด.',
+      th: 'เมื่อมีแสง เงาจึงถือกำเนิด — และในเงานั้น ฉันยังคงสร้างต่อไป.',
     },
     location: {
       en: 'Trat, Thailand 🇹🇭',
@@ -32,8 +32,8 @@ export const CONFIG = {
         'AI/LLM, automation, native C, Android/Kotlin, and physics all live in the same shadow. What looks like complexity is usually just a structure that has not been decoded yet.',
       ],
       th: [
-        'ฉันชอบสร้างของที่ไม่ใช่แค่ใช้ได้ แต่ต้องเร็ว เรียบ และไม่มีอะไรเกินจำเป็น',
-        'สนใจ AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ — ยิ่งระบบซับซ้อน ก็ยิ่งอยากรู้ว่าข้างใต้มันทำงานยังไง',
+        'ฉันไม่ได้สร้างของเพื่อให้มันแค่ “ใช้ได้” — ถ้ามันยังช้า ยังรก หรือยังมีสิ่งเกินจำเป็น แปลว่างานนั้นยังไม่จบ',
+        'AI/LLM, automation, native C, Android/Kotlin และฟิสิกส์ คือสิ่งที่ฉันไล่ตามอยู่เรื่อย ๆ — เพราะเบื้องหลังความซับซ้อน มักมีกฎบางอย่างซ่อนอยู่เสมอ',
       ],
     },
     tags: ['AI / LLM', 'Automation', 'Physics', 'Discord Bots', 'Android', 'Open Source'],
@@ -68,7 +68,7 @@ export const CONFIG = {
       name: 'Force Translate Unlocker',
       description: {
         en: 'A Chrome extension that strips translation barriers from websites, including SPA / React / Next.js pages. If a wall exists, remove the wall.',
-        th: 'Chrome extension ที่ลบตัวบล็อกการแปลอัตโนมัติ รองรับ SPA / React / Next.js และทำงานทั้งหมดในเครื่อง — ถ้ามีกำแพง ก็รื้อมันออก',
+        th: 'Chrome extension ที่ลบตัวบล็อกการแปลอัตโนมัติ รองรับ SPA / React / Next.js และทำงานทั้งหมดในเครื่อง — ถ้ามีกำแพงขวางอยู่ ก็แค่หาวิธีเดินทะลุมัน',
       },
       tech: ['JavaScript', 'Chrome Extension', 'Manifest V3'],
       icon: '🌐',
@@ -100,10 +100,10 @@ export const CONFIG = {
   ],
 
   donate: {
-    heading: { en: 'Fuel the Shadow', th: 'Fuel the Shadow' },
+    heading: { en: 'Fuel the Shadow', th: 'เติมเชื้อไฟให้เงา' },
     subheading: {
       en: 'If something born in the shadows proved useful, you may fuel the next experiment. ☕',
-      th: 'ถ้า tool ที่ทำไว้มีประโยชน์กับคุณ จะเติมพลังให้โปรเจกต์ถัดไปก็ยินดี ☕',
+      th: 'ถ้าสิ่งที่สร้างจากเงานี้มีประโยชน์กับคุณ จะเติมเชื้อไฟให้การทดลองครั้งต่อไปก็ยินดี ☕',
     },
     promptpay: {
       enabled: true,
@@ -125,10 +125,10 @@ export const CONFIG = {
   },
 
   contact: {
-    heading: { en: 'Enter the Shadow Network', th: 'Contact' },
+    heading: { en: 'Enter the Shadow Network', th: 'ส่งสัญญาณถึงฉัน' },
     subheading: {
       en: 'Have something worthy of being built, or a problem the system still cannot solve? Send a signal into the dark.',
-      th: 'มีโปรเจกต์น่าสนใจ หรืออยากคุยเรื่องโค้ด AI หรือฟิสิกส์ ก็ทักมาได้',
+      th: 'มีโปรเจกต์ที่น่าสนใจ ปัญหาที่แก้ไม่ลง หรือแค่เรื่อง AI กับฟิสิกส์ที่อยากคุย — ส่งสัญญาณมาได้',
     },
     links: [
       { label: 'Email', value: 'naphatsaranmek@gmail.com', icon: '✉', href: 'mailto:naphatsaranmek@gmail.com', copyable: true },
