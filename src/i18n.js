@@ -101,22 +101,22 @@ export const TRANSLATIONS = {
     nav_contact:  'ติดต่อ',
 
     // Hero
-    available:    'พร้อมทำโปรเจกต์ใหม่',
+    available:    'พร้อมสำหรับการเคลื่อนไหวครั้งถัดไป',
     scroll:       'เลื่อนลง',
-    cta_projects: 'ดูโปรเจกต์',
-    cta_contact:  'ติดต่อ',
+    cta_projects: 'ตามรอยสิ่งที่สร้างไว้',
+    cta_contact:  'ส่งสัญญาณมา',
 
     // Section labels
     label_about:    'เกี่ยวกับ',
     label_skills:   'ทักษะ',
     label_projects: 'โปรเจกต์',
     label_contact:  'ติดต่อ',
-    label_donate:   'สนับสนุน',
+    label_donate:   'เชื้อไฟ',
 
     // Section titles
-    title_about:    'ในเงานั้นมีอะไรอยู่',
-    title_skills:   'สิ่งที่ใช้สร้าง',
-    title_projects: 'สิ่งที่สร้างไว้',
+    title_about:    'สิ่งที่ซ่อนอยู่หลังเงา',
+    title_skills:   'สิ่งที่ใช้ขีดเขียนความจริง',
+    title_projects: 'ร่องรอยที่ทิ้งไว้',
 
     // Donate
     donate_amount_label:      'จำนวนเงิน',
@@ -139,7 +139,7 @@ export const TRANSLATIONS = {
     copied: 'คัดลอกแล้ว',
 
     // Footer
-    back_top: 'กลับด้านบน',
+    back_top: 'กลับสู่จุดเริ่มต้น',
 
     // Settings
     settings_title:       'การตั้งค่า',
