@@ -182,11 +182,7 @@ export function renderProjects({ projects }, t) {
   }));
   search.addEventListener('input', updateResults);
   section.addEventListener('keydown', event => {
-    if (event.key === '/' && event.target !== search && !event.altKey && !event.ctrlKey &&
-        !event.metaKey && !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
-      event.preventDefault();
-      search.focus();
-    } else if (event.key === 'Escape' && event.target === search) {
+    if (event.key === 'Escape' && event.target === search) {
       search.value = '';
       updateResults();
       search.blur();
