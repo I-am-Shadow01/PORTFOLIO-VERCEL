@@ -86,7 +86,7 @@ function projectCard(project, index, t) {
           <div class="case-visual-body">
             <span class="case-code-mark">&gt;_</span>
             ${project.preview.map((line, i) => `<div class="case-code-line"><span>${String(i + 1).padStart(2, '0')}</span><b>${escapeHtml(line)}</b><i></i></div>`).join('')}
-            <span class="case-code-footer">SYSTEM / ONLINE <span class="case-visual-pulse"></span></span>
+            <span class="case-code-footer">SOURCE / PUBLIC <span class="case-visual-pulse"></span></span>
           </div>
         </div>
       </div>
