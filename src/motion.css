@@ -77,11 +77,14 @@
 
   .featured-stage.motion-seen .album-disc{animation:vinyl-turn 28s linear infinite}
   .featured-stage.motion-seen .album-shadow{animation:shadow-breathe 7.5s ease-in-out infinite}
-  .featured-stage.motion-seen .album-wave span{animation:level-meter 2.7s ease-in-out infinite;animation-delay:calc(var(--i) * -127ms)}
+  .featured-stage.motion-seen .album-wave span{animation:level-meter 3.5s ease-in-out infinite;animation-delay:calc(var(--i) * -197ms)}
+  .featured-stage.motion-seen .album-wave span:nth-child(3n){animation-duration:4.9s}
+  .featured-stage.motion-seen .album-wave span:nth-child(4n){animation-duration:2.8s}
   .featured-stage.motion-seen::after{animation:sheen-cross 13s ease-in-out infinite}
 
   .card-art-music-bot.motion-seen .record-disc{animation:record-turn 24s linear infinite}
-  .card-art-music-bot.motion-seen .sound-waves i{animation:level-meter 2.4s ease-in-out infinite;animation-delay:calc(var(--i) * -138ms)}
+  .card-art-music-bot.motion-seen .sound-waves i{animation:level-meter 3.4s ease-in-out infinite;animation-delay:calc(var(--i) * -167ms)}
+  .card-art-music-bot.motion-seen .sound-waves i:nth-child(3n){animation-duration:4.6s}
   .card-art-native-c-bot.motion-seen .art-network svg{animation:network-lean 14s ease-in-out infinite}
   .card-art-native-c-bot.motion-seen .art-network svg circle{animation:node-pulse 6s ease-in-out infinite}
   .card-art-native-c-bot.motion-seen .art-network svg circle:nth-child(3n){animation-delay:-2s}
@@ -94,7 +97,7 @@
 .motion-suspended .art-network svg *, .motion-suspended .type-underline,
 .motion-suspended .featured-stage::after { animation-play-state:paused!important; }
 @keyframes hero-entrance {
-  from{opacity:0;transform:translate3d(0,17px,0);filter:blur(4px)}
+  from{opacity:0;transform:translate3d(0,12px,0);filter:blur(2px)}
   to{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}
 }
 @keyframes art-entrance {
@@ -109,10 +112,11 @@
   to{transform:rotate(360deg)}
 }
 @keyframes level-meter {
-  0%,100%{transform:scaleY(.72)}
-  25%{transform:scaleY(1.07)}
-  55%{transform:scaleY(.88)}
-  80%{transform:scaleY(1.14)}
+  0%,100%{transform:scaleY(.8)}
+  18%{transform:scaleY(1.03)}
+  43%{transform:scaleY(.72)}
+  66%{transform:scaleY(1.12)}
+  88%{transform:scaleY(.94)}
 }
 @keyframes shadow-breathe {
   0%,100%{opacity:.77;transform:translateY(125px) scale(.94)}
@@ -124,8 +128,8 @@
   54%{transform:translateX(105%);opacity:0}
 }
 @keyframes network-lean {
-  0%,100%{transform:rotate(-2deg) scale(.98)}
-  50%{transform:rotate(2deg) scale(1.015)}
+  0%,100%{transform:translate3d(-2px,2px,0) rotate(-.45deg)}
+  50%{transform:translate3d(2px,-3px,0) rotate(.65deg)}
 }
 @keyframes node-pulse {
   0%,100%{opacity:.65;transform:scale(.82)}
@@ -146,3 +150,59 @@
 .album-wave span,.sound-waves i{height:var(--bar-h,24px)}
 /* Keep the moving artwork behind the hero's semantic content. */
 #hero-canvas {z-index:1}
+
+
+/* Softer editorial surfaces: curves and depth replace stacked hard rectangles. */
+:root { --soft-motion: cubic-bezier(.22,.75,.20,1); }
+.sculpture {
+  border-radius:clamp(17px,2.1vw,30px);
+  box-shadow:0 33px 95px -45px rgba(54,67,153,.38),
+             0 1px 0 rgba(205,216,255,.08) inset;
+  border-color:rgba(189,196,250,.14);
+}
+.sculpture::before {border-radius:clamp(8px,1.3vw,18px);}
+.sculpture::after {
+  background:radial-gradient(ellipse at 56% 40%,transparent 26%,rgba(3,6,22,.2) 100%);
+}
+.sculpture-fallback {
+  background:
+    radial-gradient(ellipse 50% 49% at 48% 46%,rgba(127,129,212,.23),transparent 89%),
+    radial-gradient(ellipse 74% 72% at 72% 71%,rgba(60,95,172,.18),transparent 85%),
+    linear-gradient(145deg,#11152a 4%,#1a1d3b 56%,#0b1225 100%);
+}
+.featured-work {border-radius:22px;overflow:hidden;}
+.featured-stage {
+  background:
+    radial-gradient(ellipse 70% 75% at 37% 75%,rgba(126,98,225,.35),transparent 85%),
+    radial-gradient(ellipse 75% 65% at 85% 15%,rgba(114,171,235,.23),transparent 80%),#151c38;
+}
+.work-card {
+  border-radius:18px;overflow:hidden;
+  transition:transform .7s var(--soft-motion),box-shadow .7s var(--soft-motion),border-color .5s;
+}
+.work-card:hover {
+  transform:translate3d(0,-4px,0) scale(1.006);
+  box-shadow:0 22px 60px -35px rgba(91,91,177,.24);
+}
+.exploration {
+  border-radius:18px;
+  transition:background .5s var(--soft-motion),transform .7s var(--soft-motion),border-color .5s;
+}
+.exploration:hover {
+  transform:translate3d(0,-3px,0);
+  border-color:var(--line-strong);
+}
+.button,.contact-primary,.contact-secondary {border-radius:12px;}
+.button {
+  transition:transform .65s var(--soft-motion),background .35s,color .35s,border-color .35s;
+}
+.button:hover {transform:translate3d(0,-2px,0);}
+.tag-list span {border-radius:7px;}
+.reveal-ready.in-view {animation:rise-in .85s var(--soft-motion) both;}
+
+@media (prefers-reduced-motion:reduce) {
+  .work-card:hover,.exploration:hover,.button:hover {transform:none!important;}
+}
+@media (hover:none) {
+  .work-card:hover,.exploration:hover,.button:hover {transform:none;}
+}
