@@ -206,8 +206,9 @@ h1,h2,h3,h4,p{margin:0}
 .footer-inner>span,.back-to-top{font:400 11px var(--mono);color:var(--muted)}
 .back-to-top{text-decoration:none}
 .back-to-top:hover{color:var(--accent)}
-.reveal-ready{opacity:0;transform:translateY(26px);transition:transform .8s var(--ease),opacity .8s ease}
-.reveal-ready.in-view{opacity:1;transform:translateY(0)}
+.reveal-ready{opacity:1;transform:none}
+.reveal-ready.in-view{animation:rise-in .65s var(--ease) both}
+@keyframes rise-in{from{opacity:.75;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (max-width:1200px){
   .wrap{width:min(100% - 70px,1350px)}
   .hero{gap:30px;min-height:650px}
