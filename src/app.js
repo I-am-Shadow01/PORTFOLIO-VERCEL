@@ -322,6 +322,12 @@ function syncBg() {
 // ── Keyboard shortcuts ────────────────────────────────────────
 function initShortcuts(openSettings) {
   document.addEventListener('keydown', e => {
+    if (e.key === '/' && !e.altKey && !e.ctrlKey && !e.metaKey &&
+        !e.target?.closest?.('input, textarea, select, [contenteditable="true"]')) {
+      const search = document.querySelector('#projects .case-search input');
+      if (search) { e.preventDefault(); search.focus(); }
+      return;
+    }
     if (e.altKey && !e.ctrlKey && !e.metaKey) {
       const k = e.key.toLowerCase();
       if (k === 's') { e.preventDefault(); openSettings(); }

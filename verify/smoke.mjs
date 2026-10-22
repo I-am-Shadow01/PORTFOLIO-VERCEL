@@ -48,6 +48,26 @@ for (const id of sections) check(`section #${id}`, document.getElementById(id));
 check('bg canvas present', document.getElementById('bg-canvas'));
 check('fps overlay present', document.getElementById('fps-overlay'));
 check('settings trigger present', document.getElementById('settings-trigger'));
+
+check('five public project case studies', document.querySelectorAll('.case-card').length === 5);
+check('featured Android case study', !!document.querySelector('.case-card.case-featured[data-project="music-app"]'));
+check('project architecture details exist', document.querySelectorAll('.case-detail summary').length === 5);
+const caseSearch = document.querySelector('.case-search input');
+const visibleCases = () => [...document.querySelectorAll('.case-card')].filter(card => !card.hidden);
+document.querySelector('.case-filter[data-filter="apps"]').click();
+check('Android filter shows one project', visibleCases().length === 1 && visibleCases()[0]?.dataset.project === 'music-app');
+check('filter ARIA state updates', document.querySelector('.case-filter[data-filter="apps"]').getAttribute('aria-pressed') === 'true');
+document.querySelector('.case-filter[data-filter="all"]').click();
+caseSearch.value = 'NewPipe';
+caseSearch.dispatchEvent(new window.Event('input', { bubbles: true }));
+check('search filters by technology', visibleCases().length === 1 && visibleCases()[0]?.dataset.project === 'music-app');
+caseSearch.value = 'nonexistent_project_7391';
+caseSearch.dispatchEvent(new window.Event('input', { bubbles: true }));
+check('empty results state', visibleCases().length === 0 && !document.querySelector('.case-empty').hidden);
+caseSearch.value = '';
+caseSearch.dispatchEvent(new window.Event('input', { bubbles: true }));
+check('search reset restores cards', visibleCases().length === 5);
+
 check('scroll progress present', document.querySelector('.scroll-progress'));
 
 // typing animation progresses

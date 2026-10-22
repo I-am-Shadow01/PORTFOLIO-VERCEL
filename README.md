@@ -79,3 +79,32 @@ and checks for regressions. After `npm i` inside `verify/`:
 node smoke.mjs ..                 # full-app regression check
 node bench.mjs .. performance     # engine benchmark + canvas screenshot
 ```
+
+## Project explorer (2026 refresh)
+
+Public work is curated in `src/config.js` and presented as bilingual case studies
+by `src/sections/projects.js` and the scoped `src/project-explorer.css`.
+
+- Filter by project type, search by name/stack, or press `/` to search.
+  `Escape` clears search.
+- Expand **Architecture notes** on each project card to see why it was built
+  that way. Buttons, links and disclosures use semantic HTML and ARIA.
+- The site requests *public repository metadata only* from the GitHub API once
+  per page lifetime to show the latest push month. Curated dates render as a
+  fallback when GitHub is rate-limited or unavailable. No API token is needed.
+- Private repositories are deliberately excluded from public portfolio content.
+- Existing Canvas2D, settings, animations, themes and language switching remain
+  intact; the explorer adds no runtime dependency.
+
+## Automated checks
+
+Pull requests run `.github/workflows/portfolio-checks.yml` (Node 22 and
+`verify/smoke.mjs`) to check real page boot, project filtering, search,
+empty states, ARIA states, settings, bilingual rebuilding and background engine.
+To run locally:
+
+```bash
+cd verify
+npm ci
+node smoke.mjs ..
+```
