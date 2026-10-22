@@ -55,6 +55,10 @@ test('mobile navigation, legibility and no horizontal overflow', async ({ page }
   await page.locator('#mobile-nav a[href="#now"]').click();
   await expect(page).toHaveURL(/#now$/);
   await expect(page.locator('.menu-button')).toHaveAttribute('aria-expanded', 'false');
+  const unseenCards = await page.evaluate(() =>
+    [...document.querySelectorAll('.featured-work, .work-card, .approach-intro')]
+      .filter(el => Number(getComputedStyle(el).opacity) < 0.99).length);
+  expect(unseenCards).toBe(0);
   const width = await page.evaluate(() => ({
     content: document.documentElement.scrollWidth,
     window: innerWidth
