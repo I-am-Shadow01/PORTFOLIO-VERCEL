@@ -17,7 +17,7 @@ export const COPY = {
     topLabel: 'SOFTWARE × CURIOSITY',
     heroOne: 'ไม่ใช่แค่',
     heroTwo: 'ทำงานได้',
-    heroThree: 'แต่ต้องน่าใช้ด้วย',
+    heroThree: 'ต้องน่าใช้ด้วย',
     intro: 'สร้างแอป เครื่องมือ และระบบที่ใส่ใจทั้งโครงสร้าง ความเร็ว และประสบการณ์ใช้งาน ตั้งแต่ Android ไปจนถึง AI และงานอัตโนมัติ',
     explore: 'ดูผลงาน',
     github: 'GitHub',

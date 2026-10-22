@@ -16,6 +16,7 @@ let locale = read('cid.locale', navigator.language?.toLowerCase().startsWith('th
 if (!(locale in COPY)) locale = 'en';
 let theme = read('cid.theme', 'dark') === 'light' ? 'light' : 'dark';
 let stopScene = () => {}, revealObserver;
+let unbindEscape = () => {};
 
 const tags = list => `<div class="tag-list">${list.map(s => `<span>${esc(s)}</span>`).join('')}</div>`;
 const repoUrl = p => `${GITHUB}/${encodeURIComponent(p.repo)}`;
@@ -158,11 +159,10 @@ function bind() {
   };
   menu.addEventListener('click', () => setMenu(menu.getAttribute('aria-expanded') !== 'true'));
   mobile.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+  unbindEscape();
+  const onEscape = e => { if (e.key === 'Escape') setMenu(false); };
   document.addEventListener('keydown', onEscape);
-  function onEscape(e) {
-    if (e.key === 'Escape') setMenu(false);
-    if (!document.contains(menu)) document.removeEventListener('keydown', onEscape);
-  }
+  unbindEscape = () => document.removeEventListener('keydown', onEscape);
   document.querySelector('.lang-button').addEventListener('click', () => {
     locale = locale === 'th' ? 'en' : 'th'; save('cid.locale', locale); rerender();
   });
