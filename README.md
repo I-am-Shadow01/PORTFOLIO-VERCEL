@@ -1,110 +1,53 @@
-# CID KAGENOU — Portfolio
+# CID — Software × Curiosity
 
-A dependency-free, static portfolio hosted on Vercel. It uses native ES modules, so no install or build step is required.
+A complete redesign of the personal portfolio: a responsive editorial site with a single generative visual experiment instead of the previous multi-layer particle system.
 
-## Edit content
+## Design decisions
 
-Update `src/config.js` for profile details, projects, contact links, and payment options. Section rendering lives in `src/sections/`; visual styles are in `src/styles.css`.
+- **Writing:** concise, straightforward Thai and English. No fictional job titles, inflated project counts, or artificial performance claims.
+- **Information architecture:** Introduction → featured Android build → selected public repositories → working principles → current interests → contact.
+- **Visual language:** generous typography, structured spacing, tactile project illustrations, subdued indigo/ice palette, and an optional light theme.
+- **Performance:** vanilla ES modules; one opt-in WebGL2 drawing surface, frame-capped, automatically suspended offscreen, with a CSS fallback and reduced-motion handling. No frontend framework or bundler.
+- **Integrity:** project descriptions are based on public repository READMEs. Private repositories, payment details, and any access secrets are deliberately omitted.
 
-## Run locally
+## Repository structure
 
-Serve the directory with any static file server, for example `npx serve .`, then open the URL it prints. Do not open `index.html` directly: ES modules work more reliably through a local server.
-
-## Deploy
-
-Push to the connected GitHub repository. Vercel serves the repository root as a static site; `vercel.json` sets caching and security headers.
-
-## Project map
-
-- `index.html` — semantic entry point, metadata, pre-paint preference loading, font preloads
-- `src/app.js` — composition and app lifecycle
-- `src/config.js` — all editable portfolio content
-- `src/sections/` — individual page sections
-- `src/utils/loop.js` — **one shared `requestAnimationFrame` loop + shared pointer/scroll state** for the whole site
-- `src/utils/background.js` — canvas visual engine (driven by `loop.js`)
-- `src/utils/` — settings, animation, cursor, scrolling, effects
-- `src/components/` — settings panel
-
-## Performance architecture (v2)
-
-The whole page runs on **a single rAF loop** (`src/utils/loop.js`). Every animated
-feature — background layers, cursor ring, sparkle trail, FPS meter, nav/scroll
-progress, hero typing — subscribes to it instead of keeping its own loop or its
-own `mousemove`/`scroll` listeners. The loop also pauses automatically when the
-tab is hidden and exposes `prefers-reduced-motion`.
-
-The background engine (`src/utils/background.js`) is still dependency-free
-Canvas2D (no three.js — a ~160KB dependency + GPU context would cost more than
-the line-art math layers it would replace). It is, however, heavily optimized:
-
-| technique | effect |
-|---|---|
-| alpha-bucket batching | all segments of a layer are grouped by quantized alpha and stroked once per bucket → `stroke()` drops from ~2,000/frame to ≤10/layer |
-| cached color table | `rgba(...)` strings are precomputed per accent change, not per segment |
-| typed-array spatial grid | counting-sort grid (no `Map<string,[]>`) → zero per-frame allocation |
-| ring-buffer trails | Lorenz / flow-field / epicycle trails live in `Float32Array`s → no GC churn |
-| low-res wave buffer | wave interference writes ~5,500 px (was 921,600) then upscales |
-| adaptive quality | FPS hysteresis first lowers backing-store resolution, then drops layers; reported live via `pf:adaptive-quality` |
-| idle awareness | expensive layers halve their update rate when the pointer is still |
-| scroll & energy parallax | every layer has a depth; pointer/scroll speed feeds an `energy` term that drives speed, glow and star rate |
-
-Benchmarked headlessly (same interaction script, 1280×720, software rasterizer):
-
-| mode | frame time before → after | canvas state writes/frame before → after |
-|---|---|---|
-| eco | 0.09 → 0.11 ms | 0.8 → 0.8 |
-| medium | 3.2 → 2.2 ms | 791 → 30 |
-| performance | 23.0 → 11.7 ms | 3,853 → 103 |
-
-(`putImageData` pixels per frame: 921,600 → 5,544.)
-
-### Settings & shortcuts
-
-Settings (gear button): theme, language, accent + custom hue picker, font size,
-**motion intensity slider**, cursor, **cursor trail**, background FX,
-**adaptive quality**, performance mode, FPS counter.
-
-First visit on a `prefers-reduced-motion` system starts in a calm preset
-(animations off, eco mode) — every choice can be changed afterwards.
-
-Shortcuts: `Alt+S` settings · `Alt+T` cycle theme · `Alt+F` FPS meter.
-
-## Verification
-
-`verify/` contains a headless harness (jsdom + `@napi-rs/canvas`, not part of
-the deployed site) that boots the real `app.js`, drives frames and interaction,
-and checks for regressions. After `npm i` inside `verify/`:
-
-```bash
-node smoke.mjs ..                 # full-app regression check
-node bench.mjs .. performance     # engine benchmark + canvas screenshot
+```
+index.html                 semantic entry point and metadata
+src/content.js             curated bilingual copy and project data
+src/main.js                semantic component rendering and interactions
+src/scene.js               isolated WebGL2 visual, cleanup and fallback
+src/styles.css             design system, layout, responsive states
+favicon.svg                vector identity
+vercel.json                static hosting and security headers
+tests/site.spec.mjs        Chromium desktop/mobile/keyboard/locale tests
+playwright.config.mjs      local test server and browser configuration
+.github/workflows/site-checks.yml
 ```
 
-## Project explorer (2026 refresh)
+## Local usage
 
-Public work is curated in `src/config.js` and presented as bilingual case studies
-by `src/sections/projects.js` and the scoped `src/project-explorer.css`.
+Install Node.js (for browser tests only), then run a static web server from the repository root:
 
-- Filter by project type, search by name/stack, or press `/` to search.
-  `Escape` clears search.
-- Expand **Architecture notes** on each project card to see why it was built
-  that way. Buttons, links and disclosures use semantic HTML and ARIA.
-- The site requests *public repository metadata only* from the GitHub API once
-  per page lifetime to show the latest push month. Curated dates render as a
-  fallback when GitHub is rate-limited or unavailable. No API token is needed.
-- Private repositories are deliberately excluded from public portfolio content.
-- Existing Canvas2D, settings, animations, themes and language switching remain
-  intact; the explorer adds no runtime dependency.
+```bash
+python3 -m http.server 4173
+```
+
+Open http://localhost:4173. The public site does not need `npm install` or a build step.
 
 ## Automated checks
 
-Pull requests run `.github/workflows/portfolio-checks.yml` (Node 22 and
-`verify/smoke.mjs`) to check real page boot, project filtering, search,
-empty states, ARIA states, settings, bilingual rebuilding and background engine.
-To run locally:
-
 ```bash
-cd verify
-npm ci
-node smoke.mjs ..
+npm install
+npx playwright install chromium
+npm run check
+npm test
 ```
+
+The workflow runs on pull requests and saves full-page desktop and mobile screenshots as an artifact for visual review.
+
+## Updating content
+
+Edit `src/content.js`. Each project has a public repository name, a short factual description in Thai and English, its challenge, its approach, and technologies. It intentionally doesn't auto-publish every repository (including private ones). Text and project cards share one data source.
+
+The hero artwork is abstract and the featured audio object is a visual study, **not an actual screenshot** of the Android app.

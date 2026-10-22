@@ -1,0 +1,14 @@
+{
+  "name": "cid-portfolio",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Editorial personal portfolio — native web platform, WebGL2 with CSS fallback",
+  "scripts": {
+    "test": "playwright test",
+    "check": "node --check src/main.js && node --check src/scene.js && node --check src/content.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
