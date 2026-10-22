@@ -1,3 +1,30 @@
+test('fluid surface renders distinct frames instead of rotating a static image', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  const canvas = page.locator('#hero-canvas');
+  const canRender = await page.evaluate(() => {
+    const probe = document.createElement('canvas');
+    return !!probe.getContext('webgl2');
+  });
+  if (!canRender) {
+    await expect(canvas).toHaveAttribute('data-motion', 'unavailable');
+    return;
+  }
+
+  await expect.poll(() => canvas.getAttribute('data-motion'), { timeout: 12000 })
+    .toBe('running');
+  await expect(canvas).toHaveClass(/scene-ready/);
+  const first = await canvas.screenshot({ animations: 'disabled' });
+  await page.waitForTimeout(440);
+  const second = await canvas.screenshot({ animations: 'disabled' });
+  expect(first.equals(second)).toBe(false);
+
+  await page.mouse.move(1200, 200);
+  await page.waitForTimeout(420);
+  const third = await canvas.screenshot({ animations: 'disabled' });
+  expect(second.equals(third)).toBe(false);
+});
+
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
