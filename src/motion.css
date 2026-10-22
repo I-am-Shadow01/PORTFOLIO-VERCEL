@@ -1,0 +1,148 @@
+/* Motion direction: sculptural, controlled, quiet. The hero is the focal point.
+   Secondary motion is view-scoped and pauses when the tab is hidden. */
+.sculpture {
+  background:
+    radial-gradient(ellipse 64% 60% at 55% 43%, rgba(115,115,207,.28) 0%, transparent 68%),
+    radial-gradient(ellipse 130% 95% at 10% 120%, rgba(42,100,137,.2), transparent 68%),
+    #090e20;
+  isolation:isolate;
+}
+.sculpture::after {
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse at 56% 42%,transparent 20%,rgba(1,4,13,.36) 100%);
+}
+.sculpture-fallback {
+  background:
+    radial-gradient(ellipse 60% 54% at 52% 50%,rgba(99,107,197,.22),transparent 80%),
+    linear-gradient(142deg,#10172b 9%,#171c3d 58%,#090f1c 100%);
+}
+.sculpture-fallback::after {
+  inset:23% 19%;
+  border-radius:40% 59% 42% 56%;
+  border:17px solid rgba(144,162,224,.27);
+  box-shadow:
+    10px 10px 30px rgba(116,127,207,.22),
+    inset 11px -7px 23px rgba(63,88,192,.21),
+    0 0 1px 1px rgba(228,235,255,.5);
+  transform:rotate(-23deg) skew(-7deg);
+}
+#hero-canvas.scene-ready { opacity:1; }
+.sculpture-frame, .sculpture-cross { z-index:3; }
+
+.desktop-nav a{position:relative}
+.desktop-nav a::after{
+  content:"";
+  position:absolute;left:0;right:0;bottom:-8px;height:1px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .45s cubic-bezier(.22,1,.36,1);
+}
+.desktop-nav a:hover::after,.desktop-nav a:focus-visible::after{transform:scaleX(1)}
+
+.hero-copy h1 span,.hero-copy h1 em{transform-origin:50% 100%}
+.hero-actions svg,.feature-link svg,.inline-link svg,.back-to-top,
+.principle-arrow{transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.hero-actions a:hover svg:last-child,.feature-link:hover svg,
+.inline-link:hover svg,.back-to-top:hover,.principle:hover .principle-arrow{transform:translate(4px,-2px)}
+
+.featured-stage{isolation:isolate}
+.featured-stage::after{
+  content:"";position:absolute;z-index:1;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,transparent 23%,rgba(221,218,255,.055) 42%,transparent 62%);
+  transform:translateX(-70%);
+}
+.album-disc{transform-style:preserve-3d;will-change:auto}
+.album-wave span{transform-origin:center}
+.album-shadow{will-change:auto}
+.card-art{isolation:isolate}
+.art-network svg,.record-disc,.sound-waves i{will-change:auto}
+.art-type>div:first-child b{display:inline-block;transition:transform .7s cubic-bezier(.22,1,.36,1)}
+.work-card:hover .art-type>div:first-child b{transform:translateX(6px)}
+.work-card:hover .art-type>div:first-child span:last-child{color:#e9f6ff}
+.art-type>div:first-child span:last-child{transition:color .4s}
+.card-art-native-c-bot .art-network svg circle{transform-box:fill-box;transform-origin:center}
+.hero .hero-actions a, .work-card, .featured-work, .exploration {backface-visibility:hidden}
+
+@media(prefers-reduced-motion:no-preference){
+  .hero-eyebrow{animation:hero-entrance .7s .05s both cubic-bezier(.22,1,.36,1)}
+  .hero-copy h1 span:first-child{animation:hero-entrance .85s .12s both cubic-bezier(.22,1,.36,1)}
+  .hero-copy h1 span:nth-child(2){animation:hero-entrance .85s .20s both cubic-bezier(.22,1,.36,1)}
+  .hero-copy h1 em{animation:hero-entrance .9s .28s both cubic-bezier(.22,1,.36,1)}
+  .hero-intro{animation:hero-entrance .95s .42s both cubic-bezier(.22,1,.36,1)}
+  .hero-actions{animation:hero-entrance .95s .52s both cubic-bezier(.22,1,.36,1)}
+  .hero-art{animation:art-entrance 1.25s .18s both cubic-bezier(.22,1,.36,1)}
+
+  .featured-stage.motion-seen .album-disc{animation:vinyl-turn 28s linear infinite}
+  .featured-stage.motion-seen .album-shadow{animation:shadow-breathe 7.5s ease-in-out infinite}
+  .featured-stage.motion-seen .album-wave span{animation:level-meter 2.7s ease-in-out infinite;animation-delay:calc(var(--i) * -127ms)}
+  .featured-stage.motion-seen::after{animation:sheen-cross 13s ease-in-out infinite}
+
+  .card-art-music-bot.motion-seen .record-disc{animation:record-turn 24s linear infinite}
+  .card-art-music-bot.motion-seen .sound-waves i{animation:level-meter 2.4s ease-in-out infinite;animation-delay:calc(var(--i) * -138ms)}
+  .card-art-native-c-bot.motion-seen .art-network svg{animation:network-lean 14s ease-in-out infinite}
+  .card-art-native-c-bot.motion-seen .art-network svg circle{animation:node-pulse 6s ease-in-out infinite}
+  .card-art-native-c-bot.motion-seen .art-network svg circle:nth-child(3n){animation-delay:-2s}
+  .card-art-native-c-bot.motion-seen .art-network svg circle:nth-child(4n){animation-delay:-4s}
+  .card-art-translate-unlocker.motion-seen .type-underline{animation:translation-underline 5.4s ease-in-out infinite}
+}
+.motion-idle *, .motion-suspended .album-disc,
+.motion-suspended .album-wave *, .motion-suspended .record-disc,
+.motion-suspended .sound-waves *, .motion-suspended .art-network svg,
+.motion-suspended .art-network svg *, .motion-suspended .type-underline,
+.motion-suspended .featured-stage::after { animation-play-state:paused!important; }
+@keyframes hero-entrance {
+  from{opacity:0;transform:translate3d(0,17px,0);filter:blur(4px)}
+  to{opacity:1;transform:translate3d(0,0,0);filter:blur(0)}
+}
+@keyframes art-entrance {
+  from{opacity:.35;transform:translate3d(0,16px,0) scale(.976)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes vinyl-turn {
+  from{transform:rotateX(20deg) rotateY(-19deg) rotateZ(0deg)}
+  to{transform:rotateX(20deg) rotateY(-19deg) rotateZ(360deg)}
+}
+@keyframes record-turn {
+  to{transform:rotate(360deg)}
+}
+@keyframes level-meter {
+  0%,100%{transform:scaleY(.72)}
+  25%{transform:scaleY(1.07)}
+  55%{transform:scaleY(.88)}
+  80%{transform:scaleY(1.14)}
+}
+@keyframes shadow-breathe {
+  0%,100%{opacity:.77;transform:translateY(125px) scale(.94)}
+  50%{opacity:1;transform:translateY(125px) scale(1.08)}
+}
+@keyframes sheen-cross {
+  0%,23%,100%{transform:translateX(-90%);opacity:0}
+  34%{opacity:1}
+  54%{transform:translateX(105%);opacity:0}
+}
+@keyframes network-lean {
+  0%,100%{transform:rotate(-2deg) scale(.98)}
+  50%{transform:rotate(2deg) scale(1.015)}
+}
+@keyframes node-pulse {
+  0%,100%{opacity:.65;transform:scale(.82)}
+  50%{opacity:1;transform:scale(1.1)}
+}
+@keyframes translation-underline {
+  0%,100%{opacity:.52;transform:scaleX(.85)}
+  50%{opacity:1;transform:scaleX(1.11)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .hero-eyebrow,.hero-copy h1 span,.hero-copy h1 em,.hero-intro,.hero-actions,.hero-art,
+  .featured-stage *, .card-art * {animation:none!important;filter:none!important}
+  .hero-actions svg, .art-type *, .desktop-nav a::after {transition:none!important}
+}
+
+/* Height is calculated once from curated audio-style envelopes in main.js.
+   Never ask CSS calc() to multiply two dimensional variables. */
+.album-wave span,.sound-waves i{height:var(--bar-h,24px)}
+/* Keep the moving artwork behind the hero's semantic content. */
+#hero-canvas {z-index:1}

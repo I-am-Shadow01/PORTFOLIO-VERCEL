@@ -1,5 +1,6 @@
 import { COPY, PROJECTS, GITHUB, EMAIL } from './content.js';
 import { startSculpture } from './scene.js';
+import { startEditorialMotion } from './motion.js';
 
 const icon = {
   arrow: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>',
@@ -15,7 +16,7 @@ function save(key, val) { try { localStorage.setItem(key, val); } catch {} }
 let locale = read('cid.locale', navigator.language?.toLowerCase().startsWith('th') ? 'th' : 'en');
 if (!(locale in COPY)) locale = 'en';
 let theme = read('cid.theme', 'dark') === 'light' ? 'light' : 'dark';
-let stopScene = () => {}, revealObserver;
+let stopScene = () => {}, stopMotion = () => {}, revealObserver;
 let unbindEscape = () => {};
 
 const tags = list => `<div class="tag-list">${list.map(s => `<span>${esc(s)}</span>`).join('')}</div>`;
@@ -26,7 +27,7 @@ function projectArtwork(p) {
     <svg viewBox="0 0 400 270" fill="none"><path d="M54 134H346M200 28V242M94 75l212 120M94 195 306 75" stroke="currentColor" stroke-opacity=".17"/><circle cx="200" cy="135" r="69" stroke="currentColor" stroke-opacity=".5"/><circle cx="200" cy="135" r="42" fill="currentColor" fill-opacity=".08" stroke="currentColor"/><circle cx="200" cy="135" r="6" fill="currentColor"/><circle cx="54" cy="134" r="5" fill="currentColor"/><circle cx="346" cy="134" r="5" fill="currentColor"/><circle cx="94" cy="75" r="5" fill="currentColor"/><circle cx="306" cy="195" r="5" fill="currentColor"/></svg>
     <span class="network-center">C / API</span><span class="network-label">ASYNC / CONTEXT / HTTP</span></div>`;
   if (p.id === 'translate-unlocker') return `<div class="art-type" aria-hidden="true"><div><span>あ</span><b>→</b><span>A</span></div><small>UNBLOCK / TRANSLATE</small><div class="type-underline"></div></div>`;
-  return `<div class="art-sound" aria-hidden="true"><div class="record-disc"><div class="record-core"></div></div><div class="sound-waves">${Array.from({ length: 18 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div><small>QUEUE / PLAYBACK / CONTROL</small></div>`;
+  return `<div class="art-sound" aria-hidden="true"><div class="record-disc"><div class="record-core"></div></div><div class="sound-waves">${Array.from({ length: 18 }, (_, i) => `<i style="--i:${i};--bar-h:${Math.round(9+45*Math.abs(Math.sin(i*.56+.7)*Math.cos(i*.2)))}px"></i>`).join('')}</div><small>QUEUE / PLAYBACK / CONTROL</small></div>`;
 }
 
 function smallProject(p, t) {
@@ -97,7 +98,7 @@ function render() {
           <div class="featured-stage">
             <div class="stage-annot stage-top"><span>01 / ${esc(t.featureBadge)}</span><span>ANDROID</span></div>
             <div class="album-geometry" aria-hidden="true"><div class="album-shadow"></div><div class="album-disc"><div class="album-disc-inner"><div class="album-eye"></div></div></div>
-              <div class="album-wave">${Array.from({ length: 25 }, (_, i) => `<span style="--i:${i}"></span>`).join('')}</div></div>
+              <div class="album-wave">${Array.from({ length: 25 }, (_, i) => `<span style="--i:${i};--bar-h:${Math.round(10+42*Math.abs(Math.sin(i*.58+.3)*Math.cos(i*.19)))}px"></span>`).join('')}</div></div>
             <div class="stage-annot stage-bottom"><span>AUDIO / INTERACTION</span><span>VISUAL STUDY • NOT A SCREENSHOT</span></div>
           </div>
           <div class="featured-copy"><div class="eyebrow"><span class="small-dot"></span>${esc(t.featureBadge)} · 2026</div>
@@ -191,9 +192,11 @@ function observeReveal() {
 }
 function rerender() {
   stopScene();
+  stopMotion();
   render();
   bind();
   observeReveal();
+  stopMotion = startEditorialMotion(document);
   stopScene = startSculpture(document.getElementById('hero-canvas'), document.getElementById('sculpture'));
 }
 rerender();
