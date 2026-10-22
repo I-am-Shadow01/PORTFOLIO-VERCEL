@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('cid.locale', 'th');
-    localStorage.setItem('cid.theme', 'dark');
+    if (!localStorage.getItem('cid.locale')) localStorage.setItem('cid.locale', 'th');
+    if (!localStorage.getItem('cid.theme')) localStorage.setItem('cid.theme', 'dark');
   });
 });
 
