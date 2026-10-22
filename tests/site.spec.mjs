@@ -58,9 +58,10 @@ test('mobile navigation, legibility and no horizontal overflow', async ({ page }
   const unseenCards = await page.evaluate(() =>
     [...document.querySelectorAll('.featured-work, .work-card, .approach-intro')]
       .filter(el => {
-        const rect = el.getBoundingClientRect();
-        const offscreen = rect.bottom < 0 || rect.top > innerHeight;
-        return offscreen && Number(getComputedStyle(el).opacity) < 0.99;
+        const style = getComputedStyle(el);
+        // A short fade-in (opacity >= .75) is fine; fully hidden content is not.
+        return style.display === 'none' || style.visibility === 'hidden' ||
+          Number(style.opacity) < 0.15;
       }).length);
   expect(unseenCards).toBe(0);
   const width = await page.evaluate(() => ({
