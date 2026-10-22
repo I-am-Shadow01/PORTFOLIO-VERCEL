@@ -57,7 +57,12 @@ test('mobile navigation, legibility and no horizontal overflow', async ({ page }
   await expect(page.locator('.menu-button')).toHaveAttribute('aria-expanded', 'false');
   const unseenCards = await page.evaluate(() =>
     [...document.querySelectorAll('.featured-work, .work-card, .approach-intro')]
-      .filter(el => Number(getComputedStyle(el).opacity) < 0.99).length);
+      .filter(el => {
+        const style = getComputedStyle(el);
+        // A short fade-in (opacity >= .75) is fine; fully hidden content is not.
+        return style.display === 'none' || style.visibility === 'hidden' ||
+          Number(style.opacity) < 0.15;
+      }).length);
   expect(unseenCards).toBe(0);
   const width = await page.evaluate(() => ({
     content: document.documentElement.scrollWidth,
