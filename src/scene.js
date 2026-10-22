@@ -21,7 +21,7 @@ void main(){
   vec3 pos=rotation*local;
   vec3 eye=vec3(0.,0.,3.50);
   float depth=eye.z-pos.z;
-  gl_Position=vec4(pos.x*2.9/uAspect,pos.y*2.9,(depth-1.3)*.85,depth);
+  gl_Position=vec4(pos.x*2.40/uAspect,pos.y*2.40,(depth-1.3)*.85,depth);
   vNormal=rotation*aNormal;
   vView=eye-pos;
   vUV=aUV;
@@ -37,22 +37,34 @@ out vec4 color;
 void main(){
   vec3 view=normalize(vView),n=normalize(vNormal);
   if(!gl_FrontFacing)n=-n;
-  vec3 key=normalize(vec3(-.55,.92,1.25)),fill=normalize(vec3(.90,-.38,.45));
+  vec3 key=normalize(vec3(-.55,.92,1.25));
+  vec3 fill=normalize(vec3(.90,-.38,.45));
   float ndv=max(0.,dot(n,view));
-  float light=max(0.,dot(n,key)),bounce=max(0.,dot(n,fill));
-  float fresnel=pow(1.-ndv,3.15);
-  float shine=pow(max(dot(reflect(-key,n),view),0.),74.);
-  float soft=pow(max(dot(reflect(-fill,n),view),0.),16.);
-  vec3 shadow=vec3(.095,.115,.205),violet=vec3(.31,.32,.59),ice=vec3(.75,.82,.96);
-  float shift=.5+.5*sin(vUV.x*9.4248+vUV.y*1.1);
-  vec3 metal=mix(shadow,mix(violet,ice,shift*.69),.76);
-  vec3 result=metal*(.26+.69*light+.18*bounce)+ice*(shine*.66+soft*.12);
-  result+=mix(vec3(.42,.37,.92),vec3(.45,.87,1.),shift)*fresnel*.65;
-  result+=vec3(.18,.23,.38)*pow(1.-ndv,7.);
-  if(uLayer>.5)result=mix(result,vec3(.58,.71,.95),.19);
-  if(uEdge>.5)result=mix(result,vec3(.82,.91,1.),.70);
-  result=pow(result/(result+vec3(.45)),vec3(.91));
-  color=vec4(result,uEdge>.5?.67:1.);
+  float lit=max(0.,dot(n,key));
+  float bounce=max(0.,dot(n,fill));
+  float rim=pow(1.-ndv,2.1);
+  float narrow=pow(max(0.,dot(n,normalize(key+view))),93.);
+  float wide=pow(max(0.,dot(n,normalize(fill+view))),20.);
+  float brushed=.5+.5*sin(vUV.x*21.0+vUV.y*2.25);
+  vec3 deep=vec3(.025,.045,.125);
+  vec3 plum=vec3(.19,.15,.46);
+  vec3 pearl=vec3(.56,.65,.92);
+  vec3 cyan=vec3(.26,.73,1.);
+  vec3 base=mix(deep,mix(plum,pearl,brushed*.63),.54+.24*lit);
+  vec3 film=mix(vec3(.39,.30,.94),cyan,.5+.5*sin(rim*9.+vUV.x*4.2));
+  vec3 metal=base*(.38+.64*lit+.23*bounce);
+  metal+=film*rim*.78;
+  metal+=pearl*narrow*.77;
+  metal+=cyan*wide*.19;
+  float engraved=pow(.5+.5*cos(vUV.y*25.1327),34.);
+  metal+=engraved*(.025+.035*rim)*pearl;
+  if(uLayer>.5){
+    metal=mix(metal,vec3(.20,.41,.66),.19);
+    metal+=cyan*rim*.21;
+  }
+  if(uEdge>.5)metal=mix(metal,vec3(.76,.85,1.),.78);
+  metal=vec3(1.)-exp(-metal*1.17);
+  color=vec4(pow(max(metal,vec3(0.)),vec3(.88)),uEdge>.5?.76:1.);
 }`;
 function compile(gl,kind,source){
   const x=gl.createShader(kind);gl.shaderSource(x,source);gl.compileShader(x);
@@ -129,8 +141,8 @@ export function startSculpture(canvas,host){
     program=programFor(gl);
     if(!program)return false;
     try{meshes=[
-      meshFor(gl,{radius:.78,width:.29,twists:2,phase:.13,depth:.17}),
-      meshFor(gl,{radius:.81,width:.075,twists:1,phase:2.3,depth:.28})
+      meshFor(gl,{radius:.79,width:.185,twists:1,phase:.35,depth:.15}),
+      meshFor(gl,{radius:.83,width:.078,twists:2,phase:2.35,depth:.23})
     ];}catch(e){console.warn('Sculpture mesh:',e);clearGpu();return false;}
     gl.useProgram(program);
     uni=Object.fromEntries(['tilt','time','aspect','layer','edge'].map(x=>[x,gl.getUniformLocation(program,'u'+x[0].toUpperCase()+x.slice(1))]));
