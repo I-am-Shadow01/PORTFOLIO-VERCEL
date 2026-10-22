@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+# Supersede obsolete runs after rapid iterations on the same branch.
+concurrency:
+  group: site-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
