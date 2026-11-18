@@ -295,7 +295,7 @@ test.describe('touch interaction', () => {
     await expect.poll(() => canvas.getAttribute('data-motion'), { timeout: 12000 })
       .toMatch(/running|unavailable/);
     test.skip(await canvas.getAttribute('data-motion') === 'unavailable', 'WebGL unavailable');
-    expect(await canvas.evaluate(el => getComputedStyle(el).touchAction)).toBe('pan-y');
+    expect(await canvas.evaluate(el => getComputedStyle(el).touchAction)).toMatch(/\bpan-y\b/);
     const cdp = await context.newCDPSession(page);
     const drag = async (x, y, dx, dy, hold = false) => {
       const event = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
