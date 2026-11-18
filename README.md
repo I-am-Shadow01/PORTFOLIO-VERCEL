@@ -1,56 +1,47 @@
-# CID — Software × Curiosity
+# CID — Kinetic Studio
 
-A complete redesign of the personal portfolio: a responsive editorial site with a physically shaded kinetic ribbon sculpture instead of the old flat rings or multi-layer particle system.
+A bilingual (Thai/English), responsive developer portfolio. The focus is demonstrable public work and a native, interactive visual experience rather than decorative framework overhead.
 
-## Design decisions
+## Design and interaction
 
-- **Writing:** concise, straightforward Thai and English. No fictional job titles, inflated project counts, or artificial performance claims.
-- **Information architecture:** Introduction → featured Android build → selected public repositories → working principles → current interests → contact.
-- **Visual language:** generous typography, structured spacing, tactile project illustrations, subdued indigo/ice palette, and an optional light theme.
-- **Motion:** two parametric WebGL2 ribbon meshes with real normals, cinematic lighting, spring-smoothed pointer interaction, and 60fps desktop / 30fps touch-device budgets. Secondary CSS motion is choreographed per project, uses one IntersectionObserver and pauses offscreen or when the tab is hidden.
-- **Performance:** vanilla ES modules, adaptive rendering resolution, bounded DPR, context restoration, GPU cleanup, CSS fallback, reduced-motion static composition. No frontend framework or bundler.
-- **Integrity:** project descriptions are based on public repository READMEs. Private repositories, payment details, and any access secrets are deliberately omitted.
+- Editorial dark/light themes, persistent language and theme preferences, mobile navigation with keyboard and Escape support.
+- Four curated public repositories, category filtering, project details, and direct source links. The SVG project visuals are original illustrative studies, not screenshots or evidence of functionality.
+- A solid procedural WebGL2 kinetic sculpture with analytic geometry, surface normals, spectral material and studio lighting. Pointer or touch exploration, pause/resume, alternate material and reset are available. A local SVG poster is shown if WebGL2 cannot initialize.
+- Render only while the hero is visible; suspend on hidden tabs and reduced-motion preference. Adaptive resolution/pacing is based on measured browser cadence, not claims of a guaranteed frame rate. Secondary CSS animations are scoped to visible illustrations.
+- No runtime framework, external JavaScript, tracking, or private repository data. The existing public profile/contact content is retained.
 
-## Repository structure
+## Local run
 
-```
-index.html                 semantic entry point and metadata
-src/content.js             curated bilingual copy and project data
-src/main.js                semantic component rendering and interactions
-src/scene.js               shaded parametric sculpture, GPU lifecycle, adaptive quality
-src/motion.js              shared visibility observer for editorial/project animation
-src/motion.css             animation choreography and reduced-motion styles
-src/styles.css             design system, layout, responsive states
-favicon.svg                vector identity
-vercel.json                static hosting and security headers
-tests/site.spec.mjs        Chromium desktop/mobile/keyboard/locale tests
-playwright.config.mjs      local test server and browser configuration
-.github/workflows/site-checks.yml
+Use Python 3 (or any static HTTP server):
+
+```sh
+python -m http.server 4173
 ```
 
-## Local usage
+Open http://127.0.0.1:4173. The production site is static; no runtime dependency install or build is needed.
 
-Install Node.js (for browser tests only), then run a static web server from the repository root:
+## Validation
 
-```bash
-python3 -m http.server 4173
-```
-
-Open http://localhost:4173. The public site does not need `npm install` or a build step.
-
-## Automated checks
-
-```bash
-npm install
-npx playwright install chromium
+```sh
+npm ci
 npm run check
+npx playwright install chromium
 npm test
 ```
 
-The workflow runs on pull requests and saves full-page desktop and mobile screenshots as an artifact for visual review.
+If the installed Chrome is preferred, set PLAYWRIGHT_CHANNEL=chrome and run the same tests. Playwright starts its own local server; CI installs Chromium and retains screenshots/reports. Tests cover navigation, language/theme persistence, project filtering, viewport bounds, frame changes and WebGL fallback, reduced motion, pause/reset and material changes. Real-device frame rate depends on GPU, resolution and thermal conditions.
 
-## Updating content
+## Structure
 
-Edit `src/content.js`. Each project has a public repository name, a short factual description in Thai and English, its challenge, its approach, and technologies. It intentionally doesn't auto-publish every repository (including private ones). Text and project cards share one data source.
+- index.html — entry point and metadata
+- src/content.js — existing curated bilingual content and public project information
+- src/main.js — semantic markup, filters and UI state
+- src/styles.css — visual design, responsive layout and entry motion
+- src/scene.js — GPU graphics and lifecycle
+- src/sculpture-fallback.svg — local static hero fallback
+- src/project-art.js / src/project-art.css — bespoke SVG studies and secondary motion
+- src/motion.js — visibility observer
+- tests/ — Playwright behavior/regression checks
+- vercel.json — static hosting and security headers
 
-The hero artwork is abstract and the featured audio object is a visual study, **not an actual screenshot** of the Android app.
+Deployment is Git-linked through Vercel. Use a preview branch for visual checks before merging main.
