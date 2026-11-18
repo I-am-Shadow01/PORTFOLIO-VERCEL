@@ -1,0 +1,92 @@
+/* These art panels remain dark, as intentional framed studies in either site theme. */
+.featured-stage:has(> .project-artwork),
+.card-art:has(> .project-artwork) {
+  isolation: isolate;
+  overflow: hidden;
+}
+.featured-stage:has(> .project-artwork) {
+  background: radial-gradient(ellipse at 55% 48%, #2b2d53 0%, #161e35 44%, #0b1325 81%);
+  color: #dce4fa;
+}
+.card-art-native-c-bot:has(> .project-artwork) {
+  background: radial-gradient(ellipse at 50% 52%, #253d59 0%, #101d30 80%);
+}
+.card-art-translate-unlocker:has(> .project-artwork) {
+  background: radial-gradient(ellipse at 52% 49%, #29495e 0%, #102331 80%);
+}
+.card-art-music-bot:has(> .project-artwork) {
+  background: radial-gradient(ellipse at 50% 52%, #392d51 0%, #1a192e 80%);
+}
+.project-artwork {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  user-select: none;
+}
+.project-artwork > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.project-artwork--music-app {
+  inset: 26px 8px 29px;
+}
+.project-artwork .pa-label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 500;
+  letter-spacing: .055em;
+}
+.project-artwork .pa-meter,
+.project-artwork .pa-node,
+.project-artwork .pa-rotor,
+.project-artwork .pa-translate-arrow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.project-artwork .pa-meter { transform: scaleY(1); }
+.card-art:has(> .project-artwork) .card-art-index,
+.featured-stage:has(> .project-artwork) .stage-annot {
+  z-index: 2;
+  color: #cfdaef;
+}
+@media (max-width: 600px) {
+  .project-artwork--music-app { inset: 25px 0 27px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :is(.motion-seen,.motion-active) > .project-artwork .pa-meter {
+    animation: pa-meter var(--pa-duration,4s) var(--pa-delay,0s) ease-in-out infinite alternate;
+  }
+  :is(.motion-seen,.motion-active) > .project-artwork .pa-rotor {
+    animation: pa-rotor 32s linear infinite;
+  }
+  :is(.motion-seen,.motion-active) > .project-artwork .pa-node {
+    animation: pa-node 4.5s var(--pa-delay,0s) ease-in-out infinite;
+  }
+  :is(.motion-seen,.motion-active) > .project-artwork .pa-translate-arrow {
+    animation: pa-arrow 4.8s ease-in-out infinite;
+  }
+}
+.motion-idle > .project-artwork *,
+.motion-suspended .project-artwork * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .project-artwork * { animation: none !important; }
+}
+@keyframes pa-meter {
+  0%, 100% { transform: scaleY(.66); }
+  48% { transform: scaleY(1); }
+}
+@keyframes pa-rotor { to { transform: rotate(360deg); } }
+@keyframes pa-node {
+  0%, 100% { opacity: .6; }
+  50% { opacity: 1; }
+}
+@keyframes pa-arrow {
+  0%, 100% { transform: translateX(0); opacity: .7; }
+  44% { transform: translateX(4px); opacity: 1; }
+}
