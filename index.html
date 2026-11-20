@@ -1,29 +1,35 @@
 <!doctype html>
-<html lang="th" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0d14">
+  <meta name="description" content="CID KAGENOU — Full-Stack Developer and DevOps Engineer.">
+  <meta name="theme-color" content="#080810">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="CID — Software, systems and experiments. Android apps, AI integrations and practical tools.">
-  <link rel="canonical" href="https://cid-02.vercel.app/">
-  <meta property="og:url" content="https://cid-02.vercel.app/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="CID — Software × Curiosity">
-  <meta property="og:description" content="Apps, systems, and tools built with care for performance and usability.">
+  <meta property="og:title" content="CID KAGENOU — Projects & Experiments">
+  <meta property="og:description" content="Native systems, Android apps, AI integrations and creative web engineering.">
   <meta name="twitter:card" content="summary">
-  <title>CID — Software × Curiosity</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/src/styles.css">
-  <link rel="stylesheet" href="/src/project-art.css">
-  <script type="module" src="/src/main.js"></script>
+  <title>CID KAGENOU — Portfolio</title>
+  <!-- preload ฟอนต์น้ำหนักหลักที่ใช้ทันที (ลด FOIT ตอนเปิดหน้า) -->
+  <link rel="preload" href="./fonts/anakotmai-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/anakotmai-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./src/styles.css">
+  <link rel="stylesheet" href="./src/project-explorer.css">
+  <script>
+    try {
+      const settings = JSON.parse(localStorage.getItem('pf_settings') || '{}');
+      const theme = settings.theme === 'light' ? 'light' : settings.theme === 'dark' ? 'dark' : matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.dataset.theme = theme;
+      if (settings.accent) document.documentElement.style.setProperty('--ac', settings.accent);
+      if (settings.lang === 'th') document.documentElement.lang = 'th';
+    } catch (_) {}
+  </script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <div id="app"></div>
-  <noscript><main id="main" class="noscript-card wrap"><h1>CID — Software × Curiosity</h1><p>เพื่อใช้งาน Portfolio แบบโต้ตอบ โปรดเปิด JavaScript / Enable JavaScript for the interactive portfolio.</p><p><a href="https://github.com/I-am-Shadow01">View public projects on GitHub</a></p></main></noscript>
+  <a class="skip-link" href="#hero">Skip to content</a>
+  <div id="__root__"></div>
+  <script type="module" src="./src/app.js"></script>
 </body>
 </html>
