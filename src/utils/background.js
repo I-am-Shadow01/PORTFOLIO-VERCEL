@@ -1144,8 +1144,14 @@ export function initBackground() {
     dpr = vp.dpr;
     // The moving background is decorative: bound its backing-store budget
     // on 4K/8K monitors without scaling down text or the actual page UI.
+    // High-density touch phones pay for every extra pixel on every Canvas2D
+    // frame. In adaptive mode, 1.4x is enough for fine decorative lines:
+    // the native layout, text and controls still render at device resolution.
+    // Manual quality (adaptive off) retains the full original 2x option.
+    const mobileAdaptiveRatio = vp.touch && vp.small && cachedAdaptive
+      ? Math.min(dpr, 1.4) : dpr;
     const maxPixels = vp.touch ? 3_000_000 : 8_000_000;
-    const ratio = Math.min(dpr * scale, Math.sqrt(maxPixels / (W * H)));
+    const ratio = Math.min(mobileAdaptiveRatio * scale, Math.sqrt(maxPixels / (W * H)));
     canvas.width = Math.max(1, Math.round(W * ratio));
     canvas.height = Math.max(1, Math.round(H * ratio));
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -1229,8 +1235,25 @@ export function initBackground() {
   syncAccent();
   syncMode();
   const unsubSettings = onSettingsChange(() => {
+    const wasAdaptive = cachedAdaptive;
     syncAccent();
     syncMode();
+    // Changing the automatic-resolution policy needs a backing-store resize
+    // immediately, not after the next 120-frame quality sampling window.
+    if (wasAdaptive !== cachedAdaptive) {
+      if (!cachedAdaptive) {
+        // A manual override must also restore layers that adaptive quality
+        // previously shed. Otherwise they stay missing until the next sample.
+        const wasDegraded = adaptQ !== 0;
+        adaptQ = 0;
+        if (scale !== 1) applyScale(1);
+        else resizeCanvas();
+        if (wasDegraded) softRebuildParticles();
+        emitQuality(getLoopInfo());
+      } else {
+        resizeCanvas();
+      }
+    }
     staticDrawn = false;
     fpsHist = [];
   });
