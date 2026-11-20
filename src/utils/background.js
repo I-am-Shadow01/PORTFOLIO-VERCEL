@@ -41,6 +41,7 @@
 
 import { getSettings, onSettingsChange } from './settings.js';
 import { onFrame, onResize, getPointer, getScrollState, getViewport, getLoopInfo } from './loop.js';
+import { elapsedMotionTime, advanceAngle, followTarget } from './orbit-motion.js';
 
 export function initBackground() {
   const canvas = document.createElement('canvas');
@@ -638,11 +639,17 @@ export function initBackground() {
     { cx: 0.50, cy: 0.50, sc: 0.030, to: Math.PI * 0.5, h: [0.8, 0.4, 0.22, 0.15, 0.11],         depth: 0.42 },
   ];
   const epicycleTrails = ESYS.map(() => ring(TRAIL_LEN, 2));
+  const epicyclePhases = new Float64Array(ESYS.length);
+  const epicycleInfluence = new Float64Array(ESYS.length);
+  const epicycleTilt = new Float64Array(ESYS.length);
+  const epicycleCircles = ESYS.map(sys => new Float32Array(sys.h.length * 3));
+  let lastEpicycleTime = null;
 
   function drawEpicycles(t, info) {
     const base = (dark ? 0.18 : 0.14) * cM;
     const sc = Math.min(W, H);
-    const spin = 1 + info.energy * 1.6;
+    const dt = elapsedMotionTime(t, lastEpicycleTime);
+    lastEpicycleTime = t;
 
     batchTrail.reset();
     for (let si = 0; si < ESYS.length; si++) {
@@ -650,17 +657,33 @@ export function initBackground() {
       const par = (scroll.y * sys.depth * 0.05) % H;
       const cxPx = sys.cx * W, cyPx = sys.cy * H - par;
       const md = Math.hypot(mouse.x - cxPx, mouse.y - cyPx);
-      const inf = mouse.inside ? Math.max(0, 1 - md / (sc * 0.35)) : 0;
-      const speedWarp = (1 + inf * 2.5) * spin;
-      const tiltAngle = inf * Math.atan2(mouse.y - cyPx, mouse.x - cxPx);
+      const targetInfluence = mouse.inside ? Math.max(0, 1 - md / (sc * 0.35)) : 0;
+      const inf = epicycleInfluence[si] = followTarget(
+        epicycleInfluence[si], targetInfluence, dt, 120
+      );
+      // A vertical tilt is continuous across the entire pointer plane; unlike
+      // atan2, it does not flip by 2π while crossing the negative X axis.
+      const tiltTarget = inf * Math.max(-1, Math.min(1, (mouse.y - cyPx) / (sc * 0.35))) * 0.13;
+      const tiltAngle = epicycleTilt[si] = followTarget(epicycleTilt[si], tiltTarget, dt, 150);
+      epicyclePhases[si] = advanceAngle(
+        epicyclePhases[si], dt, 0.00080, (1 + inf * 0.8) * (1 + info.energy * 0.65)
+      );
+      const phase = epicyclePhases[si];
+      const circles = epicycleCircles[si];
 
       let x = cxPx, y = cyPx;
       for (let idx = 0; idx < sys.h.length; idx++) {
         const amp = sys.h[idx];
         const freq = idx + 1;
-        const angle = t * 0.00080 * freq * speedWarp + sys.to + idx * 0.7 + tiltAngle * 0.15 * freq;
-        const nx = x + amp * sys.sc * sc * Math.cos(angle);
-        const ny = y + amp * sys.sc * sc * Math.sin(angle);
+        const radius = amp * sys.sc * sc;
+        // Orbit circles and the harmonic arms must share these exact centers.
+        const offset = idx * 3;
+        circles[offset] = x;
+        circles[offset + 1] = y;
+        circles[offset + 2] = radius;
+        const angle = phase * freq + sys.to + idx * 0.7 + tiltAngle * freq;
+        const nx = x + radius * Math.cos(angle);
+        const ny = y + radius * Math.sin(angle);
         batchTrail.seg(x, y, nx, ny, bucketOf(base * 0.30 * (1 + inf * 0.5)));
         x = nx; y = ny;
       }
@@ -687,18 +710,11 @@ export function initBackground() {
     // วงโคจร (circle) — วาดรวมเป็น path เดียว
     ctx.beginPath();
     for (let si = 0; si < ESYS.length; si++) {
-      const sys = ESYS[si];
-      const par = (scroll.y * sys.depth * 0.05) % H;
-      const cxPx = sys.cx * W, cyPx = sys.cy * H - par;
-      let x = cxPx, y = cyPx;
-      for (let idx = 0; idx < sys.h.length; idx++) {
-        const amp = sys.h[idx];
-        const freq = idx + 1;
-        const angle = t * 0.00080 * freq * ((1 + info.energy * 1.6)) + sys.to + idx * 0.7;
-        ctx.moveTo(x + amp * sys.sc * sc, y);
-        ctx.arc(x, y, amp * sys.sc * sc, 0, Math.PI * 2);
-        x += amp * sys.sc * sc * Math.cos(angle);
-        y += amp * sys.sc * sc * Math.sin(angle);
+      const circles = epicycleCircles[si];
+      for (let idx = 0; idx < circles.length; idx += 3) {
+        const x = circles[idx], y = circles[idx + 1], radius = circles[idx + 2];
+        ctx.moveTo(x + radius, y);
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
       }
     }
     const cb = bucketOf(base * 0.14);
@@ -712,23 +728,30 @@ export function initBackground() {
   const LORENZ_MAX = 1800;
   const lorenz = ring(LORENZ_MAX, 3);
   let lx = 0.1, ly = 0, lz = 20;
+  let lastLorenzTime = null;
 
   function buildLorenz() {
     lorenz.reset();
+    lastLorenzTime = null;
     lx = 0.1 + Math.random() * 0.5; ly = Math.random() * 0.4; lz = 20 + Math.random() * 5;
   }
 
   function updateDrawLorenz(info) {
+    const elapsed = elapsedMotionTime(info.t, lastLorenzTime);
+    lastLorenzTime = info.t;
+    // Numerical integration previously used a fixed 0.012 per display frame,
+    // causing the same attractor to run 2.4× faster at 144Hz than at 60Hz.
+    const frameScale = elapsed / (1000 / 60);
     const lcx = W * 0.75, lcy = H * 0.5 - (scroll.y * 0.04) % H, sc = Math.min(W, H) * 0.013;
     const projX = lcx + lx * sc, projZ = lcy + (lz - 25) * sc;
     const md = Math.hypot(mouse.x - projX, mouse.y - projZ);
     if (mouse.inside && md < 120) {
-      const f = (1 - md / 120) * 0.008;
+      const f = (1 - md / 120) * 0.008 * frameScale;
       lx += (mouse.x - projX) / sc * f;
       ly += (mouse.y - projZ) / sc * f * 0.5;
     }
 
-    const dt = 0.012 * (1 + info.energy * 0.8);
+    const dt = 0.012 * frameScale * (1 + info.energy * 0.8);
     const df = (x, y, z) => ({ dx: sigma * (y - x), dy: x * (rhoL - z) - y, dz: x * y - betaL * z });
     const k1 = df(lx, ly, lz);
     const k2 = df(lx + dt / 2 * k1.dx, ly + dt / 2 * k1.dy, lz + dt / 2 * k1.dz);
@@ -880,26 +903,50 @@ export function initBackground() {
   // ════════════════════════════════════════════════════════════
   // E — 4D HYPERSPHERE (cache cos/sin ของมุมหมุน — เดิมคำนวณ trig 8 ครั้ง/จุด)
   // ════════════════════════════════════════════════════════════
+  // Independent 4D plane rotations advance continuously, even as interaction
+  // energy changes. Smoothed pointer offsets cannot snap on pointerleave.
+  const hyperAngles = new Float64Array(4);
+  const HYPER_SEGS = 48, HYPER_LATS = 10;
+  const hyperCircleCos = new Float64Array(HYPER_SEGS + 1);
+  const hyperCircleSin = new Float64Array(HYPER_SEGS + 1);
+  const hyperMeridianCos = new Float64Array(HYPER_SEGS + 1);
+  const hyperMeridianSin = new Float64Array(HYPER_SEGS + 1);
+  for (let i = 0; i <= HYPER_SEGS; i++) {
+    const circleAngle = i / HYPER_SEGS * Math.PI * 2;
+    const meridianAngle = i / HYPER_SEGS * Math.PI;
+    hyperCircleCos[i] = Math.cos(circleAngle);
+    hyperCircleSin[i] = Math.sin(circleAngle);
+    hyperMeridianCos[i] = Math.cos(meridianAngle);
+    hyperMeridianSin[i] = Math.sin(meridianAngle);
+  }
+  let hyperTiltXY = 0, hyperTiltZW = 0, lastHyperTime = null;
   function drawHyperSphere(t, info) {
     const base = (dark ? 0.22 : 0.18) * cM;
-    const tiltXY = mouse.inside ? mouse.nx * 0.8 : 0;
-    const tiltZW = mouse.inside ? mouse.ny * 0.5 : 0;
-    const wobble = 1 + info.energy * 1.2;
+    const dt = elapsedMotionTime(t, lastHyperTime);
+    lastHyperTime = t;
+    const speed = 1 + info.energy * 0.65;
+    hyperAngles[0] = advanceAngle(hyperAngles[0], dt, 0.000195, speed);
+    hyperAngles[1] = advanceAngle(hyperAngles[1], dt, 0.000130, speed);
+    hyperAngles[2] = advanceAngle(hyperAngles[2], dt, 0.000085, speed);
+    hyperAngles[3] = advanceAngle(hyperAngles[3], dt, 0.000060, speed);
+    hyperTiltXY = followTarget(hyperTiltXY, mouse.inside ? mouse.nx * 0.55 : 0, dt, 170);
+    hyperTiltZW = followTarget(hyperTiltZW, mouse.inside ? mouse.ny * 0.35 : 0, dt, 170);
 
-    const aXW = t * 0.000195 * wobble + tiltZW;
-    const aYW = t * 0.000130 * wobble;
-    const aZW = t * 0.000085 * wobble;
-    const aXY = t * 0.000060 * wobble + tiltXY;
+    const aXW = hyperAngles[0] + hyperTiltZW;
+    const aYW = hyperAngles[1];
+    const aZW = hyperAngles[2];
+    const aXY = hyperAngles[3] + hyperTiltXY;
     const cxw = Math.cos(aXW), sxw = Math.sin(aXW);
     const cyw = Math.cos(aYW), syw = Math.sin(aYW);
     const czw = Math.cos(aZW), szw = Math.sin(aZW);
     const cxy = Math.cos(aXY), sxy = Math.sin(aXY);
 
-    const SEGS = 48, LATS = 10;
     const offY = -(scroll.y * 0.05) % H;
     const scale3 = Math.min(W, H) * 0.14;
 
     // project 4D → 2D (inline, ไม่มี object ต่อจุด)
+    // Reuse scalar outputs instead of allocating ~1,300 [x,y] arrays/frame.
+    let projectedX = 0, projectedY = 0;
     const px4 = (x, y, z, w) => {
       let xx = x, yy = y, zz = z, ww = w, t1, t2;
       t1 = xx * cxw - ww * sxw; t2 = xx * sxw + ww * cxw; xx = t1; ww = t2;
@@ -909,39 +956,41 @@ export function initBackground() {
       const s4 = 1 / Math.max(0.01, 2.2 - ww);
       const px = xx * s4, py = yy * s4, pz = zz * s4;
       const s3 = 1 / Math.max(0.01, 3.5 - pz);
-      return [W * 0.25 + px * s3 * scale3, H * 0.5 + py * s3 * scale3 + offY];
+      projectedX = W * 0.25 + px * s3 * scale3;
+      projectedY = H * 0.5 + py * s3 * scale3 + offY;
     };
 
     batchTrail.reset();
-    for (let li = 1; li < LATS; li++) {
-      const chi = (li / LATS) * Math.PI;
+    for (let li = 1; li < HYPER_LATS; li++) {
+      const chi = (li / HYPER_LATS) * Math.PI;
       const sinC = Math.sin(chi), cosC = Math.cos(chi);
       const la = base * (0.30 + 0.70 * sinC);
       const bk = bucketOf(la), bk2 = bucketOf(la * 0.4);
-      let prev = null;
-      for (let si = 0; si <= SEGS; si++) {
-        const th = (si / SEGS) * Math.PI * 2;
-        const p = px4(sinC * Math.cos(th), sinC * Math.sin(th), 0, cosC);
-        if (prev) batchTrail.seg(prev[0], prev[1], p[0], p[1], bk);
-        prev = p;
+      let prevX = 0, prevY = 0;
+      for (let si = 0; si <= HYPER_SEGS; si++) {
+        px4(sinC * hyperCircleCos[si], sinC * hyperCircleSin[si], 0, cosC);
+        if (si) batchTrail.seg(prevX, prevY, projectedX, projectedY, bk);
+        prevX = projectedX;
+        prevY = projectedY;
       }
-      prev = null;
-      for (let si = 0; si <= SEGS; si++) {
-        const th = (si / SEGS) * Math.PI * 2;
-        const p = px4(sinC * Math.cos(th), 0, sinC * Math.sin(th), cosC);
-        if (prev) batchTrail.seg(prev[0], prev[1], p[0], p[1], bk2);
-        prev = p;
+      for (let si = 0; si <= HYPER_SEGS; si++) {
+        px4(sinC * hyperCircleCos[si], 0, sinC * hyperCircleSin[si], cosC);
+        if (si) batchTrail.seg(prevX, prevY, projectedX, projectedY, bk2);
+        prevX = projectedX;
+        prevY = projectedY;
       }
     }
     for (let lo = 0; lo < 9; lo++) {
       const phi = (lo / 9) * Math.PI * 2;
       const bk = bucketOf(base * 0.22);
-      let prev = null;
-      for (let si = 0; si <= SEGS; si++) {
-        const chi = (si / SEGS) * Math.PI;
-        const p = px4(Math.sin(chi) * Math.cos(phi), Math.sin(chi) * Math.sin(phi), 0, Math.cos(chi));
-        if (prev) batchTrail.seg(prev[0], prev[1], p[0], p[1], bk);
-        prev = p;
+      const cosPhi = Math.cos(phi), sinPhi = Math.sin(phi);
+      let prevX = 0, prevY = 0;
+      for (let si = 0; si <= HYPER_SEGS; si++) {
+        const sinC = hyperMeridianSin[si];
+        px4(sinC * cosPhi, sinC * sinPhi, 0, hyperMeridianCos[si]);
+        if (si) batchTrail.seg(prevX, prevY, projectedX, projectedY, bk);
+        prevX = projectedX;
+        prevY = projectedY;
       }
     }
     batchTrail.flush(COLS, WIDTHS);
@@ -951,11 +1000,14 @@ export function initBackground() {
   // F — TIMES-TABLE CARDIOID
   // ════════════════════════════════════════════════════════════
   const MT_POINTS = 180;
-  const MT_K_MIN = 2, MT_K_MAX = 45;
-  const MT_K_SPEED = 0.000045, MT_K_LERP = 0.025;
+  // Low-order multiplication patterns have recognizable cardioid/epicycloid
+  // structure. Values near 45 produce a noisy pin-cushion instead of an orbit.
+  const MT_K_MIN = 2, MT_K_MAX = 6.5;
+  const MT_K_SPEED = 0.000045;
   const MT_R_FRAC = 0.42, MT_ROT = 0.00005;
   const MT_BREATHE = 0.015, MT_BREATHE_SPEED = 0.00028;
   let multTableK = MT_K_MIN;
+  let multTablePhase = 0, multTableRotation = 0, lastMultTableTime = null;
   // cache cos/sin ของจุดบนวงกลม (ไม่ต้องเรียก trig 360 ครั้ง/เฟรม)
   const mtCos = new Float32Array(MT_POINTS), mtSin = new Float32Array(MT_POINTS);
   for (let i = 0; i < MT_POINTS; i++) {
@@ -966,18 +1018,26 @@ export function initBackground() {
   function drawMultTable(t, info) {
     const base = (dark ? 0.16 : 0.13) * cM;
     const cx = W * 0.5, cy = H * 0.5 - (scroll.y * 0.03) % H;
+    const dt = elapsedMotionTime(t, lastMultTableTime);
+    lastMultTableTime = t;
     const breathe = 1 + Math.sin(t * MT_BREATHE_SPEED) * MT_BREATHE;
     const R = Math.min(W, H) * MT_R_FRAC * breathe * (1 + info.energy * 0.04);
     const n = MT_POINTS;
 
-    const autoK = MT_K_MIN + (Math.sin(t * MT_K_SPEED * (1 + info.energy * 3)) * 0.5 + 0.5) * (MT_K_MAX - MT_K_MIN);
-    const targetK = mouse.inside
-      ? MT_K_MIN + (mouse.x / W) * (MT_K_MAX - MT_K_MIN)
-      : autoK;
-    multTableK += (targetK - multTableK) * MT_K_LERP;
+    multTablePhase = advanceAngle(multTablePhase, dt, MT_K_SPEED, 1 + info.energy * 0.5);
+    // Start as an actual cardioid (k=2), evolve through a few low-order curves.
+    const autoK = MT_K_MIN + (1 - Math.cos(multTablePhase)) * 0.5 * (MT_K_MAX - MT_K_MIN);
+    const mouseDist = Math.hypot(mouse.x - cx, mouse.y - cy);
+    const influence = mouse.inside
+      ? Math.max(0, Math.min(1, (R * 1.25 - mouseDist) / (R * 0.35)))
+      : 0;
+    const mouseK = MT_K_MIN + Math.max(0, Math.min(1, (mouse.x - (cx - R)) / (2 * R))) * (MT_K_MAX - MT_K_MIN);
+    const targetK = autoK + (mouseK - autoK) * influence;
+    multTableK = followTarget(multTableK, targetK, dt, 300);
     const k = multTableK;
 
-    const rot = t * MT_ROT * (1 + info.energy);
+    multTableRotation = advanceAngle(multTableRotation, dt, MT_ROT, 1 + info.energy * 0.6);
+    const rot = multTableRotation;
     const cr = Math.cos(rot), sr = Math.sin(rot);
 
     batchMain.reset();

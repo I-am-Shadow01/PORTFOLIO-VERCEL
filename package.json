@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Restored interactive portfolio, native HTML/CSS/JavaScript",
   "scripts": {
-    "check": "node --check src/app.js && node --check src/utils/loop.js && node --check src/utils/background.js && node --check src/utils/effects.js && node --check src/utils/settings.js && node --check src/sections/projects.js",
+    "check": "node --check src/app.js && node --check src/utils/loop.js && node --check src/utils/background.js && node --check src/utils/orbit-motion.js && node --check src/utils/effects.js && node --check src/utils/settings.js && node --check src/sections/projects.js",
     "test": "playwright test",
     "test:smoke": "node verify/smoke.mjs ."
   },
