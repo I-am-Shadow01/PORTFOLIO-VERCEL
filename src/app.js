@@ -7,7 +7,7 @@ import { renderDonate }         from './sections/donate.js';
 import { renderContact }        from './sections/contact.js';
 import { initCursor }           from './utils/cursor.js';
 import { initAnimations }       from './utils/animations.js';
-import { initBackground }       from './utils/background.js';
+import { initBackground }       from './utils/background.js?v=20261120-orbit-fix';
 import { initSmoothScroll }     from './utils/smoothscroll.js';
 import { initEffects }          from './utils/effects.js';
 import { onFrame, getScrollState, getLoopInfo } from './utils/loop.js';

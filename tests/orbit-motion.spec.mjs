@@ -70,6 +70,16 @@ test('Lorenz integration advances by elapsed time rather than display frames', (
   expect(Math.abs(timeBudget(60) - timeBudget(144))).toBeLessThan(0.012);
 });
 
+test('versioned bootstrap cannot silently reuse an old cached orbit engine', async ({ page, request }) => {
+  await page.goto('/');
+  const script = await page.locator('script[type="module"]').getAttribute('src');
+  const version = new URL(script, page.url()).searchParams.get('v');
+  expect(version).toBeTruthy();
+  const response = await request.get(script);
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain(`background.js?v=${version}`);
+});
+
 test('performance-mode orbit stays interactive without browser exceptions', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
