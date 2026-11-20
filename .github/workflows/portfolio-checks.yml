@@ -1,0 +1,42 @@
+name: Portfolio checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Interactivity smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: verify/package-lock.json
+      - name: Install headless test dependencies
+        working-directory: verify
+        run: npm ci --no-audit --no-fund
+      - name: Test real app boot and interactions
+        working-directory: verify
+        run: node smoke.mjs ..
+  browser:
+    name: Responsive browser regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run check
+      - run: npm test

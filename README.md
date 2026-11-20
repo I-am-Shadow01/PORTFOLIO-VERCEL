@@ -1,47 +1,128 @@
-# CID — Kinetic Studio
+# CID KAGENOU — Portfolio
 
-A bilingual (Thai/English), responsive developer portfolio. The focus is demonstrable public work and a native, interactive visual experience rather than decorative framework overhead.
+## Visual restoration (November 2026)
 
-## Design and interaction
+The original neon-lime / dark editorial design is intentionally restored from
+commit `3bce83b` instead of replacing its identity with a new template. It keeps
+the custom Canvas2D particle engine, interactive background, project search,
+theme/accent/hue controls, language switching and optional visual effects.
 
-- Editorial dark/light themes, persistent language and theme preferences, mobile navigation with keyboard and Escape support.
-- Four curated public repositories, category filtering, project details, and direct source links. The SVG project visuals are original illustrative studies, not screenshots or evidence of functionality.
-- A solid procedural WebGL2 kinetic sculpture with analytic geometry, surface normals, spectral material and studio lighting. Pointer or touch exploration, pause/resume, alternate material and reset are available. A local SVG poster is shown if WebGL2 cannot initialize.
-- Render only while the hero is visible; suspend on hidden tabs and reduced-motion preference. Adaptive resolution/pacing is based on measured browser cadence, not claims of a guaranteed frame rate. Secondary CSS animations are scoped to visible illustrations.
-- No runtime framework, external JavaScript, tracking, or private repository data. The existing public profile/contact content is retained.
+The restoration fixes narrow-phone typography and statistics, an accidental
+accent rewrite when the color picker initializes, rapid theme switching,
+reduced-motion static canvas repainting, hidden canvas effects accumulating
+in low-power mode, and adaptive particle density at the lowest quality tier.
+The decorative canvas has a bounded pixel budget on very large screens.
 
-## Local run
+For verification, run `npm ci && npm run check && npm test` for real Chromium
+responsive/interaction tests. Existing headless engine smoke/benchmarks remain
+in `verify/`: run `npm ci --prefix verify && npm run test:smoke`. Dependencies
+are for tests only; the deployed site remains a static ES-module application.
 
-Use Python 3 (or any static HTTP server):
+A dependency-free, static portfolio hosted on Vercel. It uses native ES modules, so no install or build step is required.
 
-```sh
-python -m http.server 4173
+## Edit content
+
+Update `src/config.js` for profile details, projects, contact links, and payment options. Section rendering lives in `src/sections/`; visual styles are in `src/styles.css`.
+
+## Run locally
+
+Serve the directory with any static file server, for example `npx serve .`, then open the URL it prints. Do not open `index.html` directly: ES modules work more reliably through a local server.
+
+## Deploy
+
+Push to the connected GitHub repository. Vercel serves the repository root as a static site; `vercel.json` sets caching and security headers.
+
+## Project map
+
+- `index.html` — semantic entry point, metadata, pre-paint preference loading, font preloads
+- `src/app.js` — composition and app lifecycle
+- `src/config.js` — all editable portfolio content
+- `src/sections/` — individual page sections
+- `src/utils/loop.js` — **one shared `requestAnimationFrame` loop + shared pointer/scroll state** for the whole site
+- `src/utils/background.js` — canvas visual engine (driven by `loop.js`)
+- `src/utils/` — settings, animation, cursor, scrolling, effects
+- `src/components/` — settings panel
+
+## Performance architecture (v2)
+
+The whole page runs on **a single rAF loop** (`src/utils/loop.js`). Every animated
+feature — background layers, cursor ring, sparkle trail, FPS meter, nav/scroll
+progress, hero typing — subscribes to it instead of keeping its own loop or its
+own `mousemove`/`scroll` listeners. The loop also pauses automatically when the
+tab is hidden and exposes `prefers-reduced-motion`.
+
+The background engine (`src/utils/background.js`) is still dependency-free
+Canvas2D (no three.js — a ~160KB dependency + GPU context would cost more than
+the line-art math layers it would replace). It is, however, heavily optimized:
+
+| technique | effect |
+|---|---|
+| alpha-bucket batching | all segments of a layer are grouped by quantized alpha and stroked once per bucket → `stroke()` drops from ~2,000/frame to ≤10/layer |
+| cached color table | `rgba(...)` strings are precomputed per accent change, not per segment |
+| typed-array spatial grid | counting-sort grid (no `Map<string,[]>`) → zero per-frame allocation |
+| ring-buffer trails | Lorenz / flow-field / epicycle trails live in `Float32Array`s → no GC churn |
+| low-res wave buffer | wave interference writes ~5,500 px (was 921,600) then upscales |
+| adaptive quality | FPS hysteresis first lowers backing-store resolution, then drops layers; reported live via `pf:adaptive-quality` |
+| idle awareness | expensive layers halve their update rate when the pointer is still |
+| scroll & energy parallax | every layer has a depth; pointer/scroll speed feeds an `energy` term that drives speed, glow and star rate |
+
+Benchmarked headlessly (same interaction script, 1280×720, software rasterizer):
+
+| mode | frame time before → after | canvas state writes/frame before → after |
+|---|---|---|
+| eco | 0.09 → 0.11 ms | 0.8 → 0.8 |
+| medium | 3.2 → 2.2 ms | 791 → 30 |
+| performance | 23.0 → 11.7 ms | 3,853 → 103 |
+
+(`putImageData` pixels per frame: 921,600 → 5,544.)
+
+### Settings & shortcuts
+
+Settings (gear button): theme, language, accent + custom hue picker, font size,
+**motion intensity slider**, cursor, **cursor trail**, background FX,
+**adaptive quality**, performance mode, FPS counter.
+
+First visit on a `prefers-reduced-motion` system starts in a calm preset
+(animations off, eco mode) — every choice can be changed afterwards.
+
+Shortcuts: `Alt+S` settings · `Alt+T` cycle theme · `Alt+F` FPS meter.
+
+## Verification
+
+`verify/` contains a headless harness (jsdom + `@napi-rs/canvas`, not part of
+the deployed site) that boots the real `app.js`, drives frames and interaction,
+and checks for regressions. After `npm i` inside `verify/`:
+
+```bash
+node smoke.mjs ..                 # full-app regression check
+node bench.mjs .. performance     # engine benchmark + canvas screenshot
 ```
 
-Open http://127.0.0.1:4173. The production site is static; no runtime dependency install or build is needed.
+## Project explorer (2026 refresh)
 
-## Validation
+Public work is curated in `src/config.js` and presented as bilingual case studies
+by `src/sections/projects.js` and the scoped `src/project-explorer.css`.
 
-```sh
+- Filter by project type, search by name/stack, or press `/` to search.
+  `Escape` clears search.
+- Expand **Architecture notes** on each project card to see why it was built
+  that way. Buttons, links and disclosures use semantic HTML and ARIA.
+- The site requests *public repository metadata only* from the GitHub API once
+  per page lifetime to show the latest push month. Curated dates render as a
+  fallback when GitHub is rate-limited or unavailable. No API token is needed.
+- Private repositories are deliberately excluded from public portfolio content.
+- Existing Canvas2D, settings, animations, themes and language switching remain
+  intact; the explorer adds no runtime dependency.
+
+## Automated checks
+
+Pull requests run `.github/workflows/portfolio-checks.yml` (Node 22 and
+`verify/smoke.mjs`) to check real page boot, project filtering, search,
+empty states, ARIA states, settings, bilingual rebuilding and background engine.
+To run locally:
+
+```bash
+cd verify
 npm ci
-npm run check
-npx playwright install chromium
-npm test
+node smoke.mjs ..
 ```
-
-If the installed Chrome is preferred, set PLAYWRIGHT_CHANNEL=chrome and run the same tests. Playwright starts its own local server; CI installs Chromium and retains screenshots/reports. Tests cover navigation, language/theme persistence, project filtering, viewport bounds, frame changes and WebGL fallback, reduced motion, pause/reset and material changes. Real-device frame rate depends on GPU, resolution and thermal conditions.
-
-## Structure
-
-- index.html — entry point and metadata
-- src/content.js — existing curated bilingual content and public project information
-- src/main.js — semantic markup, filters and UI state
-- src/styles.css — visual design, responsive layout and entry motion
-- src/scene.js — GPU graphics and lifecycle
-- src/sculpture-fallback.svg — local static hero fallback
-- src/project-art.js / src/project-art.css — bespoke SVG studies and secondary motion
-- src/motion.js — visibility observer
-- tests/ — Playwright behavior/regression checks
-- vercel.json — static hosting and security headers
-
-Deployment is Git-linked through Vercel. Use a preview branch for visual checks before merging main.
