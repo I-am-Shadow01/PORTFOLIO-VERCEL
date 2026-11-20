@@ -18,6 +18,16 @@ responsive/interaction tests. Existing headless engine smoke/benchmarks remain
 in `verify/`: run `npm ci --prefix verify && npm run test:smoke`. Dependencies
 are for tests only; the deployed site remains a static ES-module application.
 
+### Orbit-motion correction
+
+The mathematical circles (Fourier epicycles, 4D hypersphere, Lorenz attractor,
+and times-table cardioid) now use elapsed-time integration rather than
+multiplying total uptime by changing interaction speed. Pointer influence is
+smoothed, epicycle circles share their exact centers with the rotating arms,
+and the cardioid evolves through recognizable low-order patterns. Hypersphere
+projection reuses scalar outputs and cached trigonometry instead of allocating
+arrays for every projected point.
+
 A dependency-free, static portfolio hosted on Vercel. It uses native ES modules, so no install or build step is required.
 
 ## Edit content
