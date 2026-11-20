@@ -76,6 +76,15 @@ the line-art math layers it would replace). It is, however, heavily optimized:
 | idle awareness | expensive layers halve their update rate when the pointer is still |
 | scroll & energy parallax | every layer has a depth; pointer/scroll speed feeds an `energy` term that drives speed, glow and star rate |
 
+On small coarse-pointer screens, **Adaptive Quality** limits the decorative
+Canvas2D backing scale to 1.4× (or the device DPR if lower), then continues
+adjusting resolution/layers using the existing FPS hysteresis. Page layout,
+fonts, and controls remain at native CSS/device rendering resolution. Turning
+Adaptive Quality off immediately restores the full available Canvas scale
+(up to 2× DPR and the existing pixel budget) and any adaptively hidden layers.
+The 1.4× threshold was compared in Chrome mobile emulation; it is not a
+physical-phone FPS guarantee.
+
 Benchmarked headlessly (same interaction script, 1280×720, software rasterizer):
 
 | mode | frame time before → after | canvas state writes/frame before → after |
