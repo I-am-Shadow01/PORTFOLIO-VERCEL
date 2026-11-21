@@ -41,6 +41,7 @@
 
 import { getSettings, onSettingsChange } from './settings.js';
 import { onFrame, onResize, getPointer, getScrollState, getViewport, getLoopInfo } from './loop.js';
+import { STEP_MS, motionSteps, wrapPosition, pairImpulse, flowDirection } from './motion-physics.js';
 import { elapsedMotionTime, advanceAngle, followTarget } from './orbit-motion.js';
 
 export function initBackground() {
@@ -58,7 +59,9 @@ export function initBackground() {
   const vp     = getViewport();
 
   let W = 1, H = 1, dpr = 1, scale = 1;
+  let sceneScrollY = 0, sceneScrollDy = 0;
   let alive = true;
+  const sceneInitializations = { particles: 0, stars: 0, flow: 0, lorenz: 0 };
 
   // ── Helpers ─────────────────────────────────────────────────
   let dark = true;
@@ -292,7 +295,7 @@ export function initBackground() {
     for (let i = 0; i < BLOBS.length; i++) {
       const n = BLOBS[i];
       // parallax: blob แต่ละก้อนเลื่อนตาม scroll ไม่เท่ากัน
-      const par = (scroll.y * n.depth * 0.06) % (H * 1.5);
+      const par = sceneScrollY * n.depth * 0.06;
       const cx = (n.ox + Math.sin(t * n.sp + n.ph) * 0.12) * W;
       const cy = (n.oy + Math.cos(t * n.sp * 0.7 + n.ph) * 0.10) * H - par;
       blobXY[i].cx = cx; blobXY[i].cy = cy;
@@ -305,18 +308,22 @@ export function initBackground() {
   // ════════════════════════════════════════════════════════════
   // CURSOR ORB
   // ════════════════════════════════════════════════════════════
-  const orb = { x: -9999, y: -9999, boost: 0 };
+  const orb = { x: 0, y: 0, boost: 0, alpha: 0, ready: false };
   function drawOrb(info) {
-    const tx = mouse.inside ? mouse.x : -9999;
-    const ty = mouse.inside ? mouse.y : -9999;
-    orb.x += (tx - orb.x) * 0.10;
-    orb.y += (ty - orb.y) * 0.10;
-    orb.boost *= 0.90;
-    if (orb.x < -500 || !glowTexture) return;
+    const steps = motionSteps(info.dt, info.motion);
+    if (mouse.inside) {
+      if (!orb.ready) { orb.x = mouse.x; orb.y = mouse.y; orb.ready = true; }
+      const blend = 1 - Math.pow(0.90, steps);
+      orb.x += (mouse.x - orb.x) * blend;
+      orb.y += (mouse.y - orb.y) * blend;
+    }
+    orb.alpha += ((mouse.inside ? 1 : 0) - orb.alpha) * (1 - Math.pow(0.82, steps));
+    orb.boost *= Math.pow(0.90, steps);
+    if (orb.alpha < 0.001 || !glowTexture) { if (!mouse.inside) orb.ready = false; return; }
     const a = (dark ? 0.11 : 0.14) * cM * (1 + info.energy * 0.6);
     const rad = 185 + orb.boost * 70 + info.energy * 45;
     ctx.save();
-    ctx.globalAlpha = Math.min(1, a);
+    ctx.globalAlpha = Math.min(1, a * orb.alpha);
     ctx.drawImage(glowTexture, orb.x - rad, orb.y - rad, rad * 2, rad * 2);
     ctx.restore();
   }
@@ -325,6 +332,7 @@ export function initBackground() {
   // PARTICLES
   // ════════════════════════════════════════════════════════════
   let particles = [];
+  let particleGoal = 0;
   const CONNECT = 155, REPEL = 115, LJ_RADIUS = 70;
   let adaptQ = 0;   // adaptive quality level (performance mode)
 
@@ -345,24 +353,29 @@ export function initBackground() {
   }
 
   function initParticles() {
+    sceneInitializations.particles++;
     const n = targetCount();
     particles = Array.from({ length: n }, makeParticle);
+    particleGoal = n;
   }
   /** โต/หดแบบนุ่ม — ไม่ล้างทั้งชุด (กันภาพวาปตอนคุณภาพปรับ) */
   function softRebuildParticles() {
-    const n = targetCount();
-    if (n > particles.length) {
-      while (particles.length < n) particles.push(makeParticle());
-      allocGrid(); // gItems ต้องยาวพอเท่าจำนวนอนุภาคใหม่
-    } else if (n < particles.length) {
-      particles.length = n;
-    }
+    particleGoal = targetCount();
   }
 
   const shockwaves = [];  // คลื่นกระแทกจากคลิก → ผลักอนุภาคจริง
   function pushShockwave(x, y) { shockwaves.push({ x, y, r: 0, life: 1 }); }
 
   function drawParticles(t, info, mode) {
+    const steps = motionSteps(info.dt, info.motion);
+    const countDelta = Math.max(1, Math.ceil(2 * steps));
+    if (particles.length < particleGoal) {
+      const add = Math.min(particleGoal - particles.length, countDelta);
+      for (let i = 0; i < add; i++) particles.push(makeParticle());
+      allocGrid();
+    } else if (particles.length > particleGoal) {
+      particles.length -= Math.min(particles.length - particleGoal, countDelta);
+    }
     const perf = mode === 'performance';
     const dotB  = (dark ? 0.60 : 0.55) * cM * (1 + info.energy * 0.35);
     const lineB = (dark ? 0.20 : 0.18) * cM * (1 + info.energy * 0.5);
@@ -370,19 +383,18 @@ export function initBackground() {
     const n = particles.length;
 
     // parallax ตาม scroll — อนุภาคเลื่อนจริงใน world space (wrap ได้เอง)
-    if (scroll.dy) {
-      const shift = scroll.dy * 0.22;
+    if (sceneScrollDy) {
+      const shift = sceneScrollDy * 0.22;
       for (let i = 0; i < n; i++) {
         const p = particles[i];
-        p.y += shift;
-        if (p.y < -10) p.y += H + 20; else if (p.y > H + 10) p.y -= H + 20;
+        p.y = wrapPosition(p.y + shift, H);
       }
     }
 
     // ── shockwave impulse ──
     for (let s = shockwaves.length - 1; s >= 0; s--) {
       const w = shockwaves[s];
-      w.r += 26; w.life -= 0.035;
+    w.r += 26 * steps; w.life -= 0.035 * steps;
       if (w.life <= 0) { shockwaves.splice(s, 1); continue; }
       const R = w.r;
       for (let i = 0; i < n; i++) {
@@ -391,7 +403,7 @@ export function initBackground() {
         const d = Math.hypot(dx, dy);
         if (d < R && d > R - 70 && d > 1) {
           const f = (1 - Math.abs(d - (R - 35)) / 35) * 2.4 * w.life;
-          if (f > 0) { p.vx += (dx / d) * f; p.vy += (dy / d) * f; }
+          if (f > 0) { p.vx += (dx / d) * f * steps; p.vy += (dy / d) * f * steps; }
         }
       }
     }
@@ -406,25 +418,25 @@ export function initBackground() {
       const md = Math.hypot(mdx, mdy);
       if (md < REPEL && md > 0) {
         const f = (1 - md / REPEL) * (0.68 + info.energy * 0.5);
-        p.vx += (mdx / md) * f; p.vy += (mdy / md) * f;
+        p.vx += (mdx / md) * f * steps; p.vy += (mdy / md) * f * steps;
       }
 
       if (perf) {
         for (let b = 0; b < blobXY.length; b++) {
           const bdx = blobXY[b].cx - p.x, bdy = blobXY[b].cy - p.y;
           const bd = Math.hypot(bdx, bdy);
-          if (bd > 10 && bd < 300) { const f = 0.0009 * (300 - bd) / 300; p.vx += (bdx / bd) * f; p.vy += (bdy / bd) * f; }
+          if (bd > 10 && bd < 300) { const f = 0.0009 * (300 - bd) / 300 * steps; p.vx += (bdx / bd) * f; p.vy += (bdy / bd) * f; }
         }
       }
 
-      p.vx = p.vx * 0.96 + (p.bvx + Math.cos(flow) * 0.010) * 0.04;
-      p.vy = p.vy * 0.96 + (p.bvy + Math.sin(flow) * 0.010) * 0.04;
+      const decay = Math.pow(0.96, steps);
+      p.vx = p.vx * decay + (p.bvx + Math.cos(flow) * 0.010) * (1 - decay);
+      p.vy = p.vy * decay + (p.bvy + Math.sin(flow) * 0.010) * (1 - decay);
       const spd = Math.hypot(p.vx, p.vy);
       const cap = 4.5 * speedMul;
       if (spd > cap) { p.vx = (p.vx / spd) * cap; p.vy = (p.vy / spd) * cap; }
-      p.x += p.vx * speedMul; p.y += p.vy * speedMul;
-      if (p.x < -10) p.x = W + 10; if (p.x > W + 10) p.x = -10;
-      if (p.y < -10) p.y = H + 10; if (p.y > H + 10) p.y = -10;
+      p.x = wrapPosition(p.x + p.vx * speedMul * steps, W);
+      p.y = wrapPosition(p.y + p.vy * speedMul * steps, H);
     }
 
     // ── grid หนึ่งครั้งต่อเฟรม ใช้ทั้ง LJ และเส้นเชื่อม ──
@@ -446,11 +458,10 @@ export function initBackground() {
               const q = particles[j];
               const dx = q.x - p.x, dy = q.y - p.y;
               const d = Math.hypot(dx, dy);
-              if (d < LJ_RADIUS && d > 1) {
-                const s6 = Math.pow(20 / d, 6);
-                const f = 0.005 * (2 * s6 * s6 - s6) / d;
-                p.vx -= (dx / d) * f; p.vy -= (dy / d) * f;
-                q.vx += (dx / d) * f; q.vy += (dy / d) * f;
+              if (d < LJ_RADIUS && d > 0) {
+                const [fx, fy] = pairImpulse(dx, dy, steps);
+                p.vx -= fx; p.vy -= fy;
+                q.vx += fx; q.vy += fy;
               }
             }
           }
@@ -515,15 +526,16 @@ export function initBackground() {
     };
   }
   let STARS = [];
-  function initStars() { STARS = Array.from({ length: 7 }, mkStar); }
+  function initStars() { sceneInitializations.stars++; STARS = Array.from({ length: 7 }, mkStar); }
 
   function drawStars(info) {
-    const waitScale = 1 - info.energy * 0.7;   // energy สูง → รอสั้นลง
+    const steps = motionSteps(info.dt, info.motion);
+    const waitScale = (1 + info.energy * 2) * steps;
     for (const s of STARS) {
       if (s.wait > 0) { s.wait -= waitScale; continue; }
-      s.x += Math.cos(s.ang) * s.spd;
-      s.y += Math.sin(s.ang) * s.spd + scroll.dy * 0.05;
-      s.life++;
+      s.x += Math.cos(s.ang) * s.spd * steps;
+      s.y += Math.sin(s.ang) * s.spd * steps + sceneScrollDy * 0.05;
+      s.life += steps;
       if (s.life >= s.max || s.x > W + 200 || s.y > H + 200) Object.assign(s, mkStar());
       const a = Math.sin((s.life / s.max) * Math.PI) * (dark ? 0.78 : 0.52) * cM;
       if (a <= 0.01) continue;
@@ -553,13 +565,15 @@ export function initBackground() {
       ripples.push({ x: mouse.x, y: mouse.y, r: 0, maxR: 65, life: 1 });
     }
   }
-  function drawRipples() {
+  function drawRipples(info) {
     if (!ripples.length) return;
+    const steps = motionSteps(info.dt, info.motion);
     const base = (dark ? 0.18 : 0.13) * cM;
     batchMain.reset();
     for (let i = ripples.length - 1; i >= 0; i--) {
       const r = ripples[i];
-      r.r += (r.maxR - r.r) * 0.075; r.life -= 0.022;
+      r.r += (r.maxR - r.r) * (1 - Math.pow(0.925, steps));
+      r.life -= 0.022 * steps;
       if (r.life <= 0) { ripples.splice(i, 1); continue; }
       // วงกลม ≈ 12 เส้น → รวมเข้า batch (ถูกกว่า arc+stroke ต่อวง)
       const SEG = 12;
@@ -583,13 +597,14 @@ export function initBackground() {
     }
     bursts.push({ x, y, rays, life: 1 });
   }
-  function drawBursts() {
+  function drawBursts(info) {
     if (!bursts.length) return;
+    const steps = motionSteps(info.dt, info.motion);
     const base = (dark ? 0.55 : 0.42) * cM;
     batchMain.reset();
     for (let i = bursts.length - 1; i >= 0; i--) {
       const b = bursts[i];
-      b.life -= BURST_DECAY;
+      b.life -= BURST_DECAY * steps;
       if (b.life <= 0) { bursts.splice(i, 1); continue; }
       const ease = b.life * b.life;
       const grow = 1 - b.life;
@@ -620,7 +635,7 @@ export function initBackground() {
     const b = bucketOf(a);
     if (b < 0) return;
     const CW = W / 26;
-    const off = (t * 0.016 + scroll.y * 0.12) % CW;
+    const off = (t * 0.016 + sceneScrollY * 0.12) % CW;
     ctx.beginPath();
     for (let x = -off; x <= W + CW; x += CW) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
     for (let row = 0; row <= Math.ceil(H / CW) + 1; row++) { ctx.moveTo(0, row * CW); ctx.lineTo(W, row * CW); }
@@ -639,6 +654,7 @@ export function initBackground() {
     { cx: 0.50, cy: 0.50, sc: 0.030, to: Math.PI * 0.5, h: [0.8, 0.4, 0.22, 0.15, 0.11],         depth: 0.42 },
   ];
   const epicycleTrails = ESYS.map(() => ring(TRAIL_LEN, 2));
+  const epicycleSampleClock = new Float64Array(ESYS.length);
   const epicyclePhases = new Float64Array(ESYS.length);
   const epicycleInfluence = new Float64Array(ESYS.length);
   const epicycleTilt = new Float64Array(ESYS.length);
@@ -654,7 +670,7 @@ export function initBackground() {
     batchTrail.reset();
     for (let si = 0; si < ESYS.length; si++) {
       const sys = ESYS[si];
-      const par = (scroll.y * sys.depth * 0.05) % H;
+      const par = sceneScrollY * sys.depth * 0.05;
       const cxPx = sys.cx * W, cyPx = sys.cy * H - par;
       const md = Math.hypot(mouse.x - cxPx, mouse.y - cyPx);
       const targetInfluence = mouse.inside ? Math.max(0, 1 - md / (sc * 0.35)) : 0;
@@ -694,13 +710,21 @@ export function initBackground() {
       ctx.fill();
 
       const trail = epicycleTrails[si];
-      trail.push(x, y);
+      epicycleSampleClock[si] += dt;
+      if (trail.length === 0 || epicycleSampleClock[si] >= STEP_MS) {
+        // Keep the history in orbit-local coordinates: subsequent scroll,
+        // orientation and toolbar changes translate/scale the whole trail
+        // using exactly the same transform as the live harmonic geometry.
+        trail.push((x - cxPx) / sc, (y - cyPx) / sc);
+        epicycleSampleClock[si] %= STEP_MS;
+      }
       const L = trail.length;
       if (L > 2) {
         for (let i = 1; i < L; i++) {
           const o0 = trail.at(i - 1), o1 = trail.at(i);
           const frac = i / L;
-          batchTrail.seg(trail.data[o0], trail.data[o0 + 1], trail.data[o1], trail.data[o1 + 1],
+          batchTrail.seg(cxPx + trail.data[o0] * sc, cyPx + trail.data[o0 + 1] * sc,
+                         cxPx + trail.data[o1] * sc, cyPx + trail.data[o1 + 1] * sc,
                          bucketOf(frac * base * (0.85 + inf * 0.5)));
         }
       }
@@ -731,6 +755,7 @@ export function initBackground() {
   let lastLorenzTime = null;
 
   function buildLorenz() {
+    sceneInitializations.lorenz++;
     lorenz.reset();
     lastLorenzTime = null;
     lx = 0.1 + Math.random() * 0.5; ly = Math.random() * 0.4; lz = 20 + Math.random() * 5;
@@ -742,7 +767,7 @@ export function initBackground() {
     // Numerical integration previously used a fixed 0.012 per display frame,
     // causing the same attractor to run 2.4× faster at 144Hz than at 60Hz.
     const frameScale = elapsed / (1000 / 60);
-    const lcx = W * 0.75, lcy = H * 0.5 - (scroll.y * 0.04) % H, sc = Math.min(W, H) * 0.013;
+    const lcx = W * 0.75, lcy = H * 0.5 - sceneScrollY * 0.04, sc = Math.min(W, H) * 0.013;
     const projX = lcx + lx * sc, projZ = lcy + (lz - 25) * sc;
     const md = Math.hypot(mouse.x - projX, mouse.y - projZ);
     if (mouse.inside && md < 120) {
@@ -794,15 +819,21 @@ export function initBackground() {
     waveImg = waveCtx.createImageData(waveW, waveH);
   }
 
+  let waveMouseWeight = 0, waveMouseX = 0, waveMouseY = 0, waveMouseReady = false;
   function drawWaveInterference(t, info) {
     if (!waveImg) return;
     const base = (dark ? 0.040 : 0.060) * cM;
     const s0x = W * 0.28, s0y = H * 0.32;
     const s1x = W * 0.72, s1y = H * 0.32;
     const s2x = W * 0.50, s2y = H * 0.75;
-    const hasMouse = mouse.inside;
-    const smx = mouse.x, smy = mouse.y;
-    const numSources = hasMouse ? 4 : 3;
+    const dt = Math.max(0, Math.min(50, info.dt ?? 0));
+    if (mouse.inside) {
+      if (!waveMouseReady) { waveMouseX = mouse.x; waveMouseY = mouse.y; waveMouseReady = true; }
+      waveMouseX = followTarget(waveMouseX, mouse.x, dt, 80);
+      waveMouseY = followTarget(waveMouseY, mouse.y, dt, 80);
+    }
+    waveMouseWeight = followTarget(waveMouseWeight, mouse.inside ? 1 : 0, dt, 160);
+    const smx = waveMouseX, smy = waveMouseY;
     const k = 0.018, omega = t * 0.0015;
     const data = waveImg.data;
     data.fill(0);
@@ -815,8 +846,8 @@ export function initBackground() {
         let amp = Math.cos(k * Math.hypot(px - s0x, py - s0y) - omega)
                 + Math.cos(k * Math.hypot(px - s1x, py - s1y) - omega)
                 + Math.cos(k * Math.hypot(px - s2x, py - s2y) - omega);
-        if (hasMouse) amp += Math.cos(k * Math.hypot(px - smx, py - smy) - omega);
-        const intensity = Math.abs(amp / numSources);
+        if (waveMouseWeight > 0.001) amp += waveMouseWeight * Math.cos(k * Math.hypot(px - smx, py - smy) - omega);
+        const intensity = Math.abs(amp / (3 + waveMouseWeight));
         if (intensity <= 0.52) continue;
         data[idx] = cR; data[idx + 1] = cG; data[idx + 2] = cB;
         data[idx + 3] = Math.min(255, (intensity - 0.52) * base * 2.8 * 255 * (1 + info.energy * 0.4));
@@ -828,15 +859,19 @@ export function initBackground() {
 
     // source dots
     ctx.beginPath();
-    const dots = hasMouse ? 4 : 3;
-    const pos = [s0x, s0y, s1x, s1y, s2x, s2y, smx, smy];
-    for (let i = 0; i < dots; i++) {
-      const r = i === 3 ? 5 : 3.5;
+    const pos = [s0x, s0y, s1x, s1y, s2x, s2y];
+    for (let i = 0; i < 3; i++) {
+      const r = 3.5;
       ctx.moveTo(pos[i * 2] + r, pos[i * 2 + 1]);
       ctx.arc(pos[i * 2], pos[i * 2 + 1], r, 0, Math.PI * 2);
     }
     ctx.fillStyle = `rgba(${cR},${cG},${cB},${0.6 * cM})`;
     ctx.fill();
+    if (waveMouseWeight > 0.001) {
+      ctx.beginPath(); ctx.arc(smx, smy, 5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${cR},${cG},${cB},${0.6 * cM * waveMouseWeight})`;
+      ctx.fill();
+    }
   }
 
   // ════════════════════════════════════════════════════════════
@@ -847,46 +882,46 @@ export function initBackground() {
   let flowTrail = null;
 
   function buildFlowParticles() {
+    sceneInitializations.flow++;
     flowPts = Array.from({ length: FLOW_N }, () => ({
-      x: Math.random() * W, y: Math.random() * H, head: 0, len: 0, age: Math.random() * 200,
+      x: Math.random() * W, y: Math.random() * H, head: 0, len: 0, age: Math.random() * 200, trailClock: 0,
     }));
     flowTrail = new Float32Array(FLOW_N * FLOW_TRAIL * 2);
   }
 
   function drawFlowField(t, info) {
     const base = (dark ? 0.18 : 0.14) * cM;
+    const steps = motionSteps(info.dt, info.motion);
     batchTrail.reset();
     for (let pi = 0; pi < flowPts.length; pi++) {
       const p = flowPts[pi];
       const baseOff = pi * FLOW_TRAIL * 2;
 
-      // push ตำแหน่งปัจจุบันลง ring ของจุดนี้
-      const ho = baseOff + p.head * 2;
-      flowTrail[ho] = p.x; flowTrail[ho + 1] = p.y;
-      p.head = (p.head + 1) % FLOW_TRAIL;
-      if (p.len < FLOW_TRAIL) p.len++;
-
-      p.age++;
-      if (p.age > 250 || p.x < 0 || p.x > W || p.y < 0 || p.y > H) {
-        p.x = Math.random() * W; p.y = Math.random() * H; p.len = 0; p.head = 0; p.age = 0;
-        continue;
-      }
+      p.age += steps;
+      // A finite path stays alive; only crossing the hidden viewport margin
+      // starts a new stroke. No arbitrary 250-frame in-viewport respawn.
 
       let angle = Math.sin(p.x * 0.006 + t * 0.0003) * Math.PI * 1.5
                 + Math.cos(p.y * 0.006 + t * 0.00025) * Math.PI * 0.8;
-      if (mouse.inside) {
-        const dx = p.x - mouse.x, dy = p.y - mouse.y;
-        const d = Math.hypot(dx, dy);
-        if (d < 200 && d > 1) angle += (1 - d / 200) * 2.5 * Math.atan2(-dx, dy);
-      }
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const [dirX, dirY] = mouse.inside
+        ? flowDirection(angle, dx, dy) : [Math.cos(angle), Math.sin(angle)];
       const spd = 1.6 * (1 + info.energy * 1.1);
-      p.x += Math.cos(angle) * spd;
-      p.y += Math.sin(angle) * spd + scroll.dy * 0.12;
+      p.x += dirX * spd * steps;
+      p.y += dirY * spd * steps + sceneScrollDy * 0.12;
       // ถ้าหลุดขอบ/ห่อกลับจอ ให้เริ่มหางใหม่ — กันเส้นยาวลากข้ามจอ (artifact เดิม)
       let wrapped = false;
-      if (p.x < 0) { p.x += W; wrapped = true; } else if (p.x > W) { p.x -= W; wrapped = true; }
-      if (p.y < 0) { p.y += H; wrapped = true; } else if (p.y > H) { p.y -= H; wrapped = true; }
-      if (wrapped) { p.len = 0; p.head = 0; }
+      if (p.x < 0 || p.x > W) { p.x = wrapPosition(p.x, W, 0); wrapped = true; }
+      if (p.y < 0 || p.y > H) { p.y = wrapPosition(p.y, H, 0); wrapped = true; }
+      if (wrapped) { p.len = 0; p.head = 0; p.trailClock = 0; }
+      p.trailClock += steps;
+      if (p.len === 0 || p.trailClock >= 1) {
+        const ho = baseOff + p.head * 2;
+        flowTrail[ho] = p.x; flowTrail[ho + 1] = p.y;
+        p.head = (p.head + 1) % FLOW_TRAIL;
+        if (p.len < FLOW_TRAIL) p.len++;
+        p.trailClock %= 1;
+      }
 
       const L = p.len;
       for (let i = 1; i < L; i++) {
@@ -941,7 +976,7 @@ export function initBackground() {
     const czw = Math.cos(aZW), szw = Math.sin(aZW);
     const cxy = Math.cos(aXY), sxy = Math.sin(aXY);
 
-    const offY = -(scroll.y * 0.05) % H;
+    const offY = -sceneScrollY * 0.05;
     const scale3 = Math.min(W, H) * 0.14;
 
     // project 4D → 2D (inline, ไม่มี object ต่อจุด)
@@ -1017,7 +1052,7 @@ export function initBackground() {
 
   function drawMultTable(t, info) {
     const base = (dark ? 0.16 : 0.13) * cM;
-    const cx = W * 0.5, cy = H * 0.5 - (scroll.y * 0.03) % H;
+    const cx = W * 0.5, cy = H * 0.5 - sceneScrollY * 0.03;
     const dt = elapsedMotionTime(t, lastMultTableTime);
     lastMultTableTime = t;
     const breathe = 1 + Math.sin(t * MT_BREATHE_SPEED) * MT_BREATHE;
@@ -1057,8 +1092,9 @@ export function initBackground() {
 
       const rawDist = Math.abs(i - jPos);
       const angDist = Math.min(rawDist, n - rawDist) / (n / 2);
-      if (angDist > 0.92) continue;   // คอร์ดที่ยาวที่สุดจางจนมองแทบไม่เห็น แต่ rasterize แพง
-      const alpha = base * (0.35 + 0.65 * (1 - angDist));
+      const edgeFade = Math.max(0, Math.min(1, (0.96 - angDist) / 0.10));
+      if (edgeFade === 0) continue;
+      const alpha = base * (0.35 + 0.65 * (1 - angDist)) * edgeFade;
       batchMain.seg(cx + ax * R, cy + ay * R, cx + bxx * R, cy + byy * R, bucketOf(alpha));
     }
     batchMain.flush(COLS, WIDTHS);
@@ -1092,6 +1128,7 @@ export function initBackground() {
   // fps history → quality level (มี hysteresis กันกระเพื่อมขึ้นลงถี่ๆ)
   let fpsHist = [];
   let lastAdaptAt = 0;
+  const QUALITY_DWELL_MS = 8000;
   function adapt(info, mode) {
     if (info.frame % 30 !== 0) return;
     fpsHist.push(info.fps);
@@ -1112,12 +1149,12 @@ export function initBackground() {
       else if (q === 3 && avg > 46) q = 2;
       else if (q === 4 && avg > 42) q = 3;
     } else if (mode === 'medium' && auto) {
-      q = avg < 34 ? 1 : 0;                  // medium: ลด resolution อย่างเดียว
+      q = q === 0 ? (avg < 32 ? 1 : 0) : (avg > 44 ? 0 : 1);
     } else {
       q = 0;
     }
 
-    if (q !== adaptQ) {
+    if (q !== adaptQ && (lastAdaptAt === 0 || info.t - lastAdaptAt >= QUALITY_DWELL_MS)) {
       adaptQ = q;
       const want = q <= 1 ? (q === 0 ? 1 : 0.85) : (q === 2 ? 0.8 : 0.72);
       applyScale(want);
@@ -1163,12 +1200,36 @@ export function initBackground() {
 
   function onViewportChange() {
     staticDrawn = false;
+    const oldW = W, oldH = H;
+    const hasScene = flowTrail !== null && particles.length > 0;
     resizeCanvas();
-    initParticles();
+    if (!hasScene) {
+      sceneScrollY = scroll.y;
+      initParticles();
+      initStars();
+      buildFlowParticles();
+      buildLorenz();
+    } else {
+      // The same visual points survive a toolbar resize or orientation change.
+      // Transform all historical trail coordinates with the viewport, while
+      // Lorenz' intrinsic 3D state and orbital phases remain untouched.
+      const sx = W / oldW, sy = H / oldH;
+      for (const p of particles) { p.x *= sx; p.y *= sy; }
+      for (const s of STARS) { s.x *= sx; s.y *= sy; }
+      for (const p of flowPts) { p.x *= sx; p.y *= sy; }
+      for (let i = 0; i < flowTrail.length; i += 2) {
+        flowTrail[i] *= sx; flowTrail[i + 1] *= sy;
+      }
+      // Epicycle trails are orbit-local and follow center/scale changes at
+      // render time. Rescaling them as screen pixels would distort the circles.
+      for (const item of [...ripples, ...bursts, ...shockwaves]) {
+        item.x *= sx; item.y *= sy;
+      }
+      if (orb.ready) { orb.x *= sx; orb.y *= sy; }
+      if (waveMouseReady) { waveMouseX *= sx; waveMouseY *= sy; }
+      softRebuildParticles();
+    }
     allocGrid();
-    initStars();
-    buildFlowParticles();
-    buildLorenz();
     resizeWaveCanvas();
   }
 
@@ -1178,11 +1239,19 @@ export function initBackground() {
   let ecoAcc = 0;
   const ECO_MS = 1000 / 14;
   let staticDrawn = false;
+  let advancedAlpha = 1, waveAlpha = 1;
 
   function frame(info) {
     if (!alive) return;
     const mode = currentMode();
     refreshTheme();
+    const previousSceneScrollY = sceneScrollY;
+    sceneScrollY = followTarget(
+      sceneScrollY, scroll.y, Math.max(0, Math.min(50, info.dt)), 135
+    );
+    // A programmatic scrollTo(bottom) may move thousands of CSS pixels in a
+    // single frame. Bound the decorative drift independently of page scroll.
+    sceneScrollDy = Math.max(-30, Math.min(30, sceneScrollY - previousSceneScrollY));
 
     // prefers-reduced-motion → วาดภาพนิ่งครั้งเดียวพอ
     if (info.reducedMotion || !cachedAnimate) {
@@ -1191,7 +1260,7 @@ export function initBackground() {
       ctx.clearRect(0, 0, W, H);
       drawAurora(info.t, { energy: 0 });
       drawGrid(info.t, { energy: 0 });
-      drawParticles(info.t, { energy: 0 }, 'eco');
+      drawParticles(info.t, { energy: 0, dt: 0, motion: 0 }, 'eco');
       return;
     }
     staticDrawn = false;
@@ -1216,16 +1285,60 @@ export function initBackground() {
     spawnRipple();
     drawGrid(info.t, info);
     drawParticles(info.t, info, mode);
-    drawRipples();
-    drawBursts();
+    drawRipples(info);
+    drawBursts(info);
 
+    let paintedLayers = 0;
     if (mode === 'performance') {
-      // idle = ผู้ใช้หยุดนิ่ง → เลเยอร์ที่แพงที่สุดอัปเดตทุก 2 เฟรม (มองแทบไม่ออก)
-      const idle = pointerIdle() && scroll.vel === 0;
-      const evenFrame = info.frame % 2 === 0;
-      if (adaptQ < 3) { updateDrawLorenz(info); drawHyperSphere(info.t, info); drawMultTable(info.t, info); }
-      if (adaptQ < 3 && (!idle || evenFrame)) { drawEpicycles(info.t, info); drawFlowField(info.t, info); }
-      if (adaptQ < 2 && (!idle || evenFrame)) drawWaveInterference(info.t, info);
+      // Every cleared frame must repaint every visible layer. The previous
+      // odd-frame skip caused visible on/off flashing even at perfect FPS.
+      // Fade adaptive LOD changes rather than abruptly dropping geometry.
+      const dt = Math.max(0, Math.min(50, info.dt));
+      advancedAlpha = followTarget(advancedAlpha, adaptQ < 3 ? 1 : 0, dt, 170);
+      waveAlpha = followTarget(waveAlpha, adaptQ < 2 ? 1 : 0, dt, 170);
+      if (advancedAlpha > 0.002) {
+        ctx.save();
+        ctx.globalAlpha = advancedAlpha;
+        updateDrawLorenz(info); drawHyperSphere(info.t, info); drawMultTable(info.t, info);
+        drawEpicycles(info.t, info); paintedLayers |= 1;
+        drawFlowField(info.t, info); paintedLayers |= 2;
+        ctx.restore();
+      }
+      if (waveAlpha > 0.002) {
+        ctx.save();
+        ctx.globalAlpha = waveAlpha;
+        drawWaveInterference(info.t, info); paintedLayers |= 4;
+        ctx.restore();
+      }
+    }
+    // Opt-in read-only instrumentation for Chrome motion tests. No allocations
+    // and no externally exposed mutable state during ordinary production use.
+    if (typeof window.__pfMotionProbe === 'function') {
+      const p = particles[0], f = flowPts[0];
+      let epicycleMaxGap = 0;
+      for (const trail of epicycleTrails) {
+        for (let i = 1; i < trail.length; i++) {
+          const a = trail.at(i - 1), b = trail.at(i);
+          epicycleMaxGap = Math.max(epicycleMaxGap, Math.hypot(
+            trail.data[b] - trail.data[a], trail.data[b + 1] - trail.data[a + 1]
+          ) * Math.min(W, H));
+        }
+      }
+      window.__pfMotionProbe({
+        frame: info.frame, t: info.t, dt: info.dt, mode, quality: adaptQ,
+        width: W, height: H, layerMask: paintedLayers,
+        sceneScrollY, sceneScrollDy,
+        resets: { ...sceneInitializations },
+        phases: {
+          epicycle: Array.from(epicyclePhases),
+          hyper: Array.from(hyperAngles),
+          table: multTablePhase, rotation: multTableRotation,
+        },
+        particle: p ? { x: p.x, y: p.y, vx: p.vx, vy: p.vy } : null,
+        flow: f ? { x: f.x, y: f.y } : null,
+        lorenz: { x: lx, y: ly, z: lz },
+        epicycleMaxGap,
+      });
     }
   }
 
@@ -1236,8 +1349,10 @@ export function initBackground() {
   syncMode();
   const unsubSettings = onSettingsChange(() => {
     const wasAdaptive = cachedAdaptive;
+    const previousMode = cachedMode;
     syncAccent();
     syncMode();
+    if (cachedMode !== previousMode) softRebuildParticles();
     // Changing the automatic-resolution policy needs a backing-store resize
     // immediately, not after the next 120-frame quality sampling window.
     if (wasAdaptive !== cachedAdaptive) {

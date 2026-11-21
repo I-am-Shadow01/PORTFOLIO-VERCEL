@@ -73,7 +73,7 @@ the line-art math layers it would replace). It is, however, heavily optimized:
 | ring-buffer trails | Lorenz / flow-field / epicycle trails live in `Float32Array`s → no GC churn |
 | low-res wave buffer | wave interference writes ~5,500 px (was 921,600) then upscales |
 | adaptive quality | FPS hysteresis first lowers backing-store resolution, then drops layers; reported live via `pf:adaptive-quality` |
-| idle awareness | expensive layers halve their update rate when the pointer is still |
+| frame continuity | never clear the canvas and omit visible orbit/flow/wave layers on idle frames; all active layers repaint together |
 | scroll & energy parallax | every layer has a depth; pointer/scroll speed feeds an `energy` term that drives speed, glow and star rate |
 
 On small coarse-pointer screens, **Adaptive Quality** limits the decorative
@@ -84,6 +84,33 @@ Adaptive Quality off immediately restores the full available Canvas scale
 (up to 2× DPR and the existing pixel budget) and any adaptively hidden layers.
 The 1.4× threshold was compared in Chrome mobile emulation; it is not a
 physical-phone FPS guarantee.
+
+### Motion continuity regression (21 November 2026)
+
+The background now preserves the same particles, stars, flow points, trails,
+and Lorenz state through ordinary viewport changes (including dynamic mobile
+browser chrome). Historical pixel-space trails are transformed with the new
+viewport, rather than wiped and randomly reseeded. Particle and flow motion,
+star lifetimes, visual impulses, and easing use elapsed time, not an assumed
+display refresh rate. Soft-core pair forces have finite bounds, and the vortex
+field mixes Cartesian directions to avoid an `atan2` branch-cut snap.
+Scroll-driven background parallax is eased with bounded per-frame drift so
+large programmatic scroll changes cannot teleport the decorative scene.
+
+In Performance Mode, clearing a Canvas frame also means **redrawing every
+currently visible effect**. Previously the idle optimization skipped drawing
+epicycles/flow/waves every other frame, producing an observable flicker even
+when the FPS counter looked healthy. Adaptive transitions now have minimum
+dwell/hysteresis and fade out expensive layers rather than instantaneously
+dropping them; particle counts converge gradually.
+
+Run `npm test` for browser + physics regression. `tests/motion-continuity.spec.mjs`
+measures the actual Canvas draw cadence and instruments read-only phase/particle
+state through mobile resize, orientation and tab visibility. Run
+`node verify/motion-benchmark.mjs` for paired Chrome screenshots, video and
+callback-timing samples against the current production baseline. A callback
+cadence is **not** physical-screen FPS, and passing tests does not by itself
+guarantee perceptually flawless animation on every real device.
 
 Benchmarked headlessly (same interaction script, 1280×720, software rasterizer):
 
