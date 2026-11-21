@@ -19,6 +19,8 @@
  * เทสต์ได้โดยไม่ต้องมี browser: Loop.__tick(now) ขับเฟรมเองได้ตรงๆ
  */
 
+import { frameBlend } from './motion-physics.js';
+
 const subs = new Set();
 const resizeSubs = new Set();
 
@@ -187,11 +189,11 @@ function tick(now) {
     const inst = Math.hypot(dx, dy) * (1000 / dt);
     pointer.vx = dx * (1000 / dt);
     pointer.vy = dy * (1000 / dt);
-    pointer.speed += (inst - pointer.speed) * 0.25;
+    pointer.speed += (inst - pointer.speed) * frameBlend(0.25, dt);
     pointer.nx = (pointer.x / viewport.w) * 2 - 1;
     pointer.ny = (pointer.y / viewport.h) * 2 - 1;
   } else {
-    pointer.speed *= 0.9;
+    pointer.speed *= 1 - frameBlend(0.1, dt);
   }
   pointer.px = pointer.x;
   pointer.py = pointer.y;
@@ -202,7 +204,7 @@ function tick(now) {
   scrollState.dy = y - scrollState.y;
   scrollState.y = y;
   const instVel = Math.abs(scrollState.dy) * (1000 / dt);
-  scrollState.vel += (instVel - scrollState.vel) * 0.2;
+  scrollState.vel += (instVel - scrollState.vel) * frameBlend(0.2, dt);
   if (scrollState.vel < 1) scrollState.vel = 0;
   scrollState.max = scrollMax();
   scrollState.progress = Math.min(1, Math.max(0, y / scrollState.max));
@@ -210,7 +212,7 @@ function tick(now) {
 
   // ── energy: เมาส์ไว / scroll ไว = พลังงานสูง (คลายตัวช้าๆ) ──
   const target = Math.min(1, pointer.speed / 2600 + scrollState.vel / 5000 + (pointer.down ? 0.25 : 0));
-  energy += (target - energy) * (target > energy ? 0.12 : 0.035);
+  energy += (target - energy) * frameBlend(target > energy ? 0.12 : 0.035, dt);
   if (energy < 0.001) energy = 0;
 
   // ── fps sampling ──
